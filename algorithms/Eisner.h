@@ -42,6 +42,7 @@ inline int get_index2(int len,int h,int m)
 	cout << str << endl;\
 	exit(1)
 
-vector<int>* decodeProjective(int length,double* scores);
+extern vector<int>* decodeProjective(int length,double* scores);
+extern double* encodeMarginals(int length,double* scores);
 
 #endif /* EISNER_H_ */
