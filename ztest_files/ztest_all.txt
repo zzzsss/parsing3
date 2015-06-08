@@ -1,0 +1,121 @@
+/*****order1*******/
+half the training:
+java -cp "lib\trove.jar;mst.jar" -Xmx1800m mstparser.DependencyParser train train-file:..\data\train_half.mst format:MST
+java -cp "lib\trove.jar;mst.jar" -Xmx1800m mstparser.DependencyParser test test-file:..\data\test.mst output-file:out.txt eval gold-file:..\data\test.mst format:MST
+feats:4319657
+--test(23)<2416> results: 51271/56702  0.90421/0.31912
+--dev(22)<1700>  results: 36272/40121  0.90407/0.31706
+
+all the training:
+java -cp "lib\trove.jar;mst.jar" -Xmx1800m mstparser.DependencyParser train train-file:..\data\train.mst format:MST
+feats:7052007 <39832>
+--test(23) results: 51699/56702 0.91177/0.35389 
+--dev(22)  results: 36671/40121 0.91401/0.36059
+<test detail>:
+Tokens: 56702
+Correct: 51699
+Unlabeled Accuracy: 0.9117667807132024
+Unlabeled Complete Correct: 0.3538907284768212
+Tokens non-punc: 49910
+Correct non-punc: 45972
+Unlabeled Non-punc Accuracy: 0.9210979763574434
+Unlabeled Non-punc Complete Correct: 0.3745860927152318
+
+/*****order2*******/
+//only test
+half:
+java -cp "lib\trove.jar;mst.jar" -Xmx1800m mstparser.DependencyParser train train-file:..\data\train_half.mst model-name:dep_halfo2.model order:2 test test-file:..\data\test.mst output-file:half_half_o2.txt eval gold-file:..\data\test.mst format:MST
+feats:4666501
+
+all:
+java -cp "lib\trove.jar;mst.jar" -Xmx1800m mstparser.DependencyParser train train-file:..\data\train.mst model-name:dep_allo2.model order:2 test test-file:..\data\test.mst output-file:all_o2.txt eval gold-file:..\data\test.mst format:MST
+
+
+/*********************************************************************Redo with non-golden test*************************************************/
+//half-o1
+//--dev
+Gold:dev_pos.mst||Test:out_halfo1_dev.txt
+Tokens: 40121
+Correct: 35853
+Unlabeled Accuracy: 0.8936217940729294
+Unlabeled Complete Correct: 0.3088235294117647
+Tokens non-punc: 35512
+Correct non-punc: 32117
+Unlabeled Non-punc Accuracy: 0.9043985131786438
+Unlabeled Non-punc Complete Correct: 0.3376470588235294
+//--test
+Tokens: 56702
+Correct: 50647
+Unlabeled Accuracy: 0.8932136432577334
+Unlabeled Complete Correct: 0.30629139072847683
+Tokens non-punc: 49910
+Correct non-punc: 45075
+Unlabeled Non-punc Accuracy: 0.9031256261270286
+Unlabeled Non-punc Complete Correct: 0.3307119205298013
+
+//all-o1
+//--dev
+Tokens: 40121
+Correct: 36277
+Unlabeled Accuracy: 0.9041898257770244
+Unlabeled Complete Correct: 0.3517647058823529
+Tokens non-punc: 35512
+Correct non-punc: 32506
+Unlabeled Non-punc Accuracy: 0.9153525568821806
+Unlabeled Non-punc Complete Correct: 0.38058823529411767
+//--test
+Gold:test_pos.mst||Test:out_allo1_test.txt
+Tokens: 56702
+Correct: 51176
+Unlabeled Accuracy: 0.902543120172128
+Unlabeled Complete Correct: 0.3389900662251656
+Tokens non-punc: 49910
+Correct non-punc: 45508
+Unlabeled Non-punc Accuracy: 0.9118012422360249
+Unlabeled Non-punc Complete Correct: 0.35844370860927155
+
+//half-o2
+//--dev
+Gold:dev_pos.mst||Test:out_halfo2_dev.txt
+Tokens: 40121
+Correct: 36148
+Unlabeled Accuracy: 0.9009745519802597
+Unlabeled Complete Correct: 0.3452941176470588
+Tokens non-punc: 35512
+Correct non-punc: 32357
+Unlabeled Non-punc Accuracy: 0.9111567920702861
+Unlabeled Non-punc Complete Correct: 0.3711764705882353
+//--test
+Gold:test_pos.mst||Test:out_halfo2_test.txt
+Tokens: 56702
+Correct: 51072
+Unlabeled Accuracy: 0.9007089697012451
+Unlabeled Complete Correct: 0.3406456953642384
+Tokens non-punc: 49910
+Correct non-punc: 45409
+Unlabeled Non-punc Accuracy: 0.9098176718092567
+Unlabeled Non-punc Complete Correct: 0.3621688741721854
+
+//all-o2
+//dev
+Gold:dev_pos.mst||Test:out_allo2_dev.txt
+Tokens: 40121
+Correct: 36567
+Unlabeled Accuracy: 0.9114179606689764
+Unlabeled Complete Correct: 0.3888235294117647
+Tokens non-punc: 35512
+Correct non-punc: 32751
+Unlabeled Non-punc Accuracy: 0.9222516332507321
+Unlabeled Non-punc Complete Correct: 0.41705882352941176
+//test
+Gold:test_pos.mst||Test:out_allo2_test.txt
+Tokens: 56702
+Correct: 51555
+Unlabeled Accuracy: 0.9092271877535184
+Unlabeled Complete Correct: 0.3712748344370861
+Tokens non-punc: 49910
+Correct non-punc: 45825
+Unlabeled Non-punc Accuracy: 0.9181526748146664
+Unlabeled Non-punc Complete Correct: 0.3927980132450331
+
+

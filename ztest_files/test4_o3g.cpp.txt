@@ -1,0 +1,204 @@
+/*
+ * test4_o3g.cpp
+ *
+ *  Created on: Apr 20, 2015
+ *      Author: zzs
+ */
+
+#include<fstream>
+#include<ctime>
+#include<set>
+#include"Util.h"
+#include"StringPool.h"
+#include"DependencyEvaluator.h"
+#include"DependencyParser.h"
+#include"DependencyParser2.h"
+#include"new_ones.h"
+#include "EisnerO3g.h"
+using namespace std;
+
+extern StringPool* pool;
+extern set<string> punctSet;
+extern set<string> coordSet;
+extern set<string> commaSet;
+extern vector<vector<vector<double> > > probs;
+
+extern vector<vector<double> > probs_gchs;
+extern vector<vector<vector<double> > > probs_grands;
+extern vector<vector<vector<double> > > probs_trips;
+extern vector<vector<vector<double> > > probs_sibs;
+extern vector<vector<vector<vector<double> > > > nt_probs;
+
+extern vector<vector<vector<vector<double> > > > probs_gtrips;
+extern vector<vector<vector<vector<double> > > > probs_gsibs;
+extern vector<vector<vector<double> > > probs_coords;
+
+double getGrandTripProb(int gpar, int par, int ch1, int ch2, vector<vector<vector<vector<double> > > > *probs_gtrips){
+	int ch1_fin, ch2_fin;
+	if(gpar > par){
+		ch1_fin = ch1;
+		if(ch1 > par){
+			ch2_fin = ch2 - ch1 - 1;
+		}
+		else{
+			ch2_fin = ch2;
+		}
+	}
+	else{
+		ch1_fin = ch1 - gpar - 1;
+		if(ch1 > par){
+			ch2_fin = ch2 - ch1 - 1;
+		}
+		else{
+			ch2_fin = ch2 - gpar - 1;
+		}
+	}
+	if(ch1_fin<0)
+		ch1_fin=0;
+	if(ch2_fin<0)
+		ch2_fin=0;
+	return (*probs_gtrips)[gpar][par][ch1_fin][ch2_fin];
+}
+
+double* testing_get_probs_o3g()
+{
+	int size = probs.size();
+	double* rr = new double[size*size*size*size];
+	//g-s-t
+	for(int g=0;g<size;g++){
+		//s - t
+		for(int s=0;s<size;s++)
+			for(int t=s;t<size;t++){
+				rr[get_index2_o3g(size,g,s,s,t)]=probs[s][t][0]+probs_trips[s][s][t]+probs_sibs[s][t][0]+
+						probs_grands[g][s][t] + probs_gchs[g][t]+
+						getGrandTripProb(g, s, s, t, &probs_gtrips) + probs_gsibs[g][s][t][0];
+				rr[get_index2_o3g(size,g,t,t,s)] = probs[s][t][1]+probs_trips[t][t][s]+probs_sibs[t][s][0]+
+						probs_grands[g][t][s] + probs_gchs[g][s]+
+						getGrandTripProb(g, t, t, s, &probs_gtrips) + probs_gsibs[g][t][s][0];
+			}
+		//s->r->t
+		for(int s=0;s<size;s++)
+			for(int t=s;t<size;t++){
+				for(int r = s + 1; r < t; r++){
+					rr[get_index2_o3g(size,g,s,r,t)] = probs[s][t][0]+probs_trips[s][r][t]+probs_sibs[r][t][1]+
+							probs_grands[g][s][t] + probs_gchs[g][t] +
+							getGrandTripProb(g, s, r, t, &probs_gtrips) + probs_gsibs[g][r][t][1];
+					rr[get_index2_o3g(size,g,t,r,s)] = probs[s][t][1]+probs_trips[t][r][s]+probs_sibs[r][s][1]+
+							probs_grands[g][t][s] + probs_gchs[g][s] +
+							getGrandTripProb(g, t, r, s, &probs_gtrips) + probs_gsibs[g][r][s][1];
+				}
+			}
+	}
+	for(int i=0;i<size;i++){
+		rr[get_index2_o3g(size,0,0,0,i)] = probs_trips[0][0][i] + probs_sibs[0][i][0] + probs[0][i][0];
+		for(int r = 1; r < i; r++){
+			rr[get_index2_o3g(size,0,0,r,i)] = probs_trips[0][0][i] + probs_trips[0][r][i] + probs_sibs[r][i][1];
+		}
+	}
+	return rr;
+}
+
+//test for the O2g implement
+int Test4Main(int argc,char **argv)
+{
+	/* 1.init(arguments) --- the same as the original one */
+	punctSet.insert("''");
+	punctSet.insert("``");
+	punctSet.insert(".");
+	punctSet.insert(":");
+	punctSet.insert(",");
+	ifstream config_in("config4");
+	vector<string*> args;
+	char line[100];
+	while(config_in.getline(line, 100)){
+		string arg = string(line);
+		args.push_back(pool->get(arg));
+	}
+	ParserOptions* options = new ParserOptions(args);
+	pool->addString(options->pool_size);
+	int length = (int)(args.size());
+	for(int i = 0; i < length; i++){
+		pool->push_back(args[i]);
+	}
+	config_in.close();
+
+	//testing and timing
+	DependencyPipe* pipe = new DependencyPipe3OGSibling(options);
+	DependencyParser* dp = new DependencyParser(pipe, options);
+	/* 0.init sth */
+	srand((int)time(0));
+	/* 1.init files */
+	string* tFile = dp->options->testfile;
+	string* file = dp->options->outfile;
+	long start,end;
+	dp->pipe->initInputFile(tFile);
+	dp->pipe->initOutputFile(file);
+
+	/* 2.start */
+	cout<<"Processing Sentence: \n";
+	DependencyInstance* instance = dp->pipe->nextInstance();
+	int cnt = 0;
+	int ALL_r1time=0,ALL_r2time=0,ALL_error=0;
+	while(instance != NULL){
+		printf("%d: ", cnt++);
+		int length = instance->length();
+		//1.the original one
+		start = clock() / (CLOCKS_PER_SEC/1000);
+		vector<int>*r1 = newone_outputparse_one(dp,instance,3);
+		end = clock() / (CLOCKS_PER_SEC/1000);
+		cout << end-start << "; ";
+		ALL_r1time += end-start;
+		//2.the new one
+		double* temp_probs = testing_get_probs_o3g();
+
+		//check_two(length,temp_probs);
+
+		start = clock() / (CLOCKS_PER_SEC/1000);
+		vector<int>*r2 = decodeProjective_o3g(length,temp_probs);
+		end = clock() / (CLOCKS_PER_SEC/1000);
+		cout << end-start << "|| ";
+		ALL_r2time += end-start;
+		//3.compare
+		cout << r1->size() << '-' << r2->size() << "---";
+		if(r1->size() == (r2->size()-1)){
+			//r2 has the-root-element
+			int error=0;
+			for(int i=0;i<r1->size();i++)
+				if((*r1)[i] != (*r2)[i+1])
+					error++;
+			ALL_error += error;
+			cout << error;
+			cout << endl;
+		}
+		/*
+		cout << '\n';
+		for(int i=0;i<r1->size();i++)
+			cout << (*r1)[i] << ';';
+		cout << '\n';
+		for(int i=0;i<r2->size()-1;i++)
+			cout << (*r2)[i+1] << ';';
+		cout << '\n';
+			//calculate
+		double score1=0,score2=0;
+
+		//check_two(length,temp_probs);
+
+		for(int i=0;i<r1->size();i++)
+			score1 += test_score(r2->size(),temp_probs,i+1,(*r1)[i]);
+		for(int i=0;i<r1->size();i++)
+			score2 += test_score(r2->size(),temp_probs,i+1,(*r2)[i+1]);
+		*/
+
+		delete r1;
+		delete r2;
+		delete []temp_probs;
+		delete(instance);
+		instance = dp->pipe->nextInstance();
+	}
+	cout << ALL_error << ";" << ALL_r1time << " vs " << ALL_r2time << endl;
+	dp->pipe->close();
+	return 0;
+}
+
+
+
