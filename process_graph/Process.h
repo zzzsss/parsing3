@@ -102,7 +102,7 @@ protected:
 
 	//train and test
 	double nn_dev_test(string to_test,string output,string gold);
-	void nn_train_one_iter();
+	virtual void nn_train_one_iter();
 	void nn_train_prepare();
 
 	//virtual functions for different methods
