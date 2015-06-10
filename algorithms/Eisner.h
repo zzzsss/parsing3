@@ -43,6 +43,6 @@ inline int get_index2(int len,int h,int m)
 	exit(1)
 
 extern vector<int>* decodeProjective(int length,double* scores);
-extern double* encodeMarginals(int length,double* scores);
+extern double* encodeMarginals(const int length,const double* scores);
 
 #endif /* EISNER_H_ */

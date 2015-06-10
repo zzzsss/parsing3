@@ -16,11 +16,11 @@
 
 class ProbProcess: public Process{
 protected:
+	static const double GRADIENT_SMALL;
+
 	REAL* data;
-	REAL* target;
 	REAL* gradient;
-	int current;	//current sentences
-	int end;		//all sentences
+	int alloc_sample_size;
 
 	virtual int each_get_mach_outdim(){return 1;}	//only one output scores
 	virtual void nn_train_one_iter()=0;				//different training ways
@@ -32,12 +32,11 @@ protected:
 	virtual void each_get_grad(int){}
 
 public:
-	ProbProcess(string c):Process(c),data(0),target(0),gradient(0),current(0),end(0){
+	ProbProcess(string c):Process(c),data(0),gradient(0),alloc_sample_size(0){
 		parameters->CONF_score_prob = 0;	//no-log-transform
 	}
 	virtual ~ProbProcess(){}
 };
-
 
 
 #endif /* PROCESS_PROB_PROBPROCESS_H_ */

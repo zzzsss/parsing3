@@ -51,6 +51,7 @@ public:
 	virtual void Backw_update()=0;
 	//test-time --> should perform fast calculating using pre-calculated info if possible
 	virtual REAL* mach_forward(REAL* assign,int all)=0;	//allocated here
+	virtual void mach_backward(REAL* assign,REAL* gradient,const float lrate,const float wdecay,int all)=0;	//maybe also need forward is bs is small
 	//tabs
 	virtual REAL* get_tab()=0;
 	virtual void set_tab(REAL* x)=0;

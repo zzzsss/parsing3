@@ -46,6 +46,7 @@ public:
 	virtual void Backw_update(){nnError(NNERROR_NotImplemented);}
 
 	virtual REAL* mach_forward(REAL* assign,int all);	//allocated here
+	virtual void mach_backward(REAL* assign,REAL* gradient,const float lrate,const float wdecay,int all);
 	virtual void Write(string name);
 
 	virtual REAL* get_tab(){

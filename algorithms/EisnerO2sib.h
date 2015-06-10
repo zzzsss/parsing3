@@ -44,6 +44,6 @@ inline int get_index2_o2sib(int len,int h,int c,int m)
 }
 
 extern vector<int>* decodeProjective_o2sib(int length,double* scores);
-extern double* encodeMarginals_o2sib(int length,double* scores);
+extern double* encodeMarginals_o2sib(const int length,const double* scores);
 
 #endif /* PARSING_V1_ALGORITHMS_EISNERO2SIB_H_ */

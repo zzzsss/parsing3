@@ -15,6 +15,7 @@
 #include "process_graph/Method9_O3g.h"
 #include "parts/Parameters.h"
 #include "nn/CslmInterface.h"
+#include "process_prob/MP1_o1.h"
 
 /* <Version 1.6>
  * 		-- usage:	(mode 3 and 4 are for debugging)
@@ -61,6 +62,9 @@ int main(int argc,char **argv)
 		break;
 	case 9:
 		x = new Method9_O3g(conf);
+		break;
+	case -1:
+		x = new MP1_o1(conf);
 		break;
 	default:
 		x = 0;
