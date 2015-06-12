@@ -15,6 +15,7 @@ void MP1_o1::nn_train_one_iter()
 	int sentences = training_corpus->size();
 	int sentences_skip = 0;
 	int all_forward = 0;
+	int zero_backward = 0;
 	time_t now;
 	time(&now); //ctime is not rentrant ! use ctime_r() instead if needed
 	cout << "##*** Start the training for iter " << cur_iter << " at " << ctime(&now)
@@ -80,8 +81,10 @@ void MP1_o1::nn_train_one_iter()
 				if(h != m){
 					*assign_g -= tmp_marginals[get_index2(length,h,m)];
 					//if gradient is too small, just ignore it to avoid numeric issues
-					if(*assign_g < GRADIENT_SMALL && *assign_g > -GRADIENT_SMALL)
+					if(*assign_g < GRADIENT_SMALL && *assign_g > -GRADIENT_SMALL){
 						*assign_g = 0;
+						zero_backward ++;
+					}
 					assign_g++;
 				}
 			}
@@ -92,7 +95,8 @@ void MP1_o1::nn_train_one_iter()
 		delete []tmp_marginals;
 		delete []tmp_scores;
 	}
-	cout << "Iter done, skip " << sentences_skip << " sentences and f&b " << all_forward << endl;
+	cout << "Iter done, skip " << sentences_skip << " sentences and f&b " << all_forward
+			<< ",zero-back " << zero_backward << endl;
 }
 
 
