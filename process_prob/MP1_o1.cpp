@@ -36,6 +36,12 @@ void MP1_o1::nn_train_one_iter()
 			data = new REAL[to_alloc*mach->GetIdim()];
 			gradient = new REAL[to_alloc];
 			alloc_sample_size = to_alloc;
+			if(parameters->CONF_MP_training_rearrange){
+				delete []rearrange_data;
+				delete []rearrange_gradient;
+				rearrange_data = new REAL[to_alloc*mach->GetIdim()];
+				rearrange_gradient = new REAL[to_alloc];
+			}
 		}
 		//2.featgen_fill
 		REAL* assign_x = data;
@@ -75,6 +81,9 @@ void MP1_o1::nn_train_one_iter()
 		double* tmp_marginals = encodeMarginals(length,tmp_scores);
 		assign_g = gradient;
 		REAL gradient_small = parameters->CONF_MP_gradient_small;
+		REAL* assign_redata = rearrange_data;
+		REAL* aasign_regrad = rearrange_gradient;
+		int num_rearrange = 0;
 		for(int m=1;m<length;m++){
 			for(int h=0;h<length;h++){
 				if(h != m){
@@ -84,12 +93,23 @@ void MP1_o1::nn_train_one_iter()
 						*assign_g = 0;
 						zero_backward ++;
 					}
+					else if(parameters->CONF_MP_training_rearrange){
+						//re-arrange
+						num_rearrange++;
+						feat_gen->fill_one(assign_redata,x,h,m);
+						assign_redata += mach->GetIdim();
+						*aasign_regrad = *assign_g;
+						aasign_regrad++;
+					}
 					assign_g++;
 				}
 			}
 		}
 		//6.back backward (also need forward if bs is small)
-		mach->mach_backward(data,gradient,cur_lrate, parameters->CONF_NN_WD,real_num_forw);
+		if(parameters->CONF_MP_training_rearrange)
+			mach->mach_forwback(rearrange_data,rearrange_gradient,cur_lrate, parameters->CONF_NN_WD,num_rearrange);
+		else
+			mach->mach_backward(data,gradient,cur_lrate, parameters->CONF_NN_WD,real_num_forw);
 		delete []mach_y;
 		delete []tmp_marginals;
 		delete []tmp_scores;

@@ -38,3 +38,30 @@ void CslmInterface::mach_backward(REAL* assign,REAL* gradient,const float lrate,
 	}
 }
 
+void CslmInterface::mach_forwback(REAL* assign,REAL* gradient,const float lrate,const float wdecay,int all)
+{
+	if(all==0)
+		return;
+	//gradient is given, all forward and backward, don't care about outputs
+	Mach* m = mach;
+	int idim = m->GetIdim();
+	int odim = m->GetOdim();
+	int bsize = m->GetBsize();
+
+	int remain = all;
+	int this_num = bsize;
+	REAL* xx = assign;
+	REAL* gg = gradient;
+	while(remain > 0){
+		if(remain < this_num)
+			this_num = remain;
+		mach->SetDataIn(xx);
+		mach->Forw(this_num);
+		mach->SetGradOut(gg);
+		mach->Backw(lrate,wdecay,this_num);
+		xx += this_num*idim;
+		gg += this_num*odim;
+		remain -= this_num;
+	}
+}
+

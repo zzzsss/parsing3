@@ -19,6 +19,8 @@ protected:
 	REAL* data;
 	REAL* gradient;
 	int alloc_sample_size;
+	REAL* rearrange_data;
+	REAL* rearrange_gradient;
 
 	virtual int each_get_mach_outdim(){return 1;}	//only one output scores
 	virtual void nn_train_one_iter()=0;				//different training ways
@@ -30,7 +32,7 @@ protected:
 	virtual void each_get_grad(int){}
 
 public:
-	ProbProcess(string c):Process(c),data(0),gradient(0),alloc_sample_size(0){
+	ProbProcess(string c):Process(c),data(0),gradient(0),alloc_sample_size(0),rearrange_data(0),rearrange_gradient(0){
 		parameters->CONF_score_prob = 0;	//no-log-transform
 	}
 	virtual ~ProbProcess(){}
