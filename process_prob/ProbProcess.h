@@ -16,8 +16,6 @@
 
 class ProbProcess: public Process{
 protected:
-	static const double GRADIENT_SMALL;
-
 	REAL* data;
 	REAL* gradient;
 	int alloc_sample_size;

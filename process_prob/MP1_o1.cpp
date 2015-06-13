@@ -8,8 +8,6 @@
 #include "MP1_o1.h"
 #include "../algorithms/Eisner.h"
 
-const double ProbProcess::GRADIENT_SMALL = 0.0001;
-
 void MP1_o1::nn_train_one_iter()
 {
 	int sentences = training_corpus->size();
@@ -76,12 +74,13 @@ void MP1_o1::nn_train_one_iter()
 		//5.gradients
 		double* tmp_marginals = encodeMarginals(length,tmp_scores);
 		assign_g = gradient;
+		REAL gradient_small = parameters->CONF_MP_gradient_small;
 		for(int m=1;m<length;m++){
 			for(int h=0;h<length;h++){
 				if(h != m){
 					*assign_g -= tmp_marginals[get_index2(length,h,m)];
 					//if gradient is too small, just ignore it to avoid numeric issues
-					if(*assign_g < GRADIENT_SMALL && *assign_g > -GRADIENT_SMALL){
+					if(*assign_g < gradient_small && *assign_g > -gradient_small){
 						*assign_g = 0;
 						zero_backward ++;
 					}

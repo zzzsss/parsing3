@@ -86,6 +86,10 @@ int CONF_random_seed;
 //1.6 -- scores
 int CONF_score_prob;	//whether give transform score, only for M1 (0,1)
 
+//1.7 -- for process_prob (MethodProb)
+double CONF_MP_gradient_small;	//whether cut to zero when training, 0 means off
+int CONF_MP_training_rearrange;	//whether re-arrange training samples to exclude 0 gradient, only makes sense when gradient_small is on
+
 //init
 parsing_conf(string conf_file)
 {
@@ -134,6 +138,9 @@ parsing_conf(string conf_file)
 	CONF_NN_highO_score_combine_o3g_self = 1;
 	//pre-calc
 	CONF_NN_PRECALC = 1;
+	//MP
+	CONF_MP_gradient_small = 1e-8;
+	CONF_MP_training_rearrange = 0;
 	//read in conf-file
 #define DATA_LINE_LEN 10000
 	ifstream fin(conf_file.c_str());
@@ -223,6 +230,9 @@ parsing_conf(string conf_file)
 		else if(buf=="s_prob") fin >> CONF_score_prob;
 		//precalc
 		else if(buf=="nn_precalc") fin >> CONF_NN_PRECALC;
+		//1.7
+		else if(buf=="mp_gsmall") fin >> CONF_MP_gradient_small;
+		else if(buf=="mp_gsmall_re") fin >> CONF_MP_training_rearrange;
 		else
 			cout << "Unknown conf " << buf << endl;
 	}
