@@ -43,11 +43,15 @@ void MP1_o1::nn_train_one_iter()
 				rearrange_gradient = new REAL[to_alloc];
 			}
 		}
+		//1.5 m start for where
+		int m_start = 1;
+		if(parameters->CONF_MP_o1training_0m)
+			m_start = 0;
 		//2.featgen_fill
 		REAL* assign_x = data;
 		REAL* assign_g = gradient;
 		int real_num_forw = 0;
-		for(int m=1;m<length;m++){
+		for(int m=m_start;m<length;m++){
 			for(int h=0;h<length;h++){
 				if(h != m){
 					feat_gen->fill_one(assign_x,x,h,m);
@@ -69,7 +73,7 @@ void MP1_o1::nn_train_one_iter()
 		double* tmp_scores = new double[length*length];
 		for(int ii=0;ii<length*length;ii++)
 			tmp_scores[ii] = DOUBLE_LARGENEG;
-		for(int m=1;m<length;m++){
+		for(int m=m_start;m<length;m++){
 			for(int h=0;h<length;h++){
 				if(h != m){
 					tmp_scores[get_index2(length,h,m)] = *assign_y;
@@ -84,7 +88,7 @@ void MP1_o1::nn_train_one_iter()
 		REAL* assign_redata = rearrange_data;
 		REAL* aasign_regrad = rearrange_gradient;
 		int num_rearrange = 0;
-		for(int m=1;m<length;m++){
+		for(int m=m_start;m<length;m++){
 			for(int h=0;h<length;h++){
 				if(h != m){
 					*assign_g -= tmp_marginals[get_index2(length,h,m)];
