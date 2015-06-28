@@ -44,9 +44,7 @@ void MP1_o1::nn_train_one_iter()
 			}
 		}
 		//1.5 m start for where
-		int m_start = 1;
-		if(parameters->CONF_MP_o1training_0m)
-			m_start = 0;
+		int m_start = 1;	//ignore 0 as m
 		//2.featgen_fill
 		REAL* assign_x = data;
 		REAL* assign_g = gradient;
@@ -70,6 +68,7 @@ void MP1_o1::nn_train_one_iter()
 		REAL* mach_y = mach->mach_forward(data,real_num_forw);
 		//4.scores
 		REAL* assign_y = mach_y;
+		assign_g = gradient;
 		double* tmp_scores = new double[length*length];
 		for(int ii=0;ii<length*length;ii++)
 			tmp_scores[ii] = DOUBLE_LARGENEG;
@@ -77,6 +76,8 @@ void MP1_o1::nn_train_one_iter()
 			for(int h=0;h<length;h++){
 				if(h != m){
 					tmp_scores[get_index2(length,h,m)] = *assign_y;
+						*assign_g -= 2*parameters->CONF_MP_scale_reg*(*assign_y);
+						assign_g++;
 					assign_y ++;
 				}
 			}
@@ -122,4 +123,17 @@ void MP1_o1::nn_train_one_iter()
 			<< ",zero-back " << zero_backward << endl;
 }
 
-
+vector<int>* MP1_o1::each_test_one(DependencyInstance* x)
+{
+	if(parameters->CONF_MP_marginal_score){
+		int length = x->length();
+		double *tmp_scores = get_scores_o1(x,parameters,mach,feat_gen);
+		double* tmp_marginals = encodeMarginals(length,tmp_scores);
+		vector<int> *ret = decodeProjective(x->length(),tmp_marginals);
+		delete []tmp_scores;
+		delete []tmp_marginals;
+		return ret;
+	}
+	else
+		return parse_o1(x);
+}
