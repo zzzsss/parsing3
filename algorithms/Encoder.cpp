@@ -6,186 +6,158 @@
  */
 
 //inside-outside algorithm for order-1 model
-// --- from MaxParser->DependendcyEncoder.cpp
+// --- according to MaxParser->DependendcyEncoder.cpp
+// 	--- but does not count-in root as m
 
 #include "Eisner.h"
 #include "Helper.h"
 
-//not the same as get_index, but does not matter
-static inline int getKey(int s, int t, int dir, int comp, int length){
-	int key = s;
-	key = key * length + t;
-	key = key * 2 + dir;
-	key = key * 2 + comp;
-	return key;
-}
-
-//return z
-static double calc_inside(const int length, double *beta,const double *probs)
+static double* calc_inside(const int length,const double *probs)
 {
-	int key;
-	for(int i = 0; i < length; i++){
-		key = getKey(i, i, 0, 1, length);
-		beta[key] = 0.0;
-		key = getKey(i, i, 1, 1, length);
-		beta[key] = 0.0;
-	}
-	for(int j = 1; j < length; j++){
-		for(int s = 0; s + j < length; s++){
-			int t = s + j;
-			//double prodProb_st = probs[s][t][0];probs[get_index2(length,s,t)];
-			//double prodProb_ts = probs[s][t][1];probs[get_index2(length,t,s)];
-			double prodProb_st = probs[get_index2(length,s,t)];
-			double prodProb_ts = probs[get_index2(length,t,s)];
-			//init beta
-			//incomplete spans
-			int key_st_0 = getKey(s, t, 0, 0, length);
-			beta[key_st_0] = 0.0;
-			int key_ts_0 = getKey(s, t, 1, 0, length);
-			beta[key_ts_0] = 0.0;
-			//complete spans
-			int key_st_1 = getKey(s, t, 0, 1, length);
-			beta[key_st_1] = 0.0;
-			int key_ts_1 = getKey(s, t, 1, 1, length);
-			beta[key_ts_1] = 0.0;
-			bool flg_st_0 = true, flg_ts_0 = true;
-			bool flg_st_1 = true, flg_ts_1 = true;
+	int all = length * length * 2 * 2;
+	double* inside = new double[all];
+	for(int i=0;i<all;i++)
+		inside[i] = 0;
+	//loop
+	for(int k=1; k<length; k++){//the distance k
+		for(int s=0; s<length; s++){
+			//s--t
+			int t=s+k;
+			if(t>=length)
+				break;
+			int the_ind = -1;
+			//1.incomplete
+			//1.1 s->t
+			the_ind = get_index(length,s,t,E_RIGHT,E_INCOM);
+			inside[the_ind] = Negative_Infinity;
 			for(int r = s; r < t; r++){
-				// first is direction, second is complete
-				// _s means s is the parent
-				int key1 = getKey(s, r, 0, 1, length);
-				int key2 = getKey(r + 1, t, 1, 1, length);
-
-				beta[key_st_0] = logsumexp(beta[key_st_0], beta[key1] + beta[key2] + prodProb_st, flg_st_0);
-				flg_st_0 = false;
-
-				beta[key_ts_0] = logsumexp(beta[key_ts_0], beta[key1] + beta[key2] + prodProb_ts, flg_ts_0);
-				flg_ts_0 = false;
+				inside[the_ind] = logsumexp(inside[the_ind],inside[get_index(length,s,r,E_RIGHT,E_COM)]
+					+inside[get_index(length,r+1,t,E_LEFT,E_COM)]+probs[get_index2(length,s,t)]);
 			}
-			for(int r = s; r <= t; r++){
-				if(r != s){
-					int key1 = getKey(s, r, 0, 0, length);
-					int key2 = getKey(r, t, 0, 1, length);
-					beta[key_st_1] = logsumexp(beta[key_st_1], beta[key1] + beta[key2], flg_st_1);
-					flg_st_1 = false;
-				}
-				if(r != t){
-					int key1 = getKey(s, r, 1, 1, length);
-					int key2 = getKey(r, t, 1, 0, length);
-					beta[key_ts_1] = logsumexp(beta[key_ts_1], beta[key1] + beta[key2], flg_ts_1);
-					flg_ts_1 = false;
-				}
+			//1.2 t->s
+			if(s!=0){
+			the_ind = get_index(length,s,t,E_LEFT,E_INCOM);
+			inside[the_ind] = Negative_Infinity;
+			for(int r = s; r < t; r++){
+				inside[the_ind] = logsumexp(inside[the_ind],inside[get_index(length,s,r,E_RIGHT,E_COM)]
+					+inside[get_index(length,r+1,t,E_LEFT,E_COM)]+probs[get_index2(length,t,s)]);
+			}
+			}
+			//2.complete
+			//2.1 s->t
+			the_ind = get_index(length,s,t,E_RIGHT,E_COM);
+			inside[the_ind] = Negative_Infinity;
+			for(int r = s+1; r <= t; r++){
+				inside[the_ind] = logsumexp(inside[the_ind],inside[get_index(length,s,r,E_RIGHT,E_INCOM)]
+					+inside[get_index(length,r,t,E_RIGHT,E_COM)]);
+			}
+			//2.2 t->s
+			if(s!=0){
+			the_ind = get_index(length,s,t,E_LEFT,E_COM);
+			inside[the_ind] = Negative_Infinity;
+			for(int r = s; r < t; r++){
+				inside[the_ind] = logsumexp(inside[the_ind],inside[get_index(length,s,r,E_LEFT,E_COM)]
+					+inside[get_index(length,r,t,E_LEFT,E_INCOM)]);
+			}
 			}
 		}
 	}
-	int key1 = getKey(0, length - 1, 0, 1, length);
-	int key2 = getKey(0, length - 1, 1, 1, length);
-	return logsumexp(beta[key1], beta[key2], false);
+	return inside;
 }
 
-static void calc_outside(const int length,const double *beta,const double *probs,double *alpha)
+static double* calc_outside(const int length,const double *inside,const double *probs)
 {
-	int key;
-	int end = length - 1;
-	for(int d = 0; d < 2; d++){
-		for(int c = 0 ; c < 2; c++){
-			key = getKey(0, end, d, c, length);
-			alpha[key] = 0.0;
-		}
-	}
-	for(int j = end; j >= 1; j--){
-		for(int s = 0; s + j < length; s++){
-			int t = s + j;
-			//init alpha
-			//incomplete spans
-			int key_st_0 = getKey(s, t, 0, 0, length);
-			alpha[key_st_0] = 0.0;
-			int key_ts_0 = getKey(s, t, 1, 0, length);
-			alpha[key_ts_0] = 0.0;
-			//complete spans
-			int key_st_1 = getKey(s, t, 0, 1, length);
-			alpha[key_st_1] = 0.0;
-			int key_ts_1 = getKey(s, t, 1, 1, length);
-			alpha[key_ts_1] = 0.0;
-			bool flg_st_0 = true, flg_ts_0 = true;
-			bool flg_st_1 = true, flg_ts_1 = true;
-			for(int r = 0; r < s; r++){
-				//double prodProb_rt = probs[r][t][0];
-				//double prodProb_tr = probs[r][t][1];
-				double prodProb_rt = probs[get_index2(length,r,t)];
-				double prodProb_tr = probs[get_index2(length,t,r)];
-				//alpha[s][t][0][1]
-				int key_b = getKey(r, s, 0, 0, length);
-				int key_a = getKey(r, t, 0, 1, length);
-				alpha[key_st_1] = logsumexp(alpha[key_st_1], beta[key_b] + alpha[key_a], flg_st_1);
-				flg_st_1 = false;
-				//alpha[s][t][1][1]
-				key_b = getKey(r, s - 1, 0, 1, length);
-				key_a = getKey(r, t, 0, 0, length);
-				alpha[key_ts_1] = logsumexp(alpha[key_ts_1], beta[key_b] + alpha[key_a] + prodProb_rt, flg_ts_1);
-				flg_ts_1 = false;
-				key_a = getKey(r, t, 1, 0, length);
-				alpha[key_ts_1] = logsumexp(alpha[key_ts_1], beta[key_b] + alpha[key_a] + prodProb_tr, flg_ts_1);
-				flg_ts_1 = false;
+	int all = length * length * 2 * 2;
+	double* outside = new double[all];
+	for(int i=0;i<all;i++)
+		outside[i] = 0;
+	//loop
+	for(int k=length-2;k>=1;k--){	//no need for the largest span
+		for(int s=0; s<length; s++){
+			//s--t
+			int t=s+k;
+			if(t>=length)
+				break;
+			int the_ind = -1;
+			//1.complete
+			//1.1 s->t
+			the_ind = get_index(length,s,t,E_RIGHT,E_COM);
+			outside[the_ind] = Negative_Infinity;
+			for(int r=t+1;r<length;r++){
+				outside[the_ind] = logsumexp(outside[the_ind],inside[get_index(length,t+1,r,E_LEFT,E_COM)]
+					+outside[get_index(length,s,r,E_RIGHT,E_INCOM)]+probs[get_index2(length,s,r)]);
+				if(s!=0){
+					outside[the_ind] = logsumexp(outside[the_ind],inside[get_index(length,t+1,r,E_LEFT,E_COM)]
+						+outside[get_index(length,s,r,E_LEFT,E_INCOM)]+probs[get_index2(length,r,s)]);
+				}
 			}
-			for(int r = t + 1; r < length; r++){
-				//double prodProb_sr = probs[s][r][0];
-				//double prodProb_rs = probs[s][r][1];
-				double prodProb_sr = probs[get_index2(length,s,r)];
-				double prodProb_rs = probs[get_index2(length,r,s)];
-				//alpha[s][t][0][1]
-				int key_b = getKey(t + 1, r, 1, 1, length);
-				int key_a = getKey(s, r, 0, 0, length);
-				alpha[key_st_1] = logsumexp(alpha[key_st_1], beta[key_b] + alpha[key_a] + prodProb_sr, flg_st_1);
-				flg_st_1 = false;
-				key_a = getKey(s, r, 1, 0, length);
-				alpha[key_st_1] = logsumexp(alpha[key_st_1], beta[key_b] + alpha[key_a] + prodProb_rs, flg_st_1);
-				flg_st_1 = false;
-				//alpha[s][t][1][1]
-				key_b = getKey(t, r, 1, 0, length);
-				key_a = getKey(s, r, 1, 1, length);
-				alpha[key_ts_1] = logsumexp(alpha[key_ts_1], beta[key_b] + alpha[key_a], flg_ts_1);
-				flg_ts_1 = false;
+			for(int r=0;r<s;r++){
+				outside[the_ind] = logsumexp(outside[the_ind],inside[get_index(length,r,s,E_RIGHT,E_INCOM)]
+					+outside[get_index(length,r,t,E_RIGHT,E_COM)]);
 			}
-			//alpha[s][t][0][0]
-			for(int r = t; r < length; r++){
-				int key_b = getKey(t, r, 0, 1, length);
-				int key_a = getKey(s, r, 0, 1, length);
-				alpha[key_st_0] = logsumexp(alpha[key_st_0], beta[key_b] + alpha[key_a], flg_st_0);
-				flg_st_0 = false;
+			//1.2 t->s
+			if(s!=0){
+			the_ind = get_index(length,s,t,E_LEFT,E_COM);
+			outside[the_ind] = Negative_Infinity;
+			for(int r=0;r<s;r++){
+				outside[the_ind] = logsumexp(outside[the_ind],inside[get_index(length,r,s-1,E_RIGHT,E_COM)]
+					+outside[get_index(length,r,t,E_RIGHT,E_INCOM)]+probs[get_index2(length,r,t)]);
+				if(r!=0){
+					outside[the_ind] = logsumexp(outside[the_ind],inside[get_index(length,r,s-1,E_RIGHT,E_COM)]
+						+outside[get_index(length,r,t,E_LEFT,E_INCOM)]+probs[get_index2(length,t,r)]);
+				}
 			}
-			//alpha[s][t][1][0]
-			for(int r = 0; r <= s; r++){
-				int key_b = getKey(r, s, 1, 1, length);
-				int key_a = getKey(r, t, 1, 1, length);
-				alpha[key_ts_0] = logsumexp(alpha[key_ts_0], beta[key_b] + alpha[key_a], flg_ts_0);
-				flg_ts_0 = false;
+			for(int r=t+1;r<length;r++){
+				outside[the_ind] = logsumexp(outside[the_ind],inside[get_index(length,t,r,E_LEFT,E_INCOM)]
+					+outside[get_index(length,s,r,E_LEFT,E_COM)]);
+			}
+			}
+			//2.incomplete
+			//2.1 s->t
+			the_ind = get_index(length,s,t,E_RIGHT,E_INCOM);
+			outside[the_ind] = Negative_Infinity;
+			for(int r=t;r<length;r++){
+				outside[the_ind] = logsumexp(outside[the_ind],inside[get_index(length,t,r,E_RIGHT,E_COM)]
+					+outside[get_index(length,s,r,E_RIGHT,E_COM)]);
+			}
+			//2.2 t->s
+			if(s!=0){
+			the_ind = get_index(length,s,t,E_LEFT,E_INCOM);
+			outside[the_ind] = Negative_Infinity;
+			for(int r=0+1;r<=s;r++){
+				outside[the_ind] = logsumexp(outside[the_ind],inside[get_index(length,r,s,E_LEFT,E_COM)]
+					+outside[get_index(length,r,t,E_LEFT,E_COM)]);
+			}
 			}
 		}
 	}
+	return outside;
 }
 
 double* encodeMarginals(const int length,const double* scores)
 {
 	double* marginals = new double[length*length];	//use get_index2
-	double *beta = new double[length * length * 2 * 2];
-	double *alpha = new double[length * length * 2 * 2];
-	double z = calc_inside(length, beta,scores);
-	calc_outside(length,beta,scores,alpha);
+	for(int i=0;i<length*length;i++)
+		marginals[i] = 0;
+	double* inside = calc_inside(length,scores);
+	double* outside = calc_outside(length,inside,scores);
+	double z = inside[get_index(length,0,length-1,E_RIGHT,E_COM)];
 
 	for(int i=0;i<length;i++){
 		for(int j=i+1;j<length;j++){
 			//i->j
-			int key_io = getKey(i, j, 0, 0, length);
+			int key_io = get_index(length,i,j,E_RIGHT,E_INCOM);
 			int key_assign = get_index2(length,i,j);
-			marginals[key_assign] = exp(beta[key_io]+alpha[key_io]-z);
+			marginals[key_assign] = exp(inside[key_io]+outside[key_io]-z);
 			//j->i
-			key_io = getKey(i, j, 1, 0, length);
+			if(i!=0){
+			key_io = get_index(length,i,j,E_LEFT,E_INCOM);
 			key_assign = get_index2(length,j,i);
-			marginals[key_assign] = exp(beta[key_io]+alpha[key_io]-z);
+			marginals[key_assign] = exp(inside[key_io]+outside[key_io]-z);
+			}
 		}
 	}
-	delete []beta;
-	delete []alpha;
+	delete []inside;
+	delete []outside;
 	return marginals;
 }
