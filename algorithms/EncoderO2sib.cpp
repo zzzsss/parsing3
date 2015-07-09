@@ -255,7 +255,7 @@ static void calc_outside(const int length,const double *beta,const double *probs
 //direction: 0,st(right);1,ts(left)
 //spans: 0,incomplete;1,complete;2,sibling
 
-double* encodeMarginals(const int length,const double* scores)
+double* encodeMarginals_o2sib(const int length,const double* scores)
 {
 	double* marginals = new double[length*length*length];	//use get_index2
 	double *beta = new double[length * length * 2 * 3];
@@ -269,7 +269,7 @@ double* encodeMarginals(const int length,const double* scores)
 			//sst
 			int key_assign = get_index2_o2sib(length,s,s,t);
 			marginals[key_assign] = exp(beta[getKey(s+1,t,1,1,length)]+alpha[getKey(s,t,0,0,length)]+scores[key_assign]-z);
-			for(int r=i+1;r<j;r++){
+			for(int r=s+1;r<t;r++){
 				//srt
 				key_assign = get_index2_o2sib(length,s,r,t);
 				marginals[key_assign] = exp(beta[getKey(s,r,0,0,length)]+beta[getKey(r,t,0,2,length)]
@@ -278,7 +278,7 @@ double* encodeMarginals(const int length,const double* scores)
 			//tts
 			key_assign = get_index2_o2sib(length,t,t,s);
 			marginals[key_assign] = exp(beta[getKey(s,t-1,0,1,length)]+alpha[getKey(s,t,1,0,length)]+scores[key_assign]-z);
-			for(int r=i+1;r<j;r++){
+			for(int r=s+1;r<t;r++){
 				//trs
 				key_assign = get_index2_o2sib(length,t,r,s);
 				marginals[key_assign] = exp(beta[getKey(r,t,1,0,length)]+beta[getKey(s,r,0,2,length)]

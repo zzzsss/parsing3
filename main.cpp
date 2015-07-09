@@ -16,6 +16,7 @@
 #include "parts/Parameters.h"
 #include "nn/CslmInterface.h"
 #include "process_prob/MP1_o1.h"
+#include "process_prob/MP2_o2sib.h"
 
 /* <Version 1.6>
  * 		-- usage:	(mode 3 and 4 are for debugging)
@@ -65,6 +66,9 @@ int main(int argc,char **argv)
 		break;
 	case -1:
 		x = new MP1_o1(conf);
+		break;
+	case -2:
+		x = new MP2_o2sib(conf);
 		break;
 	default:
 		x = 0;

@@ -92,6 +92,7 @@ int CONF_MP_training_rearrange;	//whether re-arrange training samples to exclude
 //int CONF_MP_o1training_0m;	//for mp1, allow 0 as m when training	---<DISCARDED>
 int CONF_MP_marginal_score;		//use marginal prob as scores
 double CONF_MP_scale_reg;		//l2-reg directly for scores, just trying
+string CONF_MP_o1mach;	//for score combining
 
 //init
 parsing_conf(string conf_file)
@@ -240,6 +241,7 @@ parsing_conf(string conf_file)
 		else if(buf=="mp_gsmall_re") fin >> CONF_MP_training_rearrange;
 		else if(buf=="mp_ms")	fin >> CONF_MP_marginal_score;
 		else if(buf=="mp_reg")	fin >> CONF_MP_scale_reg;
+		else if(buf=="mp_o1mach") fin >> CONF_MP_o1mach;
 		else
 			cout << "Unknown conf " << buf << endl;
 	}
