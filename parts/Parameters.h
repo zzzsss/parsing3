@@ -11,9 +11,33 @@
 #include "../cslm/Tools.h"
 #include <fstream>
 #include <cstdio>
+#include <sstream>
 
 #define DOUBLE_LARGENEG -10000000.0		//maybe it is enough
 #define INIT_EM_MAX_SIZE 2000000	//maybe enough
+
+static void get_oneline_list(istream& fin,double** l,int n){
+	string line;
+	int assigned = 0;
+	int multi = 1;
+	std::getline(fin,line);
+	*l = new double[n];
+	stringstream ss(line);
+	while(1){
+		double k = 0;
+		ss >> k;
+		if(!ss || assigned>=n) break;
+		if((int)k > 0)	//special
+			multi = k;
+		else{
+			for(int i=0;i<multi && assigned<n;i++)
+				(*l)[assigned++] = k;
+			multi = 1;
+		}
+	}
+	for(int i=assigned;i<n;i++)
+		(*l)[i] = (*l)[assigned-1];	//will fault if -1
+}
 
 class  parsing_conf{
 public:
@@ -94,6 +118,10 @@ int CONF_MP_marginal_score;		//use marginal prob as scores
 double CONF_MP_scale_reg;		//l2-reg directly for scores, just trying
 string CONF_MP_o1mach;	//for score combining
 
+//1.7.5 -- changes
+double *CONF_NN_resample_list;
+double *CONF_NN_highO_o1filter_cut_list;
+
 //init
 parsing_conf(string conf_file)
 {
@@ -147,6 +175,10 @@ parsing_conf(string conf_file)
 	CONF_MP_training_rearrange = 0;
 	CONF_MP_marginal_score = 0;
 	CONF_MP_scale_reg = 0;
+	//changes
+	CONF_NN_resample_list = 0;
+	CONF_NN_highO_o1filter_cut_list = 0;
+
 	//read in conf-file
 #define DATA_LINE_LEN 10000
 	ifstream fin(conf_file.c_str());
@@ -242,6 +274,15 @@ parsing_conf(string conf_file)
 		else if(buf=="mp_ms")	fin >> CONF_MP_marginal_score;
 		else if(buf=="mp_reg")	fin >> CONF_MP_scale_reg;
 		else if(buf=="mp_o1mach") fin >> CONF_MP_o1mach;
+		//1.7.5
+		else if(buf=="nn_resample_l"){
+			get_oneline_list(fin,&CONF_NN_resample_list,CONF_NN_ITER);
+			CONF_NN_resample = CONF_NN_resample_list[0];
+		}
+		else if(buf=="nn_filter_l"){
+			get_oneline_list(fin,&CONF_NN_highO_o1filter_cut_list,CONF_NN_ITER);
+			CONF_NN_highO_o1filter_cut = CONF_NN_highO_o1filter_cut_list[0];
+		}
 		else
 			cout << "Unknown conf " << buf << endl;
 	}

@@ -131,6 +131,12 @@ int Process::set_lrate_one_iter()
 			}
 		}
 	}
+	if(parameters->CONF_NN_resample_list){
+		parameters->CONF_NN_resample = parameters->CONF_NN_resample_list[cur_iter+1];	//next
+	}
+	if(parameters->CONF_NN_highO_o1filter_cut_list){
+		parameters->CONF_NN_highO_o1filter_cut = parameters->CONF_NN_highO_o1filter_cut_list[cur_iter+1];	//next
+	}
 	return 1;
 }
 

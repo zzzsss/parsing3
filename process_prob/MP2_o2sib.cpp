@@ -21,27 +21,37 @@ void MP2_o2sib::nn_train_one_iter()
 			<< "with lrate " << cur_lrate << endl;
 	cout << "#Sentences is " << sentences << " and resample (about)" << sentences*parameters->CONF_NN_resample << endl;
 
-	static bool** all_noprob_o1 = 0;
+	static double** all_scores_o1 = 0;
 	//---always perform filtering
 	//sweep all once and count
-	if(all_noprob_o1==0){
+	if(all_scores_o1==0){
 	FeatureGenO1* feat_temp_o1 = new FeatureGenO1(dict,parameters->CONF_x_window,
 					parameters->CONF_add_distance,parameters->CONF_add_pos,parameters->CONF_add_direction);
-	all_noprob_o1 = new bool*[sentences];
+	all_scores_o1 = new double*[sentences];
+	for(int i=0;i<sentences;i++){
+		DependencyInstance* x = training_corpus->at(i);
+		all_scores_o1[i] = get_scores_o1(x,parameters,mach_o1_filter,feat_temp_o1);
+	}
+	delete feat_temp_o1;
+	}
+
+	//decide the filtering
+	bool** all_noprob_o1 = new bool*[sentences];
 	int all_tokens_train=0,all_token_filter_wrong=0;
 	for(int i=0;i<sentences;i++){
 			DependencyInstance* x = training_corpus->at(i);
 			int len = x->length();
-			double* scores_o1_filter = get_scores_o1(x,parameters,mach_o1_filter,feat_temp_o1);
+			double* scores_o1_filter = all_scores_o1[i];
 			all_tokens_train += len;
 			all_noprob_o1[i] = get_noprob_o1(len,scores_o1_filter);
 			for(int m=1;m<len;m++){
 				if(all_noprob_o1[i][get_index2(len,x->heads->at(m),m)])
 					all_token_filter_wrong ++;
 			}
-			delete []scores_o1_filter;
 	}
-	cout << "For o1 filter: all " << all_tokens_train << ";filter wrong " << all_token_filter_wrong << endl;
+	{
+	cout << "For o1 filter at cut of " << parameters->CONF_NN_highO_o1filter_cut
+			<< ": all " << all_tokens_train << ";filter wrong " << all_token_filter_wrong << endl;
 	time_t now;
 	time(&now);cout << "#Finish o1-filter at " << ctime(&now) << endl;
 	}
