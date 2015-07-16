@@ -116,7 +116,8 @@ int CONF_MP_training_rearrange;	//whether re-arrange training samples to exclude
 //int CONF_MP_o1training_0m;	//for mp1, allow 0 as m when training	---<DISCARDED>
 int CONF_MP_marginal_score;		//use marginal prob as scores
 double CONF_MP_scale_reg;		//l2-reg directly for scores, just trying
-string CONF_MP_o1mach;	//for score combining
+string CONF_MP_o1mach;		//for score combining
+string CONF_MP_o2sibmach;	//for o2sib score combining, here not use options
 
 //1.7.5 -- changes
 double *CONF_NN_resample_list;
@@ -274,6 +275,7 @@ parsing_conf(string conf_file)
 		else if(buf=="mp_ms")	fin >> CONF_MP_marginal_score;
 		else if(buf=="mp_reg")	fin >> CONF_MP_scale_reg;
 		else if(buf=="mp_o1mach") fin >> CONF_MP_o1mach;
+		else if(buf=="mp_o2sibmach") fin >> CONF_MP_o2sibmach;
 		//1.7.5
 		else if(buf=="nn_resample_l"){
 			get_oneline_list(fin,&CONF_NN_resample_list,CONF_NN_ITER);

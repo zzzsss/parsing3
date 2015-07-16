@@ -17,6 +17,7 @@
 #include "nn/CslmInterface.h"
 #include "process_prob/MP1_o1.h"
 #include "process_prob/MP2_o2sib.h"
+#include "process_prob/MP3_o3g.h"
 
 /* <Version 1.6>
  * 		-- usage:	(mode 3 and 4 are for debugging)
@@ -69,6 +70,9 @@ int main(int argc,char **argv)
 		break;
 	case -2:
 		x = new MP2_o2sib(conf);
+		break;
+	case -3:
+		x = new MP3_o3g(conf);
 		break;
 	default:
 		x = 0;

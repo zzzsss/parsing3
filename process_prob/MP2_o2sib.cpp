@@ -306,6 +306,10 @@ void MP2_o2sib::nn_train_one_iter()
 	}
 	cout << "Iter done, skip " << sentences_skip << " sentences and f&b " << all_forward
 			<< ",zero-back " << zero_backward << endl;
+
+	for(int i=0;i<sentences;i++)
+		delete [](all_noprob_o1[i]);
+	delete []all_noprob_o1;
 }
 
 vector<int>* MP2_o2sib::each_test_one(DependencyInstance* x)
