@@ -88,10 +88,7 @@ void MP3_o3g::nn_train_one_iter()
 		REAL* assign_g = gradient;
 		int real_num_forw = 0;
 		int idim = mach->GetIdim();
-		for(int i=0;i<sentences;i++){
-			DependencyInstance* x = training_corpus->at(i);
-			bool* o1_noprob = all_noprob_o1[i];
-			int length = x->length();
+		//loop------------------
 			for(int m=1;m<length;m++){
 				//2.1 special (0,0,c,m)	when h==0
 				int noprob_0m = o1_noprob[get_index2(length,0,m)];
@@ -170,7 +167,6 @@ void MP3_o3g::nn_train_one_iter()
 					}
 				}
 			}
-		}
 		//3.forward
 		all_forward += real_num_forw;
 		REAL* mach_y = mach->mach_forward(data,real_num_forw);
@@ -180,10 +176,7 @@ void MP3_o3g::nn_train_one_iter()
 		double* tmp_scores = new double[length*length*length*length];
 		for(int ii=0;ii<length*length*length*length;ii++)
 			tmp_scores[ii] = DOUBLE_LARGENEG;
-		for(int i=0;i<sentences;i++){
-			DependencyInstance* x = training_corpus->at(i);
-			bool* o1_noprob = all_noprob_o1[i];
-			int length = x->length();
+		//loop------------------
 			for(int m=1;m<length;m++){
 				//2.1 special (0,0,c,m)	when h==0
 				int noprob_0m = o1_noprob[get_index2(length,0,m)];
@@ -278,7 +271,6 @@ void MP3_o3g::nn_train_one_iter()
 					}
 				}
 			}
-		}
 		//5.gradients
 		double* tmp_marginals = encodeMarginals_o3g(length,tmp_scores);
 		assign_g = gradient;
@@ -286,10 +278,7 @@ void MP3_o3g::nn_train_one_iter()
 		REAL* assign_redata = rearrange_data;
 		REAL* aasign_regrad = rearrange_gradient;
 		int num_rearrange = 0;
-		for(int i=0;i<sentences;i++){
-			DependencyInstance* x = training_corpus->at(i);
-			bool* o1_noprob = all_noprob_o1[i];
-			int length = x->length();
+		//loop------------------
 			for(int m=1;m<length;m++){
 				//2.1 special (0,0,c,m)	when h==0
 				int noprob_0m = o1_noprob[get_index2(length,0,m)];
@@ -472,7 +461,6 @@ void MP3_o3g::nn_train_one_iter()
 					}
 				}
 			}
-		}
 
 		//6.back backward (also need forward if bs is small)
 		if(parameters->CONF_MP_training_rearrange)
