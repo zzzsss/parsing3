@@ -139,7 +139,7 @@ void MP3_o3g::nn_train_one_iter()
 					}}
 					//for g and c
 					for(int g=0;g<length;g++){
-						if(g==h || g==m || g==c)
+						if(g<=large && g>=small)
 							continue;
 						bool link_gh = (x->heads->at(h)==g);
 						int noprob_gh = o1_noprob[get_index2(length,g,h)];
@@ -235,7 +235,7 @@ void MP3_o3g::nn_train_one_iter()
 					}}
 					//for g and c
 					for(int g=0;g<length;g++){
-						if(g==h || g==m || g==c)
+						if(g<=large && g>=small)
 							continue;
 						bool link_gh = (x->heads->at(h)==g);
 						int noprob_gh = o1_noprob[get_index2(length,g,h)];
@@ -381,7 +381,7 @@ void MP3_o3g::nn_train_one_iter()
 					}}
 					//for g and c
 					for(int g=0;g<length;g++){
-						if(g==h || g==m || g==c)
+						if(g<=large && g>=small)
 							continue;
 						bool link_gh = (x->heads->at(h)==g);
 						int noprob_gh = o1_noprob[get_index2(length,g,h)];
