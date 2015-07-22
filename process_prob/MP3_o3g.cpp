@@ -16,6 +16,7 @@ void MP3_o3g::nn_train_one_iter()
 {
 	int sentences = training_corpus->size();
 	int sentences_skip = 0;
+	int sentences_skip_long = 0;
 	int all_forward = 0;
 	int zero_backward = 0;
 	time_t now;
@@ -60,15 +61,20 @@ void MP3_o3g::nn_train_one_iter()
 	}
 
 	for(int i=0;i<sentences;i++){
+		DependencyInstance* x = training_corpus->at(i);
+		long length = x->length();
+
 		if(double(rand())/RAND_MAX > parameters->CONF_NN_resample){
 			sentences_skip++;
 			continue;
 		}
+		else if(length >= parameters->CONF_MP_o3g_toolong){
+			sentences_skip_long++;
+			continue;
+		}
 		//1.allocate(maybe)
-		DependencyInstance* x = training_corpus->at(i);
-		int length = x->length();
 		bool* o1_noprob = all_noprob_o1[i];
-		int to_alloc = length*length*length*length;	//3nd order
+		long to_alloc = length*length*length*length;	//3nd order
 		if(alloc_sample_size < to_alloc){
 			//allocate spaces
 			delete []data;
@@ -474,6 +480,7 @@ void MP3_o3g::nn_train_one_iter()
 
 	cout << "Iter done, skip " << sentences_skip << " sentences and f&b " << all_forward
 			<< ",zero-back " << zero_backward << endl;
+	cout << "Also skip long sentences " << sentences_skip_long << endl;
 
 	for(int i=0;i<sentences;i++)
 		delete [](all_noprob_o1[i]);

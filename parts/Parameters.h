@@ -118,6 +118,7 @@ int CONF_MP_marginal_score;		//use marginal prob as scores
 double CONF_MP_scale_reg;		//l2-reg directly for scores, just trying
 string CONF_MP_o1mach;		//for score combining
 string CONF_MP_o2sibmach;	//for o2sib score combining, here not use options
+int CONF_MP_o3g_toolong;
 
 //1.7.5 -- changes
 double *CONF_NN_resample_list;
@@ -176,6 +177,7 @@ parsing_conf(string conf_file)
 	CONF_MP_training_rearrange = 0;
 	CONF_MP_marginal_score = 0;
 	CONF_MP_scale_reg = 0;
+	CONF_MP_o3g_toolong = 1000;
 	//changes
 	CONF_NN_resample_list = 0;
 	CONF_NN_highO_o1filter_cut_list = 0;
@@ -276,6 +278,7 @@ parsing_conf(string conf_file)
 		else if(buf=="mp_reg")	fin >> CONF_MP_scale_reg;
 		else if(buf=="mp_o1mach") fin >> CONF_MP_o1mach;
 		else if(buf=="mp_o2sibmach") fin >> CONF_MP_o2sibmach;
+		else if(buf=="mp_o3g_long") fin >> CONF_MP_o3g_toolong;
 		//1.7.5
 		else if(buf=="nn_resample_l"){
 			get_oneline_list(fin,&CONF_NN_resample_list,CONF_NN_ITER);
