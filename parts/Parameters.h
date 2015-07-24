@@ -145,7 +145,8 @@ parsing_conf(string conf_file)
 	CONF_NN_ITER_decrease=1;		//cut times
 	CONF_NN_ITER_force_half=100;
 	CONF_NN_LMULT=-0.5;	//when >=0:as mult ; -1~0: schedule rate
-	CONF_NN_WD=3e-5;
+	//CONF_NN_WD=3e-5;
+	CONF_NN_WD=-1e-4;
 	CONF_NN_we=50;						//word-embedding size
 	CONF_NN_plus_layers=2;				//plus number of layers(plus from base)
 	CONF_NN_resample=1.0;				//re-sample rate
@@ -155,7 +156,8 @@ parsing_conf(string conf_file)
 	CONF_NN_highO_embed_init = 0;
 	CONF_NN_highO_score_combine = 1;
 	CONF_NN_highO_o1filter = 1;
-	CONF_NN_highO_o1filter_cut = 0.001;	//filter out when < this
+	//CONF_NN_highO_o1filter_cut = 0.001;	//filter out when < this
+	CONF_NN_highO_o1filter_cut = 1e-6;
 	CONF_NN_ISCALE=0.1;
 	CONF_x_window=7;	//word and pos window size
 	CONF_add_distance=1;	//whether add distance --- and for different ways
@@ -173,8 +175,9 @@ parsing_conf(string conf_file)
 	//pre-calc
 	CONF_NN_PRECALC = 0;
 	//MP
-	CONF_MP_gradient_small = 1e-8;
-	CONF_MP_training_rearrange = 0;
+	//CONF_MP_gradient_small = 1e-8;
+	CONF_MP_gradient_small = 0;
+	CONF_MP_training_rearrange = 1;
 	CONF_MP_marginal_score = 0;
 	CONF_MP_scale_reg = 0;
 	CONF_MP_o3g_toolong = 1000;
