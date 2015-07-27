@@ -27,7 +27,7 @@ double* Process::get_scores_o3g(DependencyInstance* x,parsing_conf* zp,NNInterfa
 	double *tmp_scores = new double[num_allocated];
 	for(long i=0;i<length*length*length*length;i++)
 		tmp_scores[i] = DOUBLE_LARGENEG;
-	REAL *mach_x = new REAL[num_allocated*idim];	//num_allocated is more than needed
+	REAL *mach_x = new REAL[num_allocated*((long)idim)/6];	//num_allocated is more than needed --- maybe guaranteed to be less than 1/6
 	REAL* assign_x = mach_x;
 
 #define TMP_FILL_ONE(h,m,c,g){zf->fill_one(assign_x,x,h,m,c,g); assign_x += idim; num_togo += 1;}
