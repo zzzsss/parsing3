@@ -27,6 +27,14 @@ double* Process::get_scores_o3g(DependencyInstance* x,parsing_conf* zp,NNInterfa
 	double *tmp_scores = new double[num_allocated];
 	for(long i=0;i<length*length*length*length;i++)
 		tmp_scores[i] = DOUBLE_LARGENEG;
+
+	//just back to o2, no o3 scores
+	if(x->length() >= 100){	//hard coded
+		for(long i=0;i<length*length*length*length;i++)
+			tmp_scores[i] = 0;
+		return tmp_scores;		
+	}
+
 	REAL *mach_x = new REAL[num_allocated*((long)idim)/6];	//num_allocated is more than needed --- maybe guaranteed to be less than 1/6
 	REAL* assign_x = mach_x;
 
