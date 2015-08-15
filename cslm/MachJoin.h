@@ -18,35 +18,45 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  *
  *
+ *
+ *  Join machine:
+ *   - combines several machines into one layer
+ *   - the output dimensions must be identical, the input dimensions may differ
  */
 
-#ifndef _MachSeq_h
-#define _MachSeq_h
+#ifndef _MachJoin_h
+#define _MachJoin_h
 
 using namespace std;
 #include <vector>
 
 #include "MachMulti.h"
 
-class MachSeq : public MachMulti
+class MachJoin : public MachMulti
 {
 private:
-  Timer tbackw;
+#ifdef BLAS_CUDA
+  REAL* gpu_dev_data_out;	// local copy of output buffer
+  REAL* sub_input_tmp;			// Temporarily hold the input of a sub-machine before transfer to the right device
+#else
+  REAL* grad_out_copy;	// copy of output gradients, that is passed to the sub-machines' Backw()
+#endif
+  void do_alloc(bool);	// perform allocation of dynamic data structures
+  void do_delete();	// delete data structures
 protected:
-  virtual void ReadData(istream&, size_t, int=0); 	// read binary data
-  MachSeq(const MachSeq &);			// create a copy of the machine (without submachines)
+  virtual void ReadData(istream&, size_t, int=0); // read binary data
+  MachJoin(const MachJoin &);			// create a copy of the machine (without submachines)
 public:
-  MachSeq();	// create initial sequence with no machine
-  virtual ~MachSeq();
-  virtual MachSeq *Clone();			// create a copy of the machine and all submachines
-  virtual int GetMType() {return file_header_mtype_mseq;};	// get type of machine
+  MachJoin();	// create initial sequence with no machine
+  virtual ~MachJoin();
+  virtual MachJoin *Clone();			// create a copy of the machine and all submachines
+  virtual int GetMType() {return file_header_mtype_mjoin;};	// get type of machine
     // redfine connecting functions
   virtual void SetDataIn(REAL*);	// set pointer of input data
   virtual void SetGradOut(REAL*);	// set pointer of output gradient 
     // add and remove machines
   virtual void MachAdd(Mach*); // add new machine after the existing ones
   virtual Mach *MachDel();
-  virtual void MachInsert(Mach*,size_t); // insert a new machine at a specified position
     // standard functions
   virtual void Info(bool=false, char *txt=(char*)"");	// display (detailed) information on machine
   virtual void Forw(int=0, bool=false);	// calculate outputs for current inputs

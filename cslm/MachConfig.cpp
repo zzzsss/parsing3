@@ -2,7 +2,7 @@
  * This file is part of the continuous space language and translation model toolkit
  * for statistical machine translation and large vocabulary speech recognition.
  *
- * Copyright 2014, Holger Schwenk, LIUM, University of Le Mans, France
+ * Copyright 2015, Holger Schwenk, LIUM, University of Le Mans, France
  *
  * The CSLM toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version 3 as
@@ -17,26 +17,35 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  *
- * $Id: MachConfig.cpp,v 1.12 2014/03/25 21:52:53 schwenk Exp $
+ *
  */
 
 #include <boost/program_options/errors.hpp>
 #include <boost/program_options/parsers.hpp>
 #include <cstring>
 #include <strings.h>
+#include "Mach.h"
+#include "MachAvr.h"
 #include "MachConfig.h"
+#include "MachJoin.h"
 #include "MachLinRectif.h"
+//#include "MachMax.h"	// experimental
 #include "MachPar.h"
 #include "MachSeq.h"
 #include "MachSig.h"
 #include "MachSoftmax.h"
 #include "MachSoftmaxStable.h"
+#include "MachSoftmaxClass.h"
 #include "MachSplit.h"
 #include "MachSplit1.h"
 //#include "MachStab.h"
 //#include "MachStacked.h"
 //#include "MachTabSh.h"
 #include "MachTanh.h"
+#include "Tools.h"
+#include "MachCopy.h"
+
+
 namespace bpo = boost::program_options;
 
 /**
@@ -49,6 +58,7 @@ MachConfig::MachConfig (bool bNeedConfFile, REAL rInitBias) :
       bHelpRequest(false),
       bNeedConfFile(bNeedConfFile),
       bReadMachOnly(false),
+      iRepeat(1),
       rInitBias(rInitBias),
       eErrorCode(MachConfig::NoError),
       odCommandLine("Command line options"),
@@ -70,6 +80,7 @@ MachConfig::MachConfig (bool bNeedConfFile, REAL rInitBias) :
           ("tgt-word-list,w"      , opt_sem<std::string>::new_sem(), "word list of the vocabulary and counts (used to select the most frequent words)")
           ("word-list,w"          , opt_sem<std::string>::new_sem(), "word list of the vocabulary and counts (used to select the most frequent words)")
           ("input-file,i"         , opt_sem<std::string>::new_sem(), "file name of the input n-best list")
+          ("aux-file,a"           , opt_sem<std::string>::new_sem(), "file name of the auxiliary data")
           ("output-file,o"        , opt_sem<std::string>::new_sem(), "file name of the output n-best list")
           ("source-file,S"        , opt_sem<std::string>::new_sem(), "file name of the file with source sentences (needed for TM rescoring)")
           ("phrase-table"         , opt_sem<std::string>::new_sem(), "rescore with a Moses on-disk phrase table")
@@ -86,9 +97,12 @@ MachConfig::MachConfig (bool bNeedConfFile, REAL rInitBias) :
           ("vocab-target,B"       , opt_sem<std::string>::new_sem(), "target word-list to be used with the CSTM")
           ("weights,w"            , opt_sem<std::string>::new_sem(), "coefficients of the feature functions")
           ("tm-scores,N"          , opt_sem<std::string>::new_sem()->default_value("4:0"), "specification of the TM scores to be used (default first 4)")
+          ("MachSeed,Mseed"       , opt_sem<int> ::new_sem()->default_value(0),"Machine seed for random weights init (default: do not set the seed)")
+	  ("lrate,L"              , opt_sem<std::string>::new_sem()->default_value("Decay beg=5e-3 mult=7e-8 stop=0"), "learning rate applied: type (Decay AdaGrad Divide DivideAndRecover), initial value, multiplier and learning stop value")
           ("inn,I"                , opt_sem<int> ::new_sem(                     )->default_value(    0  ), "number of hypothesis to read per n-best (default all)")
           ("outn,O"               , opt_sem<int> ::new_sem(                     )->default_value(    0  ), "number of hypothesis to write per n-best (default all)")
           ("offs,a"               , opt_sem<int> ::new_sem(                     )->default_value(    0  ), "add offset to n-best ID (useful for separately generated n-bests)")
+          ("aux-dim,n"            , opt_sem<int> ::new_sem(                     )->default_value(    0  ), "dimension of auxiliary data")
           ("num-scores,n"         , opt_sem<int> ::new_sem(                     )->default_value(    5  ), "number of scores in phrase table")
           ("ctxt-in,c"            , opt_sem<int> ::new_sem(                     )->default_value(    7  ), "input context size")
           ("ctxt-out,C"           , opt_sem<int> ::new_sem(                     )->default_value(    7  ), "output context size")
@@ -98,22 +112,28 @@ MachConfig::MachConfig (bool bNeedConfFile, REAL rInitBias) :
           ("mode,M"               , opt_sem<int> ::new_sem(                     )->default_value(    3  ), "mode of the data (1=IGN_BOS 2=IGN_UNK 4=IGN_UNK_ALL, 8=IGN_EOS)")
           ("lm-pos,p"             , opt_sem<int> ::new_sem(                     )->default_value(    0  ), "position of LM score (1..n, 0 means to append it)")
           ("tm-pos,P"             , opt_sem<int> ::new_sem(                     )->default_value(    0  ), "position of the TM scores, up to 4 values")
+          ("target-pos,T"         , opt_sem<int> ::new_sem(                     )->default_value(   -1  ), "position of the predicted word in the n-gram, default: last one")
           ("buf-size,b"           , opt_sem<int> ::new_sem(                     )->default_value(16384  ), "buffer size")
           ("block-size,B"         , opt_sem<int> ::new_sem(&this->iBlockSize    )->default_value(  128  ), "block size for faster training")
-          ("drop-out,O"           , opt_sem<REAL>::new_sem(&this->rPercDropOut  )->default_value(   -1.0), "percentage of neurons to be used for drop-out [0-1] (set by default to -1 to turn it off)")
+          ("drop-out,O"           , opt_sem<REAL>::new_sem(&this->rPercDropOut  )->default_value(    0.0), "percentage of neurons to be used for drop-out [0-1] (set by default to 0 to turn it off)")
           ("random-init-project,r", opt_sem<REAL>::new_sem(&this->rInitProjLayer)->default_value(    0.1), "value for random initialization of the projection layer")
           ("random-init-weights,R", opt_sem<REAL>::new_sem(&this->rInitWeights  )->default_value(    0.1), "value for random initialization of the weights")
-          ("lrate-beg,L"          , opt_sem<REAL>::new_sem(                     )->default_value(  5E-03), "initial learning rate")
-          ("lrate-mult,M"         , opt_sem<REAL>::new_sem(                     )->default_value(  7E-08), "learning rate multiplier for exponential decrease")
-          ("weight-decay,W"       , opt_sem<REAL>::new_sem(                     )->default_value(  3E-05), "coefficient of weight decay")
+          ("clip-weights,w"       , opt_sem<REAL>::new_sem(&this->rClipWeights  )->default_value(    0  ), "value for clipping weights (no clipping by default)")
+          ("clip-gradients-weights,g",opt_sem<REAL>::new_sem(&this->rClipGradWeights)->default_value(0  ), "value for clipping gradients on weights (no clipping by default)")
+          ("clip-gradients-bias,G", opt_sem<REAL>::new_sem(&this->rClipGradBias )->default_value(    0  ), "value for clipping gradients on biases (no clipping by default)")
+          ("weight-decay,W"       , opt_sem<REAL>::new_sem(                     )->default_value(  0.01), "coefficient of weight decay")
           ("backward-tm,V"        , opt_sem<bool>::new_sem()->zero_tokens(), "use an inverse back-ward translation model")
           ("renormal,R"           , opt_sem<bool>::new_sem()->zero_tokens(), "renormalize all probabilities, slow for large short-lists")
           ("recalc,r"             , opt_sem<bool>::new_sem()->zero_tokens(), "recalculate global scores")
           ("sort,s"               , opt_sem<bool>::new_sem()->zero_tokens(), "sort n-best list according to the global scores")
           ("lexical,h"            , opt_sem<bool>::new_sem()->zero_tokens(), "report number of lexically different hypothesis")
           ("server,X"             , opt_sem<bool>::new_sem()->zero_tokens(), "run in server mode listening to a named pipe to get weights for new solution extraction")
+          ("unstable-sort,U"      , opt_sem<bool>::new_sem()->zero_tokens(), "use unstable sort (compatility mode with older version of the CSLM toolkit)")
+          ("use-word-class,u"     , opt_sem<bool>::new_sem()->zero_tokens(), "use word class to structure the output layer")
+          ("dump-activities,A"    , opt_sem<std::vector<std::string> >::new_sem(), "specify layer and filename to dump the activity for each n-gram (eg \"3:layer3.txt\")")
 #ifdef BLAS_CUDA
-          ("cuda-device,D"        , opt_sem<std::vector<int> >::new_sem()->default_value(std::vector<int>(1,0),"0"), "select CUDA device")
+          ("cuda-device,D"        , opt_sem<std::vector<std::string> >::new_sem(), "select CUDA device (eg \"0:2\" for devices 0 and 2)")
+          ("cuda-dev-num,N"       , opt_sem<int>::new_sem()->default_value(1),  "number of CUDA devices to be used")
 #endif
           ;
 
@@ -130,15 +150,27 @@ MachConfig::MachConfig (bool bNeedConfFile, REAL rInitBias) :
           ("machine.Tanh"         , bpo::value<std::vector<std::string> >())
           ("machine.Softmax"      , bpo::value<std::vector<std::string> >())
           ("machine.SoftmaxStable", bpo::value<std::vector<std::string> >())
+          ("machine.SoftmaxClass" , bpo::value<std::vector<std::string> >())
           ("machine.Multi"        , bpo::value<std::vector<std::string> >())
           ("machine.Sequential"   , bpo::value<std::vector<std::string> >())
           ("machine.Parallel"     , bpo::value<std::vector<std::string> >())
           ("machine.Split"        , bpo::value<std::vector<std::string> >())
           ("machine.Split1"       , bpo::value<std::vector<std::string> >())
           ("machine.Join"         , bpo::value<std::vector<std::string> >())
+          ("machine.Combined"     , bpo::value<std::vector<std::string> >())
+          ("machine.Avr"          , bpo::value<std::vector<std::string> >())
+          ("machine.Copy"         , bpo::value<std::vector<std::string> >())
           ;
   this->odGeneralConfig.add(this->odMachineTypes);
 
+
+  /* set dimension constant names */
+
+  char sDimVar[10];
+  for (char c = 1 ; 20 >= c ; c++) {
+    sprintf(sDimVar, "DIM%d", c);
+    this->odGeneralConfig.add_options()(sDimVar, bpo::value<int>());
+  }
 
   /* set machine specific options */
 
@@ -148,15 +180,24 @@ MachConfig::MachConfig (bool bNeedConfFile, REAL rInitBias) :
           ("output-dim"           , bpo::value<int> ()->required(), "output dimension")
           ("nb-forward"           , bpo::value<int> ()->default_value(0), "forward number")
           ("nb-backward"          , bpo::value<int> ()->default_value(0), "backward number")
+          ("update"               , bpo::value<bool>(), "update parameters during backward (default true)")
+          ("lrate-coeff"          , bpo::value<REAL>(), "layer specific coefficient of the learning rate (default 1.0)")
           ;
 
   // machine options for all machine types (including multiple machines)
   this->odMachMultiConf.add_options()
-          ("drop-out"             , bpo::value<REAL>(), "percentage of neurons to be used for drop-out [0-1], set to -1 to turn it off")
+          ("drop-out"             , bpo::value<REAL>(), "percentage of neurons to be used for drop-out [0-1], set to 0 to turn it off")
           ("block-size"           , bpo::value<int> (), "block size for faster training")
           ("init-from-file"       , bpo::value<std::string>(), "name of file containing all machine data")
+          ("name"                 , bpo::value<std::string>(), "name of machine (used internally)")
+          ("clone"                , bpo::value<std::string>(), "replace current machine by a copy of previous machine with given name (sharing the parameters)")
           ;
   this->odMachineConf.add(this->odMachMultiConf);
+  
+  // machine options for multiple machine types ONLY 
+  this->odMachMultiConf.add_options()
+          ("repeat"             , bpo::value<int>()->default_value(1), "repeat the inner machines N times")
+          ;
 
   // machine options for linear machines (base class MachLin)
   this->odMachLinConf.add_options()
@@ -167,6 +208,10 @@ MachConfig::MachConfig (bool bNeedConfFile, REAL rInitBias) :
           ("random-init-weights"  , bpo::value<REAL>(), "value for random initialization of the weights (method used by default with general value)")
           ("const-init-bias"      , bpo::value<REAL>(), "constant value for initialization of the bias")
           ("random-init-bias"     , bpo::value<REAL>(), "value for random initialization of the bias (method used by default with general value)")
+          ("clip-weights"         , bpo::value<REAL>(), "value for clipping weights (used by default with general value)")
+          ("clip-gradients-weights",bpo::value<REAL>(), "value for clipping gradients on weights (used by default with general value)")
+          ("clip-gradients-bias"  , bpo::value<REAL>(), "value for clipping gradients on biases (used by default with general value)")
+          ("share-id"          	  , bpo::value<int> ()->default_value(-1), "All machines sharing the same share-id will share their weights (default is all machines share their weights)")
           ;
   this->odMachLinConf.add(this->odMachineConf);
 
@@ -174,8 +219,11 @@ MachConfig::MachConfig (bool bNeedConfFile, REAL rInitBias) :
   this->odMachTabConf.add_options()
           ("const-init-project"   , bpo::value<REAL>(), "constant value for initialization of the projection layer")
           ("random-init-project"  , bpo::value<REAL>(), "value for random initialization of the projection layer (method used by default with general value)")
+          ("share-id"          	  , bpo::value<int> ()->default_value(-1), "All machines sharing the same share-id will share their weights (default is all machines share their weights)")
           ;
   this->odMachTabConf.add(this->odMachineConf);
+
+
 }
 
 /**
@@ -316,6 +364,8 @@ Mach *MachConfig::get_machine ()
     }
   } while (sRead != sMachGroup);
 
+  Mach::SetFileId(file_header_version); //Loic: needed to create old machines with new code
+
   // read machine structure
   this->bReadMachOnly = false;
   this->eErrorCode = MachConfig::NoError;
@@ -323,10 +373,10 @@ Mach *MachConfig::get_machine ()
   this->read_next_machine(pNextMach, this->iBlockSize);
   if ((this->eErrorCode != MachConfig::NoError) && (pNextMach != NULL)) {
     delete pNextMach;
-    return NULL;
+    pNextMach = NULL;
   }
-  else
-    return pNextMach;
+  this->mMachNameMap.clear();
+  return pNextMach;
 }
 
 /**
@@ -372,6 +422,9 @@ std::string MachConfig::get_error_string() const
     break;
   case MachConfig::UnknownMachType:
     sError = "unknown machine type \"";
+    break;
+  case MachConfig::UnknownMachName:
+    sError = "unknown machine name \"";
     break;
   case MachConfig::UnknownMachCode:
     sError = "unknown machine code ";
@@ -443,6 +496,30 @@ std::string MachConfig::get_mach () const
   }
 }
 
+#ifdef BLAS_CUDA
+/**
+ * get CUDA devices
+ * @returns list of indexes (eg ":0:2" for devices 0 and 2) or number of devices
+ */
+std::string MachConfig::get_cuda_devices () const
+{
+  std::string sCudaDev;
+  if (this->vmGeneralOptions.count("cuda-device") > 0) {
+    // concatenate all device selections (for backward compatibility)
+    std::vector<std::string> vsInput = this->vmGeneralOptions["cuda-device"].as<std::vector<std::string> >();
+    for (std::vector<std::string>::const_iterator vsci = vsInput.begin() ; vsci != vsInput.end() ; vsci++)
+      (sCudaDev += ':') += *vsci;
+  }
+  else {
+    // get number of devices
+    std::ostringstream oss;
+    oss << this->vmGeneralOptions["cuda-dev-num"].as<int>();
+    sCudaDev = oss.str();
+  }
+  return sCudaDev;
+}
+#endif
+
 /**
  * open configuration file
  * @return false in case of error, true otherwise
@@ -467,27 +544,44 @@ bool MachConfig::open_file ()
  * reads next machine block from configuration file
  * @param pNewMach set to new machine object pointer, or NULL if 'end' mark is read (and possibly in case of error)
  * @param iBlockSize block size for faster training
- * @param prLookUpTable look-up table for each MachTab in a MachPar (default NULL)
  * @return true if 'end' mark is read, false otherwise
  * @note error code is set if an error occurred
  */
-bool MachConfig::read_next_machine (Mach *&pNewMach, int iBlockSize, REAL *prLookUpTable)
+bool MachConfig::read_next_machine (Mach *&pNewMach, int iBlockSize)
 {
   // read machine type name
   std::string sMachType;
-  this->ossErrorInfo.str(sMachType);
-  this->ifsConf >> sMachType;
-  std::ios_base::iostate iost = this->ifsConf.rdstate();
-  if (iost) {
-    // error handling
-    if (iost & std::ios_base::eofbit)
-      this->eErrorCode = MachConfig::MachDescrIncomplete;
-    else
-      this->eErrorCode = MachConfig::ProbReadMachName;
-    this->ossErrorInfo << sMachType;
-    pNewMach = NULL;
-    return false;
-  }
+  const char *sMachType_cstr;
+  do {
+    this->ossErrorInfo.str(sMachType);
+    this->ifsConf >> sMachType;
+    std::ios_base::iostate iost = this->ifsConf.rdstate();
+    if (iost) {
+      // error handling
+      if (iost & std::ios_base::eofbit)
+        this->eErrorCode = MachConfig::MachDescrIncomplete;
+      else
+        this->eErrorCode = MachConfig::ProbReadMachName;
+      this->ossErrorInfo << sMachType;
+      pNewMach = NULL;
+      return false;
+    }
+    sMachType_cstr = sMachType.c_str();
+
+    // discard comments / read 'end' mark
+    if ('#' == sMachType_cstr[0]) {
+      if (strcasecmp(sMachType_cstr, "#End") == 0) {
+        pNewMach = NULL;
+        return true;
+      }
+      else {
+        std::stringbuf sb;
+        this->ifsConf.get(sb);
+        this->ifsConf.clear();
+        sMachType_cstr = NULL;
+      }
+    }
+  } while (NULL == sMachType_cstr);
 
   // verify if name contains equal sign
   size_t stEqualPos = sMachType.find('=', 1);
@@ -503,12 +597,7 @@ bool MachConfig::read_next_machine (Mach *&pNewMach, int iBlockSize, REAL *prLoo
   bool bMachLin   = false;
   bool bMachMulti = false;
   bool bMachTab   = false;
-  const char *sMachType_cstr = sMachType.c_str();
-  if (strcasecmp(sMachType_cstr, "#End") == 0) {
-    pNewMach = NULL;
-    return true;
-  }
-  else if (strcasecmp(sMachType_cstr, "Mach") == 0) {
+  if (strcasecmp(sMachType_cstr, "Mach") == 0) {
     iMachType = file_header_mtype_base;
   }
   else if (strcasecmp(sMachType_cstr, "Tab") == 0) {
@@ -522,6 +611,9 @@ bool MachConfig::read_next_machine (Mach *&pNewMach, int iBlockSize, REAL *prLoo
   else if (strcasecmp(sMachType_cstr, "Linear") == 0) {
     iMachType = file_header_mtype_lin;
     bMachLin = true;
+  }
+  else if (strcasecmp(sMachType_cstr, "Copy") == 0) {
+    iMachType = file_header_mtype_copy;
   }
   else if (strcasecmp(sMachType_cstr, "Sig") == 0) {
     iMachType = file_header_mtype_sig;
@@ -539,6 +631,10 @@ bool MachConfig::read_next_machine (Mach *&pNewMach, int iBlockSize, REAL *prLoo
     iMachType = file_header_mtype_stab;
     bMachLin = true;
   }*/
+  else if (strcasecmp(sMachType_cstr, "SoftmaxClass") == 0) {
+    iMachType = file_header_mtype_softmax_class;
+    bMachLin = true;
+  }
   else if (strcasecmp(sMachType_cstr, "SoftmaxStable") == 0) {
     iMachType = file_header_mtype_softmax_stable;
     bMachLin = true;
@@ -559,6 +655,16 @@ bool MachConfig::read_next_machine (Mach *&pNewMach, int iBlockSize, REAL *prLoo
       iMachType = file_header_mtype_mpar;
     else if (strcasecmp(sMachType_cstr, "Split") == 0)
       iMachType = file_header_mtype_msplit;
+    else if (strcasecmp(sMachType_cstr, "Combined") == 0)
+      iMachType = file_header_mtype_combined;
+    /*else if (strcasecmp(sMachType_cstr, "Max") == 0)		// under development
+      iMachType = file_header_mtype_max;*/			// under development
+    else if (strcasecmp(sMachType_cstr, "Avr") == 0)
+      iMachType = file_header_mtype_avr;
+    /*else if (strcasecmp(sMachType_cstr, "Stacked") == 0)	// under development
+      iMachType = file_header_mtype_mstack; */			// under development
+    else if (strcasecmp(sMachType_cstr, "Join") == 0)
+      iMachType = file_header_mtype_mjoin;
     else {
       // error handling
       this->eErrorCode = MachConfig::UnknownMachType;
@@ -571,7 +677,7 @@ bool MachConfig::read_next_machine (Mach *&pNewMach, int iBlockSize, REAL *prLoo
   if (bMachMulti)
     pNewMach = this->read_multi_machine (iMachType, iBlockSize);
   else
-    pNewMach = this->read_simple_machine(iMachType, iBlockSize, prLookUpTable, bMachLin, bMachTab);
+    pNewMach = this->read_simple_machine(iMachType, iBlockSize, bMachLin, bMachTab);
   return false;
 }
 
@@ -586,7 +692,7 @@ Mach *MachConfig::read_multi_machine (int iMachType, int iBlockSize)
 {
   Mach *pNewMach = NULL;
   MachMulti *pMachMulti = NULL;
-  bool bInitFromFile = false;
+  bool bNoCloneOrInit = true;
 
   // read machine parameters
   bpo::variables_map vmMachParams;
@@ -596,24 +702,47 @@ Mach *MachConfig::read_multi_machine (int iMachType, int iBlockSize)
   // get current block size (get current machine block size if defined, or block size in parameter)
   const boost::program_options::variable_value &vvBS = vmMachParams["block-size"];
   int iCurBlockSize = (vvBS.empty() ? iBlockSize : vvBS.as<int>());
+  
+  // get current repeat content (get current repeat value if defined)
+  const boost::program_options::variable_value &vvRPT = vmMachParams["repeat"];
+  int iCurRepeat = (vvRPT.empty() ? iRepeat : vvRPT.as<int>());
 
   // verify if machine structure must be read without creating new object
   if (!this->bReadMachOnly) {
-
-    // verify if machine data file name is available
-    const boost::program_options::variable_value &vvIFF = vmMachParams["init-from-file"];
-    bInitFromFile = !vvIFF.empty();
-
-    // create new machine object
-    if (bInitFromFile) {
-      // read machine data from file
-      pNewMach = this->read_machine_from_file(vvIFF.as<std::string>(), iCurBlockSize, vmMachParams);
-      if (pNewMach == NULL)
-        // error handling
-        return NULL;
-      this->bReadMachOnly = true;
+    if (bNoCloneOrInit) {
+      // verify if machine is copied from other one
+      const boost::program_options::variable_value &vvC = vmMachParams["clone"];
+      if (!vvC.empty()) {
+        std::string sOtherName = vvC.as<std::string>();
+        if (this->mMachNameMap.count(sOtherName) > 0) {
+          pNewMach = this->mMachNameMap[sOtherName]->Clone();
+          sOtherName.clear();
+        }
+        if (pNewMach == NULL) {
+          // error handling
+          if (sOtherName.empty())
+            this->eErrorCode = MachConfig::ProbAllocMachine;
+          else {
+            this->ossErrorInfo.str(sOtherName);
+            this->eErrorCode = MachConfig::UnknownMachName;
+          }
+          return NULL;
+        }
+        bNoCloneOrInit = false;
+      }
     }
-    else {
+    if (bNoCloneOrInit) {
+      // verify if machine is read from a file
+      const boost::program_options::variable_value &vvIFF = vmMachParams["init-from-file"];
+      if (!vvIFF.empty()) {
+        pNewMach = this->read_machine_from_file(vvIFF.as<std::string>(), iCurBlockSize, vmMachParams);
+        if (pNewMach == NULL)
+          // error handling
+          return NULL;
+        bNoCloneOrInit = false;
+      }
+    }
+    if (bNoCloneOrInit) {
       // instantiate multi machine corresponding to given type
       switch (iMachType) {
       case file_header_mtype_multi:
@@ -630,6 +759,21 @@ Mach *MachConfig::read_multi_machine (int iMachType, int iBlockSize)
         break;
       case file_header_mtype_msplit:
         pMachMulti = new MachSplit;
+        break;
+      case file_header_mtype_combined:
+        pMachMulti = new MachCombined;
+        break;	
+      /*case file_header_mtype_max:	// under development
+        pMachMulti = new MachMax;
+        break;*/
+      case file_header_mtype_avr:
+        pMachMulti = new MachAvr;
+        break;
+      /*case file_header_mtype_mstack:	// under development
+        pMachMulti = new MachStacked;
+        break; */
+      case file_header_mtype_mjoin:
+        pMachMulti = new MachJoin;
         break;
       default:
         this->eErrorCode = MachConfig::UnknownMachCode;
@@ -648,27 +792,31 @@ Mach *MachConfig::read_multi_machine (int iMachType, int iBlockSize)
       // apply drop-out parameter (current machine drop-out value if defined, or general value)
       const boost::program_options::variable_value &vvDO = vmMachParams["drop-out"];
       pNewMach->SetDropOut(vvDO.empty() ? this->rPercDropOut : vvDO.as<REAL>());
+
+      // store name of machine if defined
+      const boost::program_options::variable_value &vvN = vmMachParams["name"];
+      if (!vvN.empty())
+        this->mMachNameMap[vvN.as<std::string>()] = pNewMach;
     }
+    else
+      this->bReadMachOnly = true;
   }
 
   // read submachines
 #ifdef BLAS_CUDA
-  int iMachDev = ((pMachMulti != NULL) ? pMachMulti->GetCudaDevice() : 0);
-  size_t stDevIndex = 0;
-  bool bChangeDev = ((cuda_devs.size() > 1) && (pMachMulti != NULL) && (
+  size_t stMachConf = ((pMachMulti != NULL) ? pMachMulti->GetGpuConfig() : 0);
+  bool bChangeDev = ((Gpu::GetDeviceCount() > 1) && (pMachMulti != NULL) && (
                           (iMachType == file_header_mtype_msplit)
+                       || (iMachType == file_header_mtype_mjoin )
                       ));
 #endif
-  REAL *prLookUpTable = NULL;
   do {
 #ifdef BLAS_CUDA
-    if (bChangeDev) {
-      cudaSetDevice(cuda_devs[stDevIndex % cuda_devs.size()]);
-      stDevIndex++;
-    }
+    if (bChangeDev)
+      Gpu::NewConfig();
 #endif
     Mach *pSubMach = NULL;
-    if (this->read_next_machine(pSubMach, iCurBlockSize, prLookUpTable))
+    if (this->read_next_machine(pSubMach, iCurBlockSize))
       break;
     else if (pSubMach != NULL) {
       // handle errors
@@ -677,23 +825,31 @@ Mach *MachConfig::read_multi_machine (int iMachType, int iBlockSize)
         break;
       }
 
-      // get look-up table of first MachTab in a MachPar
-      int iSubMType = pSubMach->GetMType();
-      if (   (prLookUpTable == NULL) && (iMachType == file_header_mtype_mpar)
-          && ((iSubMType == file_header_mtype_tab) || (iSubMType == file_header_mtype_tabsh)) ) {
-        prLookUpTable = static_cast<MachTab*>(pSubMach)->GetTabAdr();
-      }
-
       // add new submachine to multi machine
-      if (pMachMulti != NULL)
+      if (pMachMulti != NULL) {
         pMachMulti->MachAdd(pSubMach);
+#ifdef BLAS_CUDA
+        Gpu::SetConfig(pSubMach->GetGpuConfig());
+#endif
+      }
     }
   } while (this->eErrorCode == MachConfig::NoError);
 #ifdef BLAS_CUDA
-  if (bChangeDev) cudaSetDevice(iMachDev); // reset to multi machine GPU
+  Gpu::SetConfig(stMachConf); // reset to multi machine GPU
 #endif
 
-  if (bInitFromFile)
+    if(iCurRepeat > 1){
+	int nb = pMachMulti->MachGetNb(); 
+	cout << " - repeating these " << nb << " machine(s) " << iCurRepeat << " times" << endl;
+	for(int i=0; i<iCurRepeat-1; ++i){
+	    for(int j=0; j<nb; ++j){
+		Mach* pClonedMach = pMachMulti->MachGet(j)->Clone();
+		pMachMulti->MachAdd(pClonedMach);
+	    }
+	}
+    }
+
+  if (!bNoCloneOrInit)
     this->bReadMachOnly = false;
   return pNewMach;
 }
@@ -702,15 +858,16 @@ Mach *MachConfig::read_multi_machine (int iMachType, int iBlockSize)
  * creates a simple machine and reads his parameters
  * @param iMachType type of simple machine
  * @param iBlockSize block size for faster training
- * @param prLookUpTable look-up table for each MachTab in a MachPar (default NULL)
  * @param bMachLin true if the machine is a linear machine, default false otherwise
  * @param bMachTab true if the machine is a table lookup machine, default false otherwise
  * @return new machine object (may be NULL in case of error)
  * @note error code is set if an error occurred
  */
-Mach *MachConfig::read_simple_machine (int iMachType, int iBlockSize, REAL *prLookUpTable, bool bMachLin, bool bMachTab)
+Mach *MachConfig::read_simple_machine (int iMachType, int iBlockSize, bool bMachLin, bool bMachTab)
 {
   Mach *pNewMach = NULL;
+  bool bNoCloneOrInit = true;
+  int iShareId=-1; 
 
   // read machine parameters
   bpo::variables_map vmMachParams;
@@ -725,13 +882,36 @@ Mach *MachConfig::read_simple_machine (int iMachType, int iBlockSize, REAL *prLo
   const boost::program_options::variable_value &vvBS = vmMachParams["block-size"];
   int iCurBlockSize = (vvBS.empty() ? iBlockSize : vvBS.as<int>());
 
-  // create new machine object
-  const boost::program_options::variable_value &vvIFF = vmMachParams["init-from-file"];
-  if (!vvIFF.empty()) {
-    // read machine data from file
-    pNewMach = this->read_machine_from_file(vvIFF.as<std::string>(), iCurBlockSize, vmMachParams);
+  if (bNoCloneOrInit) {
+    // verify if machine is copied from other one
+    const boost::program_options::variable_value &vvC = vmMachParams["clone"];
+    if (!vvC.empty()) {
+      std::string sOtherName = vvC.as<std::string>();
+      if (this->mMachNameMap.count(sOtherName) > 0) {
+        pNewMach = this->mMachNameMap[sOtherName]->Clone();
+        sOtherName.clear();
+      }
+      if (pNewMach == NULL) {
+        // error handling
+        if (sOtherName.empty())
+          this->eErrorCode = MachConfig::ProbAllocMachine;
+        else {
+          this->ossErrorInfo.str(sOtherName);
+          this->eErrorCode = MachConfig::UnknownMachName;
+        }
+      }
+      bNoCloneOrInit = false;
+    }
   }
-  else {
+  if (bNoCloneOrInit) {
+    // verify if machine is read from a file
+    const boost::program_options::variable_value &vvIFF = vmMachParams["init-from-file"];
+    if (!vvIFF.empty()) {
+      pNewMach = this->read_machine_from_file(vvIFF.as<std::string>(), iCurBlockSize, vmMachParams);
+      bNoCloneOrInit = false;
+    }
+  }
+  if (bNoCloneOrInit) {
     // get dimension values
     int iInputDim  = vmMachParams[ "input-dim"].as<int>();
     int iOutputDim = vmMachParams["output-dim"].as<int>();
@@ -740,78 +920,123 @@ Mach *MachConfig::read_simple_machine (int iMachType, int iBlockSize, REAL *prLo
     int iNbForward  = vmMachParams["nb-forward" ].as<int>();
     int iNbBackward = vmMachParams["nb-backward"].as<int>();
 
+    bool bNewShareId = false; // apply general parameters only if machine with new share-id or no-share (-1)
     // instantiate simple machine corresponding to given type
     MachLin *pMachLin = NULL;
+    MachCopy *pMachCopy = NULL;
     MachTab *pMachTab = NULL;
-    switch (iMachType) {
-    case file_header_mtype_base:
-      pNewMach = new Mach(iInputDim, iOutputDim, iCurBlockSize, iNbForward, iNbBackward);
-      break;
-    case file_header_mtype_tab:
-      if (prLookUpTable == NULL) {
-        // first MachTab in a MachPar or not in a MachPar
-        pNewMach = pMachTab = new MachTab(iInputDim, iOutputDim, iCurBlockSize, iNbForward, iNbBackward);
-      }
-      else {
-        // other MachTab in a MachPar
-        pNewMach = pMachTab = new MachTab(prLookUpTable, iInputDim, iOutputDim, iCurBlockSize, iNbForward, iNbBackward);
-      }
-      break;
-    /*case file_header_mtype_tabsh:
-      if (prLookUpTable == NULL) {
-          // first MachTab in a MachPar or not in a MachPar
-        pNewMach = pMachTab = new MachTabSh(iInputDim, iOutputDim, iCurBlockSize, iNbForward, iNbBackward);
-      }
-      else {
-          // other MachTab in a MachPar
-        pNewMach = pMachTab = new MachTabSh(prLookUpTable, iInputDim, iOutputDim, iCurBlockSize, iNbForward, iNbBackward);
-      }
-      break;*/
-    case file_header_mtype_lin:
-      pNewMach = pMachLin = new MachLin(iInputDim, iOutputDim, iCurBlockSize, iNbForward, iNbBackward);
-      break;
-    case file_header_mtype_lin_rectif:
-      pNewMach = pMachLin = new MachLinRectif(iInputDim, iOutputDim, iCurBlockSize, iNbForward, iNbBackward);
-      break;
-    case file_header_mtype_sig:
-      pNewMach = pMachLin = new MachSig(iInputDim, iOutputDim, iCurBlockSize, iNbForward, iNbBackward);
-      break;
-    case file_header_mtype_tanh:
-      pNewMach = pMachLin = new MachTanh(iInputDim, iOutputDim, iCurBlockSize, iNbForward, iNbBackward);
-      break;
-    case file_header_mtype_softmax:
-      pNewMach = pMachLin = new MachSoftmax(iInputDim, iOutputDim, iCurBlockSize, iNbForward, iNbBackward);
-      break;
-    /*case file_header_mtype_stab:
-      pNewMach = pMachLin = MachStab(iInputDim, iOutputDim, iCurBlockSize, iNbForward, iNbBackward);
-      break;*/
-    case file_header_mtype_softmax_stable:
-      pNewMach = pMachLin = new MachSoftmaxStable(iInputDim, iOutputDim, iCurBlockSize, iNbForward, iNbBackward);
-      break;
-    default:
-      this->eErrorCode = MachConfig::UnknownMachCode;
-      this->ossErrorInfo.str(std::string());
-      this->ossErrorInfo << iMachType;
-      return NULL;
-      break;
+
+    iShareId = vmMachParams["share-id"].as<int>();
+    if(iShareId != -1 && Mach::GetSharedMachine(iShareId) != NULL) {
+	//TODO: should we check the machine type also?
+	if(Mach::GetSharedMachine(iShareId)->GetMType() != iMachType){
+	  Error("WARNING: machines sharing weights have not the same type, check the config file!");
+	}
+	if(iMachType == file_header_mtype_tab){
+	    if (Mach::GetSharedMachine(iShareId)->GetIdim()!=1 || iOutputDim != Mach::GetSharedMachine(iShareId)->GetOdim()){
+		Error("MachTab sharing weights have not the same input/output size, check the config file!");
+	    }
+	}
+	else if(iInputDim != Mach::GetSharedMachine(iShareId)->GetIdim() || iOutputDim != Mach::GetSharedMachine(iShareId)->GetOdim()){
+	    cerr << "mach[" << iShareId << "]->idim=" << Mach::GetSharedMachine(iShareId)->GetIdim() << " idim=" << iInputDim << endl;
+	    cerr << "mach[" << iShareId << "]->odim=" << Mach::GetSharedMachine(iShareId)->GetOdim() << " odim=" << iOutputDim << endl;
+	  Error("Machines sharing weights have not the same input/output size, check the config file!");
+	}
+	//cout << "Cloning previous machine with share-id " << iShareId << endl;
+	pNewMach = Mach::GetSharedMachine(iShareId)->Clone();
+	if(iMachType == file_header_mtype_lin) pMachLin = (MachLin*) pNewMach; 
+	else if(iMachType == file_header_mtype_tab) pMachTab = (MachTab*) pNewMach; 
+    } else if(iShareId == -1 && Mach::GetSharedMachine(iShareId) != NULL && iMachType == file_header_mtype_tab) {
+	    // special case for MachTab
+	    // All MachTab share their weights by default. This is for compatibility with previously built system
+	    //  cout << "Create MachTab with share-id " << iShareId << " -> cloning existing machine with that share-id" << endl;
+	    if(1 != Mach::GetSharedMachine(iShareId)->GetIdim() || iOutputDim != Mach::GetSharedMachine(iShareId)->GetOdim()){
+	      Error("Machines sharing weights have not the same input/output size, check the config file!");
+	    }
+	    pNewMach = pMachTab = ((MachTab*)Mach::GetSharedMachine(iShareId))->Clone();
+    } else {
+	//if(iShareId==-1) cout << "Creating new machine with no share-id" << endl;
+	//else cout << "Creating new machine with share-id " << iShareId << endl;
+	switch (iMachType) {
+	case file_header_mtype_base:
+	  pNewMach = new Mach(iInputDim, iOutputDim, iCurBlockSize, iNbForward, iNbBackward);
+	  break;
+	case file_header_mtype_tab:
+	    pNewMach = pMachTab = new MachTab(iInputDim, iOutputDim, iCurBlockSize, iNbForward, iNbBackward, iShareId);
+	    Mach::SetSharedMachine(iShareId, pNewMach);
+	  break;
+	case file_header_mtype_lin:
+	  pNewMach = pMachLin = new MachLin(iInputDim, iOutputDim, iCurBlockSize, iNbForward, iNbBackward, iShareId);
+	  break;
+	case file_header_mtype_copy:
+	  pNewMach = pMachCopy = new MachCopy(iInputDim, iOutputDim, iCurBlockSize, iNbForward, iNbBackward);
+	  break;
+	case file_header_mtype_lin_rectif:
+	  pNewMach = pMachLin = new MachLinRectif(iInputDim, iOutputDim, iCurBlockSize, iNbForward, iNbBackward, iShareId);
+	  break;
+	case file_header_mtype_sig:
+	  pNewMach = pMachLin = new MachSig(iInputDim, iOutputDim, iCurBlockSize, iNbForward, iNbBackward, iShareId);
+	  break;
+	case file_header_mtype_tanh:
+	  pNewMach = pMachLin = new MachTanh(iInputDim, iOutputDim, iCurBlockSize, iNbForward, iNbBackward, iShareId);
+	  break;
+	case file_header_mtype_softmax:
+	  pNewMach = pMachLin = new MachSoftmax(iInputDim, iOutputDim, iCurBlockSize, iNbForward, iNbBackward, iShareId);
+	  break;
+	/*case file_header_mtype_stab:
+	  pNewMach = pMachLin = MachStab(iInputDim, iOutputDim, iCurBlockSize, iNbForward, iNbBackward);
+	  break;*/
+	case file_header_mtype_softmax_stable:
+	  pNewMach = pMachLin = new MachSoftmaxStable(iInputDim, iOutputDim, iCurBlockSize, iNbForward, iNbBackward, iShareId);
+	  break;
+	case file_header_mtype_softmax_class:
+	  pNewMach = pMachLin = new MachSoftmaxClass(iInputDim, iOutputDim, iCurBlockSize, iNbForward, iNbBackward, iShareId);
+	  break;
+	default:
+	  this->eErrorCode = MachConfig::UnknownMachCode;
+	  this->ossErrorInfo.str(std::string());
+	  this->ossErrorInfo << iMachType;
+	  return NULL;
+	  break;
+	}
+	if(iShareId != -1){
+	    Mach::SetSharedMachine(iShareId, pNewMach);
+	}
+	bNewShareId = true;
     }
+
     if (pNewMach == NULL) {
       // error handling
       this->eErrorCode = MachConfig::ProbAllocMachine;
       return NULL;
     }
 
+    // apply update parameter if defined
+    const boost::program_options::variable_value &vvU = vmMachParams["update"];
+    if (!vvU.empty())
+      pNewMach->SetUpdataParams(vvU.as<bool>());
+  
+    // apply lrate-coeff parameter if defined
+    const boost::program_options::variable_value &vvLRC = vmMachParams["lrate-coeff"];
+    if (!vvLRC.empty())
+      pNewMach->SetLrateCoeff(vvLRC.as<REAL>());
+
     // apply drop-out parameter (current machine drop-out value if defined, or general value)
     const boost::program_options::variable_value &vvDO = vmMachParams["drop-out"];
     pNewMach->SetDropOut(vvDO.empty() ? this->rPercDropOut : vvDO.as<REAL>());
 
+    // store name of machine if defined
+    const boost::program_options::variable_value &vvN = vmMachParams["name"];
+    if (!vvN.empty())
+      this->mMachNameMap[vvN.as<std::string>()] = pNewMach;
+
     // initialize MachLin
     if (pMachLin != NULL)
-      this->apply_machine_parameters(pMachLin, vmMachParams, true);
+      this->apply_machine_parameters(pMachLin, vmMachParams, bNewShareId);
 
     // initialize MachTab
     if (pMachTab != NULL)
-      this->apply_machine_parameters(pMachTab, vmMachParams, prLookUpTable == NULL);
+      this->apply_machine_parameters(pMachTab, vmMachParams, bNewShareId);
   }
 
   return pNewMach;
@@ -833,7 +1058,6 @@ bool MachConfig::read_machine_parameters (const bpo::options_description &odMach
   // read until end of line
   std::stringbuf sbParamsLine;
   this->ifsConf.get(sbParamsLine);
-  std::string sParams = sbParamsLine.str();
 
   // handle errors
   if (this->ifsConf.bad() || bNoEqualChar) {
@@ -841,22 +1065,67 @@ bool MachConfig::read_machine_parameters (const bpo::options_description &odMach
       this->eErrorCode = MachConfig::MachWithoutEqualChar;
     else
       this->eErrorCode = MachConfig::ProbReadMachParams;
-    this->ossErrorInfo << ' ' << cEqual << sParams;
+    this->ossErrorInfo << ' ' << cEqual << sbParamsLine.str();
     return false;
   }
   this->ifsConf.clear();
 
-  // read machine parameters
+  // read abbreviated dimensions (ex: " 128 X 256 ", "DIM0xDIM1")
+  std::istringstream issParamsLine(sbParamsLine.str());
+  std::vector<std::string> vDims;
+  vDims.resize(2);
+  issParamsLine >> vDims[0];
+  std::size_t stPos = vDims[0].find_first_of("xX");
+  char cCross;
+  if (std::string::npos == stPos)
+    issParamsLine >> cCross >> vDims[1];
+  else {
+    cCross = vDims[0][stPos++];
+    if ('\0' == vDims[0][stPos])
+      issParamsLine >> vDims[1];
+    else
+      vDims[1] = vDims[0].substr(stPos);
+    vDims[0].erase(stPos - 1);
+  }
+
+  // replace dimension constants by their values
+  for (std::vector<std::string>::iterator it = vDims.begin() ; it != vDims.end() ; it++) {
+    const boost::program_options::variable_value &vv = this->vmGeneralOptions[*it];
+    if (!vv.empty())
+      try {
+        std::ostringstream oss;
+        oss << vv.as<int>();
+        (*it) = oss.str();
+      } catch (boost::bad_any_cast&) {}
+  }
+
+  // verify dimensions
+  bpo::parsed_options poDims(&odMachineConf);
+  if ((!issParamsLine.fail()) && (('x' == cCross) || ('X' == cCross))) {
+    // dimensions available
+    poDims.options.push_back(bpo::option(std::string( "input-dim"), std::vector<std::string>(1, vDims[0])));
+    poDims.options.push_back(bpo::option(std::string("output-dim"), std::vector<std::string>(1, vDims[1])));
+  }
+  else {
+    // no abbreviated dimensions
+    issParamsLine.clear();
+    issParamsLine.seekg(0);
+  }
+
+  // read other machine parameters
   try {
+    std::stringbuf sbOtherParams;
+    issParamsLine.get(sbOtherParams);
+    bpo::store(poDims, vmMachParams);
     bpo::store(
-        bpo::command_line_parser(std::vector<std::string>(1, sParams)).
+        bpo::command_line_parser(std::vector<std::string>(1, sbOtherParams.str())).
         extra_style_parser(MachConfig::parse_mach_params).options(odMachineConf).run(), vmMachParams);
     bpo::notify(vmMachParams);
   }
   catch (bpo::error &e) {
     // error handling
     this->eErrorCode = MachConfig::MachParamsParsingError;
-    this->ossErrorInfo << " =" << sParams << "\": " << e.what();
+    this->ossErrorInfo << " =" << sbParamsLine.str() << "\": " << e.what();
     return false;
   }
 
@@ -864,7 +1133,7 @@ bool MachConfig::read_machine_parameters (const bpo::options_description &odMach
 }
 
 /**
- * parses machine parameters (dimensions and other options)
+ * parses machine parameters
  * @param vsTokens vector of tokens
  * @return vector of options
  * @note throws exception of class boost::program_options::error in case of error
@@ -879,106 +1148,8 @@ std::vector<bpo::option> MachConfig::parse_mach_params (const std::vector<std::s
   for (std::vector<std::string>::const_iterator iT = vsTokens.begin() ; iT != iEnd ; iT++)
     ssTokens << *iT << ' ';
 
-  // read abbreviated dimension values
-  int iInputDim = -1, iOutputDim = -1;
-  char cCross = ' ';
-  ssTokens >> iInputDim >> cCross >> iOutputDim; // ex: " 128 x 256 ", " 128 X 256 "
-  if ((ssTokens.rdstate() == 0) && ((cCross == 'x') || (cCross == 'X'))) {
-    // dimensions available
-    std::ostringstream ossI, ossO;
-    ossI << iInputDim;
-    voParsed.insert(voParsed.end(), bpo::option(std::string("input-dim" ), std::vector<std::string>(1, ossI.str())));
-    ossO << iOutputDim;
-    voParsed.insert(voParsed.end(), bpo::option(std::string("output-dim"), std::vector<std::string>(1, ossO.str())));
-  }
-  else {
-    // no abbreviated dimensions
-    ssTokens.seekg(0);
-    ssTokens.clear();
-  }
-
-  // read other parameters
-  std::string sRead;
-  short iReadStep = 0;
-  std::vector<bpo::option>::iterator iOption;
-  do {
-    sRead.clear();
-    if (iReadStep < 3)
-      // read next token (name, equal character or start of value)
-      ssTokens >> sRead;
-    else {
-      // read end of value in quotes
-      std::stringbuf sbRead;
-      ssTokens.get(sbRead, '\"');
-      if (ssTokens.peek() != std::char_traits<char>::eof())
-        sbRead.sputc(ssTokens.get());
-      sRead = sbRead.str();
-    }
-    if (sRead.empty() || ssTokens.bad())
-      break;
-    size_t stPos = 0;
-    size_t stLen = sRead.length();
-
-    // read option name
-    if (iReadStep <= 0) {
-      // new option
-      iOption = voParsed.insert(voParsed.end(), bpo::option());
-
-      // option name
-      size_t stNPos = sRead.find('=');
-      iOption->string_key = sRead.substr(stPos, stNPos - stPos);
-      iOption->value.push_back(std::string());
-
-      // next step: read equal character
-      iReadStep = 1;
-      if (stNPos != std::string::npos)
-        stPos = stNPos;
-      else
-        continue;
-    }
-
-    // read equal character
-    if (iReadStep == 1) {
-      if (sRead[stPos] == '=')
-        stPos++;
-      else
-        // error
-        break;
-
-      // next step: read option value
-      iReadStep = 2;
-      if (stPos >= stLen)
-        continue;
-    }
-
-    // read option value
-    if (iReadStep == 2) {
-      // next loop: read new option (if value is not in quotes)
-      iReadStep = 0;
-
-      // verify quotes
-      size_t stNPos = stLen;
-      if (sRead[stPos] == '\"') {
-        // option value in quotes
-        stPos++;
-        if ((stPos < stLen) && (sRead[stLen - 1] == '\"'))
-          stNPos--;
-        else
-          // next loop: end reading value in quotes
-          iReadStep = 3;
-      }
-      iOption->value.back() = sRead.substr(stPos, stNPos - stPos);
-      continue;
-    }
-
-    // end reading value in quotes
-    if (iReadStep >= 3) {
-      iOption->value.back().append(sRead, stPos, stLen - stPos - 1);
-
-      // next step: read new option
-      iReadStep = 0;
-    }
-  } while (!(sRead.empty() || ssTokens.bad()));
+  // read parameters
+  ParseParametersLine(ssTokens, voParsed);
 
   // handle errors
   if (ssTokens.bad())
@@ -1015,7 +1186,17 @@ Mach *MachConfig::read_machine_from_file(const std::string &sFileName, int iBloc
     this->eErrorCode = MachConfig::ProbAllocMachine;
     return NULL;
   }
-  pNewMach->ResetNbEx();
+
+  // apply machine forward and backward parameters (set to 0 if not defined)
+  const boost::program_options::variable_value &vvNF = vmMachParams["nb-forward" ];
+  const boost::program_options::variable_value &vvNB = vmMachParams["nb-backward"];
+  pNewMach->SetNbEx(vvNF.empty() ? 0 : vvNF.as<int>(),
+                    vvNB.empty() ? 0 : vvNB.as<int>()   );
+
+  // apply update parameter if defined
+  const boost::program_options::variable_value &vvU = vmMachParams["update"];
+  if (!vvU.empty())
+    pNewMach->SetUpdataParams(vvU.as<bool>());
 
   // apply machine drop-out parameter if defined
   const boost::program_options::variable_value &vvDO = vmMachParams["drop-out"];
@@ -1099,6 +1280,27 @@ void MachConfig::apply_machine_parameters(MachLin *pMachLin, const bpo::variable
     bool bCurRandInitBias = !vvRIB.empty();
     if (bCurRandInitBias || bBiasNotInit) { // if no init-bias option is used, a general value is applied
       pMachLin->BiasRandom(bCurRandInitBias ? vvRIB.as<REAL>() : this->rInitBias);
+    }
+
+    // value for clipping weights
+    const boost::program_options::variable_value &vvCW = vmMachParams["clip-weights"];
+    bool bCurClipWeights = !vvCW.empty();
+    if (bCurClipWeights || bApplyGenVal) { // if the option is not used, the general value is applied
+      pMachLin->SetClipW(bCurClipWeights ? vvCW.as<REAL>() : this->rClipWeights);
+    }
+
+    // value for clipping gradients on weights
+    const boost::program_options::variable_value &vvCGW = vmMachParams["clip-gradients-weights"];
+    bool bCurClipGradWeights = !vvCGW.empty();
+    if (bCurClipGradWeights || bApplyGenVal) { // if the option is not used, the general value is applied
+      pMachLin->SetClipGradW(bCurClipGradWeights ? vvCGW.as<REAL>() : this->rClipGradWeights);
+    }
+
+    // value for clipping gradients on biases
+    const boost::program_options::variable_value &vvCGB = vmMachParams["clip-gradients-bias"];
+    bool bCurClipGradBias = !vvCGB.empty();
+    if (bCurClipGradBias || bApplyGenVal) { // if the option is not used, the general value is applied
+      pMachLin->SetClipGradB(bCurClipGradBias ? vvCGB.as<REAL>() : this->rClipGradBias);
     }
   }
 }

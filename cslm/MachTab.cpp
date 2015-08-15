@@ -2,7 +2,7 @@
  * This file is part of the continuous space language and translation model toolkit
  * for statistical machine translation and large vocabulary speech recognition.
  *
- * Copyright 2014, Holger Schwenk, LIUM, University of Le Mans, France
+ * Copyright 2015, Holger Schwenk, LIUM, University of Le Mans, France
  *
  * The CSLM toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version 3 as
@@ -16,8 +16,6 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
- *
- * $Id: MachTab.cpp,v 1.51 2014/03/25 21:52:53 schwenk Exp $
  */
 
 using namespace std;
@@ -34,26 +32,30 @@ using namespace std;
 
 void MachTab::do_alloc()
 {
-  if (!ext_table) {
+  debug0("do_alloc MachTab\n");
+  if (!bExternal) {
 #ifdef BLAS_CUDA
-    cudaSetDevice(cuda_dev);
-    t = cuda_alloc(idim*odim, "memory for table look-up machine");
+    Gpu::SetConfig(gpu_conf);
+    t = Gpu::Alloc(idim*odim, "memory for table look-up machine");
+    debug3("    CUDA alloc table at %p, size %dx%d\n", (void*)t, idim,odim);
 #else
     t = new REAL[idim*odim];
+    debug3("    alloc table at %p, size %dx%d\n", (void*)t, idim,odim);
     if (!t) Error ("can't allocate memory for table look-up machine");
 #endif
   }
-  else
-    ;
+  else {
+    debug3("    reuse table at %p, size %dx%d\n", (void*)t, idim,odim);
+  }
 #ifdef BLAS_CUDA
     tmp_inp = new REAL[idim*bsize];
 #endif
 }
 
-
-MachTab::MachTab(const int p_idim, const int p_odim, const int p_bsize, const ulong p_nbfw, const ulong p_nbbw)
- : Mach(1, p_odim, p_bsize, p_nbfw, p_nbbw), ext_table(false), t_shared(NULL), t_mutex(NULL)
+MachTab::MachTab(const int p_idim, const int p_odim, const int p_bsize, const ulong p_nbfw, const ulong p_nbbw, const int shareid, const bool xtable)
+ : Mach(1, p_odim, p_bsize, p_nbfw, p_nbbw), Shareable(xtable, shareid), t(NULL), t_shared(NULL), t_mutex(NULL)
 {
+  debug1("** constructor MachTab %lx\n", (luint) this);
   if (p_idim<=0) Error("Table machine: illegal value of input dimension");
   if (p_odim<=0) Error("Table machine: illegal value of output dimension");
   idim = p_idim; // override 1 in call to Mach()
@@ -70,34 +72,22 @@ MachTab::MachTab(const int p_idim, const int p_odim, const int p_bsize, const ul
       t_shared = new_t_shared;
     }
   }
-}
-
-MachTab::MachTab(REAL *table,
-	const int p_idim, const int p_odim, const int p_bsize,
-	const ulong p_nbfw, const ulong p_nbbw)
- : Mach(1, p_odim, p_bsize, p_nbfw, p_nbbw), ext_table(true),
-   t_shared(NULL), t_mutex(NULL)
-{
-  if (p_idim<0) Error("Table machine: illegal value of input dimension");
-  if (p_odim<0) Error("Table machine: illegal value of output dimension");
-  idim = p_idim; // override 1 in call to Mach()
-
-  //if (!table) Error ("Table look-up machine: provided address is NULL");
-  t=table;
-  do_alloc();
+    
 }
 
 MachTab::MachTab(const MachTab &m)
- : Mach(m, 1), ext_table(true), t(NULL),
+ : Mach(m, 1), Shareable(true, -1), t(NULL),
    t_shared(NULL), t_mutex(NULL)
 {
+  debug1("** copy constructor MachTab with address %lx\n", (luint) this);
   idim = m.idim; // override 1 in call to Mach()
-  ext_table = m.ext_table;
+  //bExternal = m.bExternal; //Loic: why? this should ALWAYS be true (as in initialization) 
+  iShareId = m.iShareId;
 
-  if (ext_table) {
+  if (bExternal) {
     // set look-up table with external address
+    do_alloc(); //Loic: only init tmp_inp for CUDA ??
     t = m.t;
-    do_alloc();
   }
   else {
     int inc_t_shared = 0;
@@ -121,6 +111,7 @@ MachTab::MachTab(const MachTab &m)
 
 MachTab::~MachTab()
 {
+  debug1("** destructor MachTab %lx\n", (luint) this);
 
 #ifdef BLAS_CUDA
   if (tmp_inp) delete tmp_inp;
@@ -131,6 +122,7 @@ MachTab::~MachTab()
     pthread_mutex_lock(t_mutex);
     if (t_shared != NULL) {
       if ((*t_shared) > 0) {
+        debug1("*** cloned -> not freeing t %p\n", t);
         (*t_shared)--;
         pthread_mutex_unlock(t_mutex);
         return;
@@ -143,9 +135,9 @@ MachTab::~MachTab()
   }
 
 #ifdef BLAS_CUDA
-  if (!ext_table & (t!=NULL)) cublasFree(t);
+  if (!bExternal & (t!=NULL)) cublasFree(t);
 #else
-  if (!ext_table & (t!=NULL)) delete [] t;
+  if (!bExternal & (t!=NULL)) delete [] t;
 #endif
   t = NULL;
 
@@ -162,7 +154,7 @@ MachTab::~MachTab()
 void MachTab::TableConst(const REAL val)
 {
 #ifdef BLAS_CUDA
-  cudaSetDevice(cuda_dev);
+  Gpu::SetConfig(gpu_conf);
   nppsSet_32f(val,t,idim*odim);
 #else
   for (int i=0; i<idim*odim; i++) t[i]=val;
@@ -173,10 +165,10 @@ void MachTab::TableRandom(const REAL range)
 {
   REAL c=range*2.0;
 #ifdef BLAS_CUDA
-  cudaSetDevice(cuda_dev);
+  Gpu::SetConfig(gpu_conf);
 #ifdef CURAND
   curandGenerateUniform(cuda_gen, (float*) t, idim*odim);
-  cuda_check_error("generating random values for table look-up machine");
+  Gpu::CheckError("generating random values for table look-up machine");
   nppsSubC_32f_I(0.5,t,idim*odim);
   nppsMulC_32f_I(c,t,idim*odim);
 #else
@@ -197,42 +189,72 @@ void MachTab::Info(bool detailed, char *txt)
     Mach::Info(detailed,txt);
   }
   else {
-    printf("%sMachTab %c[%d]-%d, bs=%d, passes=%lu/%lu", txt, ext_table ? 's' : '1', idim, odim, bsize, nb_forw, nb_backw);
+    if(Mach::fileid >= file_header_version3)
+	printf("%sMachTab %c%c[%d]-%d, bs=%d, passes=%lu/%lu", txt, bExternal?'s':'p', iShareId!=-1?iShareId+'0':'-', idim, odim, bsize, nb_forw, nb_backw);
+    else
+	printf("%sMachTab %c[%d]-%d, bs=%d, passes=%lu/%lu", txt, bExternal?'s':'p', idim, odim, bsize, nb_forw, nb_backw);
+    
+    if (lr_coeff != 1.0) printf(", lrate-coeff=%.2f", lr_coeff);
+
 #ifdef BLAS_CUDA
-    printf(", on GPU %d", cuda_dev);
+    printf(", on GPU %d", Gpu::GetCudaDevice(Gpu::GetDevice(gpu_conf)));
 #endif
     tm.disp(", ");
+    printf(", LookupTable=%p", t); //DEBUG 
     printf("\n");
+    debug5("%s   data: %p -> %p, grad %p <- %p\n", txt, (void*)data_in, (void*)data_out, (void*)grad_in, (void*)grad_out);
   }
+}
+
+bool MachTab::CopyParams(Mach* mach)
+{
+  MachTab* machtab = static_cast<MachTab*>(mach);
+  if (    Mach::CopyParams(mach)
+      && (machtab->bExternal == this->bExternal) ) {
+#ifdef BLAS_CUDA
+    Gpu::SetConfig(gpu_conf);
+    Gpu::MemcpyAsync(this->t, machtab->t, idim * odim * sizeof(REAL), cudaMemcpyDeviceToDevice);
+#else
+    memcpy(this->t, machtab->t, idim * odim * sizeof(REAL));
+#endif
+    return true;
+  }
+  else
+    return false;
 }
 
 //-----------------------------------------------
 // File output
 //-----------------------------------------------
 
-void MachTab::WriteParams(ofstream &of)
+void MachTab::WriteParams(ostream &of)
 {
+  debug0("* write params of type MachTab\n");
 
   Mach::WriteParams(of);
-  of.write((char*) &ext_table, sizeof(int));
+  of.write((char*) &bExternal, sizeof(int));
+  of.write((char*) &iShareId, sizeof(int));
 }
 
-
-void MachTab::WriteData(ofstream &outf) {
+void MachTab::WriteData(ostream &outf) {
   int i=0, s=sizeof(REAL);
-  if (ext_table) {
+  if (bExternal) {
+    debug0("* table look-up machine with external address to file\n");
+    //fprintf(stderr, "* table look-up machine with external address to file\n");
     outf.write((char*) &i, sizeof(int));
     outf.write((char*) &s, sizeof(int));
   }
   else {
+    debug0("* writing data of table look-up machine to file\n");
+    //fprintf(stderr, "* writing data of table look-up machine to file\n");
     i=idim*odim;
     outf.write((char*) &i, sizeof(int));
     outf.write((char*) &s, sizeof(int));
 #ifdef BLAS_CUDA
     REAL *local_mem=new REAL[i];
-    cudaSetDevice(cuda_dev);
+    Gpu::SetConfig(gpu_conf);
     cublasGetVector(i,CUDA_SIZE,t,1,local_mem,1);
-    cuda_check_error("transfer of table look-up machine from GPU memory");
+    Gpu::CheckError("transfer of table look-up machine from GPU memory");
     outf.write((char*)local_mem,i*sizeof(REAL));
     delete [] local_mem;
 #else
@@ -242,23 +264,49 @@ void MachTab::WriteData(ofstream &outf) {
   }
 }
 
+
+REAL *MachTab::WeightTable(int &idm, int &odm) {
+  debug0("* dump weights under textual form from a MachTab machine\n");
+  idm = idim;
+  odm = odim;
+	REAL *myTable = (REAL *) malloc (sizeof(REAL)*idim*odim);
+#ifdef BLAS_CUDA	
+  cudaMemcpy(myTable, t, idim*odim * sizeof(REAL), cudaMemcpyDeviceToHost);
+#else
+  memcpy(myTable, t, idim*odim * sizeof(REAL));
+#endif
+  return myTable;
+}
+	
+	
+
 //-----------------------------------------------
 // File input
 //-----------------------------------------------
 
-void MachTab::ReadParams(ifstream &inpf, bool with_alloc)
+void MachTab::ReadParams(istream &inpf, bool with_alloc)
 {
+  debug0("* read params of type MachTab\n");
 
   Mach::ReadParams(inpf, false);
-  inpf.read((char*) &ext_table, sizeof(int));
+  inpf.read((char*) &bExternal, sizeof(int));
+  debug1(" - bExternal=%d\n", (int) bExternal);
+
+  //This should be done for file_version 3 or greater !
+  if(Mach::fileid >= file_header_version3){
+    inpf.read((char*) &iShareId, sizeof(int));
+    debug1(" - share-id=%d\n", (int) iShareId);
+  }
+
   do_alloc();
 }
 
-void MachTab::ReadData(ifstream &inpf, size_t s, int bs)
+void MachTab::ReadData(istream &inpf, size_t s, int bs)
 {
   size_t se=odim*idim;
+  debug1("* read data of MachTab of size %u\n", (uint)s);
 
-  if (ext_table) {
+  if (bExternal) {
     if (s>0) {
       ErrorN("internal error in file, table look-up machine has external address, but %u elements of data are provided\n",(uint)s);
     }
@@ -271,9 +319,10 @@ void MachTab::ReadData(ifstream &inpf, size_t s, int bs)
 #ifdef BLAS_CUDA
   REAL *local_mem=new REAL[odim*idim];
   inpf.read((char*)local_mem,odim*idim*sizeof(REAL));
-  cudaSetDevice(cuda_dev);
+  debug2("CUDA: transfer %d elements for MachTab to GPU %d\n",odim*idim,Gpu::GetCudaDevice(Gpu::GetDevice(gpu_conf)));
+  Gpu::SetConfig(gpu_conf);
   cublasSetVector(odim*idim,CUDA_SIZE,local_mem,1,t,1);
-  cuda_check_error("transfer of table look-up machine to GPU memory");
+  Gpu::CheckError("transfer of table look-up machine to GPU memory");
   delete [] local_mem;
 #else
   inpf.read((char*) t,odim*idim*sizeof(REAL));
@@ -285,7 +334,7 @@ void MachTab::ReadData(ifstream &inpf, size_t s, int bs)
 // Training
 //-----------------------------------------------
 
-void MachTab::Forw(int eff_bsize)
+void MachTab::Forw(int eff_bsize, bool in_train)
 {
   if (!data_in)
     Error("MachTab::Forw(): input data is not set");
@@ -305,26 +354,32 @@ void MachTab::Forw(int eff_bsize)
   tm.start();
 
   if (eff_bsize<=0) eff_bsize=bsize;
+  debug3("MachTab::Forw: %p -> %p, bs=%d\n",(void*)data_in,(void*)data_out,eff_bsize);
 
 #ifdef BLAS_CUDA
-  cudaSetDevice(cuda_dev);
-  GpuMachTabForw(eff_bsize, odim, data_in, t, data_out);
+  Gpu::SetConfig(gpu_conf);
+  Gpu::MachTabForw(eff_bsize, odim, data_in, t, data_out);
+  Gpu::CheckError("MachTab::Forw - After Gpu::MachTabForw");
 #else
   REAL *optr=data_out;
   for (int b=0; b<eff_bsize; b++) {
     int idx= (int) data_in[b];
     if (idx==NULL_WORD) {
         // simulate empty word: set everything to 0
+      debug4("MachTab %p: b=%d, empty word    to %p, size %d\n", this, b, (void*)optr, odim);
       for (int i=0; i<odim; i++) *optr++=0.0;
     }
     else {
+      debug5("MachTab %p: b=%d, memcpy idx %d to %p, size %d\n", this, b, idx, (void*)optr, odim);
       memcpy(optr,t+idx*odim,odim*sizeof(REAL));
+      debug4(" partial codes: %e %e .. %e %e\n", optr[0],optr[1],optr[odim-2],optr[odim-1]);
       optr+=odim;
     }
   }
 #endif
 
   nb_forw+=eff_bsize;
+  debug0("MachTab::Forw done\n");
 
   tm.stop();
   debugMachOutp("MachTab",data_out,idim,odim,eff_bsize);
@@ -333,32 +388,45 @@ void MachTab::Forw(int eff_bsize)
 
 void MachTab::Backw(const float lrate, const float wdecay, int eff_bsize)
 {
+  debug2("MachTab::Backw: %p <- %p\n",(void*)grad_in,(void*)grad_out);
   // table[wid] = table[wid] + lrate * grad_out[wid] * data_in[wid]
 
-  REAL lrate_bs = lrate / sqrt(GetBsize());	// scale by block size !
+  REAL lrate_bs = lr_coeff * lrate / sqrt(GetBsize());	// scale by block size !
   tm.start();
 
 #ifdef BLAS_CUDA
-  cudaSetDevice(cuda_dev);
-  GpuMachTabBackw(lrate_bs,eff_bsize, odim, data_in, t, grad_out);
+  Gpu::SetConfig(gpu_conf);
+  if (update) {
+    Gpu::MachTabBackw(lrate_bs,eff_bsize, odim, data_in, t, grad_out);
+  }
     // we don't backprop to the input of a table look-up machine
-  nppsSet_32f(0.0,grad_in,eff_bsize);
+  debug0("clear input grads\n");
+  Gpu::MemsetAsync(grad_in, 0, eff_bsize*sizeof(REAL));
 #else
-  REAL *gptr = grad_out;
-  for (int b=0; b<eff_bsize; b++,gptr+=odim) {
-    int idx= (int) data_in[b];
-    if (idx==NULL_WORD) { // empty word: no weight update
-    }
-    else {
-      REAL *tptr=t+idx*odim;
-      AXPY(&odim,&lrate_bs,gptr,&inc1,tptr,&inc1);
+  if (update) {
+    REAL *gptr = grad_out;
+    for (int b=0; b<eff_bsize; b++,gptr+=odim) {
+      int idx= (int) data_in[b];
+      if (idx==NULL_WORD) { // empty word: no weight update
+        debug2("MachTab %lx: empty word at idx %d\n", (luint) this, idx);
+      }
+      else {
+        REAL *tptr=t+idx*odim;
+        debug3("b=%d idx=%d tptr=%p\n", b, idx, tptr);
+        debug4("  partial grads: %e %e .. %e %e\n", gptr[0],gptr[1],gptr[odim-2],gptr[odim-1]);
+        debug4("  codes        : %e %e .. %e %e\n", tptr[0],tptr[1],tptr[odim-2],tptr[odim-1]);
+        AXPY(&odim,&lrate_bs,gptr,&inc1,tptr,&inc1);
+        debug4("  codes updated : %e %e .. %e %e\n", tptr[0],tptr[1],tptr[odim-2],tptr[odim-1]);
+      }
     }
   }
- 
+
     // we don't backprop to the input of a table look-up machine
+  debug0("clear input grads\n");
   for (int b=0; b<eff_bsize; b++) grad_in[b]=0.0;
 #endif
 
+  debug0("MachTab::Backw() done\n");
   tm.stop();
 }
 

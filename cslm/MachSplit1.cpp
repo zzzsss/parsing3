@@ -2,7 +2,7 @@
  * This file is part of the continuous space language and translation model toolkit
  * for statistical machine translation and large vocabulary speech recognition.
  *
- * Copyright 2014, Holger Schwenk, LIUM, University of Le Mans, France
+ * Copyright 2015, Holger Schwenk, LIUM, University of Le Mans, France
  *
  * The CSLM toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version 3 as
@@ -17,7 +17,7 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  *
- * $Id: MachSplit1.cpp,v 1.13 2014/03/25 21:52:53 schwenk Exp $
+ *
  */
 
 using namespace std;
@@ -25,20 +25,26 @@ using namespace std;
 
 #include "Tools.h"
 #include "MachSplit1.h"
+
+#ifdef BLAS_CUDA
 #include "Gpu.cuh"
+#endif
 
 MachSplit1::MachSplit1()
  : MachMulti(), grad_out_split(NULL)
 {
+  debug0("** constructor MachSplit1\n");
 }
 
 MachSplit1::MachSplit1(const MachSplit1 &m)
  : MachMulti(m), grad_out_split(NULL)
 {
+  debug0("** copy constructor MachSplit1\n");
 }
 
 MachSplit1::~MachSplit1()
 {
+  debug0("** destructor MachSplit1\n");
   // data_out and grad_in will be freed by Mach::~Mach()
 #ifdef BLAS_CUDA
   Error("Check setting CUDA device");
@@ -58,18 +64,20 @@ MachSplit1 *MachSplit1::Clone()
  
 void MachSplit1::MachAdd(Mach *new_mach)
 {
+  debug0("*** MachSplit1::MachAdd()");
   if (machs.empty()) {
     machs.push_back(new_mach);
 	// think about freeing memory
     idim=new_mach->GetIdim();
     odim=new_mach->GetOdim();
     bsize=new_mach->GetBsize();
+    debug1("*** adding 1st machine: setting output dim to %d\n", odim);
 #ifdef BLAS_CUDA
-    cudaSetDevice(cuda_dev);
+    Gpu::SetConfig(gpu_conf);
     data_in=NULL; // will be set by MachSplit1::SetDataIn()
-    data_out = cuda_alloc(odim*bsize, "first output data in split machine");
-    grad_in = cuda_alloc(idim*bsize, "input gradient in split machine");
-    grad_out_split = cuda_alloc(odim*bsize, "first internal output gradient in split machine");
+    data_out = Gpu::Alloc(odim*bsize, "first output data in split machine");
+    grad_in = Gpu::Alloc(idim*bsize, "input gradient in split machine");
+    grad_out_split = Gpu::Alloc(odim*bsize, "first internal output gradient in split machine");
     grad_out = NULL;
 #else
     data_in=NULL; // will be set by MachSplit1::SetDataIn()
@@ -82,6 +90,7 @@ void MachSplit1::MachAdd(Mach *new_mach)
     new_mach->SetGradOut(NULL); // will be done in Backw()
   }
   else {
+    debug1("*** add new machine of odim %d to split machine\n",new_mach->GetOdim());
     if (bsize!=new_mach->GetBsize())
       Error("bunch size of new split machine does not match");
     if (idim!=new_mach->GetIdim())
@@ -90,12 +99,13 @@ void MachSplit1::MachAdd(Mach *new_mach)
  
       // resize output (idim does not change !)
     odim += new_mach->GetOdim();
+    debug2("*** adding %dth machines: resize output dim to %d\n", (int) machs.size(), odim);
 #ifdef BLAS_CUDA
-    cudaSetDevice(cuda_dev);
+    Gpu::SetConfig(gpu_conf);
     if (data_out) cublasFree(data_out);
-    data_out = cuda_alloc(odim*bsize, "resized output data in split machine");
+    data_out = Gpu::Alloc(odim*bsize, "resized output data in split machine");
     if (grad_out_split) cublasFree(grad_out_split);
-    grad_out_split = cuda_alloc(odim*bsize, "resized internal output gradient in split machine");
+    grad_out_split = Gpu::Alloc(odim*bsize, "resized internal output gradient in split machine");
 #else
     if (data_out) delete [] data_out;
     data_out = (odim*bsize>0) ? new REAL[odim*bsize] : NULL;
@@ -108,6 +118,7 @@ void MachSplit1::MachAdd(Mach *new_mach)
 
   activ_forw.push_back(true);
   activ_backw.push_back(true);
+  debug4("*** data_in=%p, grad_in=%p, data_out=%p, grad_out=%p\n", data_in, grad_in, data_out, grad_out);
 }
 
 Mach *MachSplit1::MachDel()
@@ -134,11 +145,11 @@ Mach *MachSplit1::MachDel()
       // resize output
     odim -= del_mach->GetOdim();
 #ifdef BLAS_CUDA
-    cudaSetDevice(cuda_dev);
+    Gpu::SetConfig(gpu_conf);
     if (data_out) cublasFree(data_out);
-    data_out = cuda_alloc(odim*bsize, "resized output data in split machine");
+    data_out = Gpu::Alloc(odim*bsize, "resized output data in split machine");
     if (grad_out_split) cublasFree(grad_out_split);
-    grad_out_split = cuda_alloc(odim*bsize, "resized internal output gradient in split machine");
+    grad_out_split = Gpu::Alloc(odim*bsize, "resized internal output gradient in split machine");
 #else
     if (data_out) delete [] data_out;
     data_out = (odim*bsize>0) ? new REAL[odim*bsize] : NULL;
@@ -158,6 +169,7 @@ void MachSplit1::SetDataIn(REAL *data)
 {
   data_in=data;
     // all machines point on the same input
+  debug1("*** MachSplit1::SetDataIn() setting all machine to %p\n", data_in); 
   for (unsigned int m=0; m<machs.size(); m++) machs[m]->SetDataIn(data_in);
 }
 
@@ -167,8 +179,9 @@ void MachSplit1::SetDataIn(REAL *data)
 //-----------------------------------------------
 
 
-void MachSplit1::ReadData(ifstream &inpf, size_t s, int bs)
+void MachSplit1::ReadData(istream &inpf, size_t s, int bs)
 {
+  debug0("* read data of MachSplit1\n");
   MachMulti::ReadData(inpf, s, bs);
 
      // get dimensions
@@ -179,13 +192,13 @@ void MachSplit1::ReadData(ifstream &inpf, size_t s, int bs)
   
     // allocate memory
 #ifdef BLAS_CUDA
-  cudaSetDevice(cuda_dev);
+  Gpu::SetConfig(gpu_conf);
   if (data_out) cublasFree(data_out);
-  data_out = (odim*bsize>0) ? cuda_alloc(odim*bsize, "ReadData output data in split machine") : NULL;
+  data_out = (odim*bsize>0) ? Gpu::Alloc(odim*bsize, "ReadData output data in split machine") : NULL;
   if (grad_out_split) cublasFree(grad_out_split);
-  grad_out_split = (odim*bsize>0) ? cuda_alloc(odim*bsize, "ReadData gradient output in split machine") : NULL;
+  grad_out_split = (odim*bsize>0) ? Gpu::Alloc(odim*bsize, "ReadData gradient output in split machine") : NULL;
   if (grad_in) cublasFree(grad_in);
-  grad_in = (idim*bsize>0) ? cuda_alloc(idim*bsize, "ReadData gradient input in split machine") : NULL;
+  grad_in = (idim*bsize>0) ? Gpu::Alloc(idim*bsize, "ReadData gradient input in split machine") : NULL;
 
 #else
   if (data_out) delete [] data_out;
@@ -221,12 +234,12 @@ void MachSplit1::Info(bool detailed, char *txt)
     sprintf(ntxt,"%s  ", txt);
     for (unsigned int i=0; i<machs.size(); i++) machs[i]->Info(detailed, ntxt);
   }
-  printf("%stotal number of parameters: %d (%d MBytes)\n", txt, GetNbParams(), GetNbParams()*(int) sizeof(REAL)/1048576);
+  printf("%stotal number of parameters: %lu (%d MBytes)\n", txt, GetNbParams(), (int) (GetNbParams()*sizeof(REAL)/1048576));
 }
 
 
 // forward pass for all machines and copy output into cumulated output
-void MachSplit1::Forw(int eff_bsize)
+void MachSplit1::Forw(int eff_bsize, bool in_train)
 {
   if (machs.empty())
     Error("called Forw() for an empty split machine");
@@ -239,12 +252,12 @@ void MachSplit1::Forw(int eff_bsize)
   REAL *optr=data_out;
   for (unsigned int m=0; m<machs.size(); m++) {
     if (activ_forw[m]) {
-      machs[m]->Forw(eff_bsize);
+      machs[m]->Forw(eff_bsize,in_train);
         // copy output to arrange each into continuous blocks
       int codim=machs[m]->GetOdim();
       REAL * dptr = machs[m]->GetDataOut();
 #ifdef BLAS_CUDA
-      GpuCopyMatrixToMatrixStrided(optr, dptr, eff_bsize, codim, odim);
+      Gpu::CopyMatrixToMatrixStrided(optr, dptr, eff_bsize, codim, odim);
 #else
       REAL *optr2=optr;
       for (int b=0; b<eff_bsize; b++) {
@@ -286,11 +299,11 @@ void MachSplit1::Backw(const float lrate, const float wdecay, int eff_bsize)
 #ifdef BLAS_CUDA
     //I don't enable the faster code here as it slow down the Forws pass!
     //I don't understand why this can happen, everything was synchronized.
-    //cudaSetDevice(cuda_dev);
-    //GpuCopyMatrixStridedToMatrix(gsptr, goptr2, eff_bsize, codim, odim);
+    Gpu::SetConfig(machs[m]->GetGpuConfig());
+    //Gpu::CopyMatrixStridedToMatrix(gsptr, goptr2, eff_bsize, codim, odim);
     //gsptr += codim * eff_bsize;
     for (int b=0; b<eff_bsize; b++) {
-      cudaMemcpy(gsptr, goptr2, codim*sizeof(REAL), cudaMemcpyDeviceToDevice);
+      Gpu::MemcpyAsync(gsptr, goptr2, codim*sizeof(REAL), cudaMemcpyDeviceToDevice);
       goptr2 += odim;
       gsptr += codim;
     }
@@ -312,7 +325,7 @@ void MachSplit1::Backw(const float lrate, const float wdecay, int eff_bsize)
   if (activ_backw[0]) {
     machs[0]->Backw(lrate,wdecay,eff_bsize);
 #ifdef BLAS_CUDA
-    cudaMemcpy(grad_in, machs[0]->GetGradIn(), idim*eff_bsize*sizeof(REAL), cudaMemcpyDeviceToDevice);
+    Gpu::MemcpyAsync(grad_in, machs[0]->GetGradIn(), idim*eff_bsize*sizeof(REAL), cudaMemcpyDeviceToDevice);
 #else
     memcpy(grad_in, machs[0]->GetGradIn(), idim*eff_bsize*sizeof(REAL));
 #endif
@@ -320,7 +333,8 @@ void MachSplit1::Backw(const float lrate, const float wdecay, int eff_bsize)
   else {
       // clear the gradient so we can cumulate the following ones
 #ifdef BLAS_CUDA
-    cudaMemset(grad_in, 0.0, idim*eff_bsize*sizeof(REAL));
+    Gpu::SetConfig(gpu_conf);
+    Gpu::MemsetAsync(grad_in, 0.0, idim*eff_bsize*sizeof(REAL));
 #else
     memset(grad_in, 0.0, idim*eff_bsize*sizeof(REAL));
 #endif
@@ -341,6 +355,7 @@ void MachSplit1::Backw(const float lrate, const float wdecay, int eff_bsize)
 #endif
     }
     else {
+      debug1("  MachSplit1[%d]: backw deactivated\n",m);
     }
   }
 

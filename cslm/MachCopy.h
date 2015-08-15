@@ -19,34 +19,25 @@
  *
  *
  *
- * softmax machine:  a_i = exp(a_i) / sum_k a_k
- * The stable version remove the max of a_i to all a_i before exp.
- *     This lower numerical precision problem
- * with a_k is the kth output of a linear machine
+ * copy machine:  output = input
  */
 
-#ifndef _MachSoftmaxStable_h
-#define _MachSoftmaxStable_h
+#ifndef _MachCopy_h
+#define _MachCopy_h
 
-#include "MachLin.h"
+#include "Mach.h"
 
-#undef BLAS_CUDA_NPPS_SUM	// thsi should be faster, but I can't get it working
-
-class MachSoftmaxStable : public MachLin
+class MachCopy : public Mach
 {
-private:
-  Timer tmn;				// cumulated time used for softmax normalization
-#if defined(BLAS_CUDA) && defined(BLAS_CUDA_NPPS_SUM)
-  Npp8u *gpu_sum_buf;			// temporary buffer for fast sum with nppsSum_32f()
-#endif
 protected:
-  MachSoftmaxStable(const MachSoftmaxStable &);			// create a copy of the machine
+  virtual void ReadData(istream&, size_t, int=0); // read binary data
+  MachCopy(const MachCopy &);			// create a copy of the machine, sharing the parameters
 public:
-  MachSoftmaxStable(const int=0, const int=0, const int=128, const ulong=0, const ulong=0, const int shareid=-1, const bool xdata=false);	
-  virtual ~MachSoftmaxStable();
-  virtual MachSoftmaxStable *Clone() {return new MachSoftmaxStable(*this);}	// create a copy of the machine
-  virtual int GetMType() {return file_header_mtype_softmax_stable;};	// get type of machine
-  virtual void Info(bool=false, char *txt=(char*)"");	// display (detailed) information on machine
+  MachCopy(const int=0, const int=0, const int=128, const ulong=0, const ulong=0);	
+  virtual ~MachCopy() {}
+  virtual MachCopy *Clone() {return new MachCopy(*this);}		// create a copy of the machine, sharing the parameters
+  virtual int GetMType() {return file_header_mtype_copy;};	// get type of machine
+  virtual void Info(bool=false, char *txt=(char*)"");		// display (detailed) information on machine
   virtual void Forw(int=0, bool=false);	// calculate outputs for current inputs
     // backprop gradients from output to input and update all weights
   virtual void Backw (const float lrate, const float wdecay, int=0);

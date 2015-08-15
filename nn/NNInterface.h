@@ -57,6 +57,7 @@ public:
 	virtual REAL* get_tab()=0;
 	virtual void set_tab(REAL* x)=0;
 	virtual void clone_tab(REAL* x,int all)=0;
+	virtual void noupdate_tab()=0;
 	//precalc
 	virtual void pre_calc()=0;
 	virtual void DEBUG_pre_calc()=0;

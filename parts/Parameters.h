@@ -76,6 +76,7 @@ int CONF_NN_BS;						//block-size
 int* CONF_NN_h_size;	//hsizes: array
 double CONF_NN_drop;
 int CONF_NN_act;	//activation functions
+int CONF_NN_FIXVEC;	//no update on embeddings any longer
 
 //use o1-mach for higher-order <must with the same other parameters>
 int CONF_NN_highO_embed_init;
@@ -146,13 +147,14 @@ parsing_conf(string conf_file)
 	CONF_NN_ITER_force_half=100;
 	CONF_NN_LMULT=-0.5;	//when >=0:as mult ; -1~0: schedule rate
 	//CONF_NN_WD=3e-5;
-	CONF_NN_WD=-1e-4;
+	CONF_NN_WD=1e-4;
 	CONF_NN_we=50;						//word-embedding size
 	CONF_NN_plus_layers=2;				//plus number of layers(plus from base)
 	CONF_NN_resample=1.0;				//re-sample rate
 	CONF_NN_BS=128;						//block-size
 	CONF_NN_h_size = 0;
-	CONF_NN_drop = -1;
+	CONF_NN_drop = 0;
+	CONF_NN_FIXVEC = 100000000;			//this means never
 	CONF_NN_highO_embed_init = 0;
 	CONF_NN_highO_score_combine = 1;
 	CONF_NN_highO_o1filter = 1;
@@ -244,6 +246,7 @@ parsing_conf(string conf_file)
 		}
 		else if(buf=="nn_drop")	fin >> CONF_NN_drop;
 		else if(buf=="nn_act") fin >> CONF_NN_act;
+		else if(buf=="nn_fixv")	fin >> CONF_NN_FIXVEC;
 		//o2sib use o1
 		else if(buf=="nn_o1mach") fin >> CONF_NN_highO_o1mach;
 		else if(buf=="nn_o1mach_init") fin >> 	CONF_NN_highO_embed_init;

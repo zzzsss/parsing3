@@ -2,7 +2,7 @@
  * This file is part of the continuous space language and translation model toolkit
  * for statistical machine translation and large vocabulary speech recognition.
  *
- * Copyright 2014, Holger Schwenk, LIUM, University of Le Mans, France
+ * Copyright 2015, Holger Schwenk, LIUM, University of Le Mans, France
  *
  * The CSLM toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version 3 as
@@ -17,18 +17,21 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  *
- * $Id: Tools.h,v 1.31 2014/03/25 21:52:53 schwenk Exp $
+ *
  */
 
 #ifndef _Tools_h
 #define _Tools_h
 
+#include <boost/program_options/option.hpp>
 #include <iostream>
+#include <istream>
 #include <fstream>
 #include <string.h>	// memcpy()
 #include <stdlib.h>	// exit()
 #include <math.h>	
 #include <limits>
+#include <vector>
 using namespace std;
 
 typedef float REAL;			// precision of all the calculations
@@ -40,15 +43,33 @@ typedef unsigned int uint;
 typedef long unsigned int luint;
 
 static const int max_word_len=65534;	// should be more than enough when reading text lines ;-)
-static const string cslm_version="V3.0";
+static const string cslm_version="V3.1";
 
 //
 // general purpose helper functions
 //
 #ifdef DEBUG
 # define TRACE(txt) cout << txt;
+# define debug0(F) printf(F)
+# define debug1(F,a) printf(F,a)
+# define debug2(F,a,b) printf(F,a,b)
+# define debug3(F,a,b,c) printf(F,a,b,c)
+# define debug4(F,a,b,c,d) printf(F,a,b,c,d)
+# define debug5(F,a,b,c,d,e) printf(F,a,b,c,d,e)
+# define debug6(F,a,b,c,d,e,f) printf(F,a,b,c,d,e,f)
+# define debug7(F,a,b,c,d,e,f,h) printf(F,a,b,c,d,e,f,h)
+# define debug8(F,a,b,c,d,e,f,h,i) printf(F,a,b,c,d,e,f,h,i)
 #else
 # define TRACE(txt)
+# define debug0(F)
+# define debug1(F,a)
+# define debug2(F,a,b)
+# define debug3(F,a,b,c)
+# define debug4(F,a,b,c,d)
+# define debug5(F,a,b,c,d,e)
+# define debug6(F,a,b,c,d,e,f)
+# define debug7(F,a,b,c,d,e,f,h)
+# define debug8(F,a,b,c,d,e,f,h,i)
 #endif
 
 #ifdef DEBUGEX
@@ -70,6 +91,13 @@ void ErrorN(const char* msg, ...)
     __attribute__((format(printf, 1, 2)));
 
 #define CHECK_FILE(ifs,fname) if(!ifs) { perror(fname); Error(); }
+
+/**
+ * parses parameters written in one line like "param1=val1 param2=val2"
+ * @param isInput input stream
+ * @param voParams out vector of parameters
+ */
+void ParseParametersLine(istream& isInput, vector<boost::program_options::option>& voParams);
 
 //
 // parsing of ASCII files

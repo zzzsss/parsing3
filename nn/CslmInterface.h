@@ -70,6 +70,10 @@ public:
 		REAL* tab = mm->GetTabAdr();
 		memcpy(tab,x,sizeof(REAL)*all);
 	}
+	virtual void noupdate_tab(){	//no backw on the tabs, fix embeddings
+		MachMulti* m = (MachMulti*)mach;
+		m->Activate(0, true, false);
+	}
 
 	virtual void pre_calc();
 	virtual void DEBUG_pre_calc();

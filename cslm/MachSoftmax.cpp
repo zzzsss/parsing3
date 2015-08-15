@@ -2,7 +2,7 @@
  * This file is part of the continuous space language and translation model toolkit
  * for statistical machine translation and large vocabulary speech recognition.
  *
- * Copyright 2014, Holger Schwenk, LIUM, University of Le Mans, France
+ * Copyright 2015, Holger Schwenk, LIUM, University of Le Mans, France
  *
  * The CSLM toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version 3 as
@@ -17,7 +17,7 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  *
- * $Id: MachSoftmax.cpp,v 1.39 2014/03/25 21:52:53 schwenk Exp $
+ *
  */
 
 using namespace std;
@@ -32,19 +32,19 @@ using namespace std;
 #endif
 
 
-MachSoftmax::MachSoftmax(const int p_idim, const int p_odim, const int p_bsize, const ulong p_nbfw, const ulong p_nbbw)
- : MachLin(p_idim, p_odim, p_bsize, p_nbfw, p_nbbw)
+MachSoftmax::MachSoftmax(const int p_idim, const int p_odim, const int p_bsize, const ulong p_nbfw, const ulong p_nbbw, const int shareid, const bool xdata)
+ : MachLin(p_idim, p_odim, p_bsize, p_nbfw, p_nbbw, shareid, xdata)
 {
+  debug0("** constructor MachSoftmax\n");
 #if defined(BLAS_CUDA) && defined(BLAS_CUDA_NPPS_SUM)
   int nbytes=0;
-  cudaSetDevice(cuda_dev);
+  Gpu::SetConfig(gpu_conf);
   nppsSumGetBufferSize_32f(odim, &nbytes);
+  debug2(" - CUDA MachSoftmax: allocating %d bytes for fast sum of %d-dimensional output layer\n",nbytes,odim);
   gpu_sum_buf = nppsMalloc_8u(nbytes);
 #endif
 #ifdef BLAS_CUDA
-  struct cudaDeviceProp props;
-  cudaGetDeviceProperties(&props, cuda_dev);
-  if(props.warpSize != 32){
+  if(Gpu::GetDeviceProp(gpu_conf).warpSize != 32){
     Error("KernelSoftmax used by MachSoftmax supposes a wrapSize of 32. The code will return wrong result if run!");
   } 
 #endif
@@ -53,15 +53,15 @@ MachSoftmax::MachSoftmax(const int p_idim, const int p_odim, const int p_bsize, 
 MachSoftmax::MachSoftmax(const MachSoftmax &m)
  : MachLin(m)
 {
+  debug0("** copy constructor MachSoftmax\n");
 #if defined(BLAS_CUDA) && defined(BLAS_CUDA_NPPS_SUM)
   int nbytes=0;
   nppsSumGetBufferSize_32f(odim, &nbytes);
+  debug2(" - CUDA MachSoftmax: allocating %d bytes for fast sum of %d-dimensional output layer\n",nbytes,odim);
   gpu_sum_buf = nppsMalloc_8u(nbytes);
 #endif
 #ifdef BLAS_CUDA
-  struct cudaDeviceProp props;
-  cudaGetDeviceProperties(&props, cuda_dev);
-  if(props.warpSize != 32){
+  if(Gpu::GetDeviceProp(gpu_conf).warpSize != 32){
     Error("KernelSoftmax used by MachSoftmax supposes a wrapSize of 32. The code will return wrong result if run!");
   }
 #endif
@@ -69,8 +69,9 @@ MachSoftmax::MachSoftmax(const MachSoftmax &m)
 
 MachSoftmax::~MachSoftmax()
 {
+  debug0("** destructor MachSoftmax\n");
 #if defined(BLAS_CUDA) && defined(BLAS_CUDA_NPPS_SUM)
-  cudaSetDevice(cuda_dev);
+  Gpu::SetConfig(gpu_conf);
   if (gpu_sum_buf) nppsFree(gpu_sum_buf);
 #endif
 }
@@ -87,12 +88,15 @@ void MachSoftmax::Info(bool detailed, char *txt)
   }
   else {
     printf("%sMachSoftmax %d-%d, bs=%d, passes=%lu/%lu", txt,idim, odim, bsize, nb_forw, nb_backw);
+    if (lr_coeff != 1.0) printf(", lrate-coeff=%.2f", lr_coeff);
 #ifdef BLAS_CUDA
-    printf(", on GPU %d", cuda_dev);
+    printf(", on GPU %d", Gpu::GetCudaDevice(Gpu::GetDevice(gpu_conf)));
 #endif
+    //printf(", this=%p",this);
     tm.disp(", ");
     tmn.disp(" + norm: ");
     printf("\n");
+    debug5("%s   data: %p -> %p, grad %p <- %p\n", txt, (void*)data_in, (void*)data_out, (void*)grad_in, (void*)grad_out);
   }
 }
 
@@ -100,18 +104,19 @@ void MachSoftmax::Info(bool detailed, char *txt)
 // Training
 //-----------------------------------------------
 
-void MachSoftmax::Forw(int eff_bsize)
+void MachSoftmax::Forw(int eff_bsize, bool in_train)
 {
+  debug3("*** MachSoftmax::Forw: mach=%p data: %p <- %p\n", this, data_in, data_out);
 
   if (eff_bsize<=0) eff_bsize=bsize;
-  MachLin::Forw(eff_bsize);
+  MachLin::Forw(eff_bsize,in_train);
 
   tmn.start();
 
     // softmax normalization
 #ifdef BLAS_CUDA
     // device already set by MachLin::Forw()
-  GpuMachSoftmaxForw(eff_bsize,odim,data_out);
+  Gpu::MachSoftmaxForw(eff_bsize,odim,data_out);
 #else
   REAL *optr, sum;
   int b=eff_bsize*odim;
@@ -123,11 +128,15 @@ void MachSoftmax::Forw(int eff_bsize)
   }
 #endif
 
+    // perform drop-out
+  MachLin::ForwDropout(eff_bsize,in_train); 
+
   tmn.stop();
 }
 
 void MachSoftmax::Backw(const float lrate, const float wdecay, int eff_bsize)
 {
+  debug3("*** MachSoftmax::Backw: mach=%p grad: %p <- %p\n", this, grad_in, grad_out);
     // derivate softmax activation function
     //   do_i / da_k = o_i (kronecker_ik - o_k)
     // we suppose that do_i/da_k vanishes in the error function !!
@@ -138,6 +147,11 @@ void MachSoftmax::Backw(const float lrate, const float wdecay, int eff_bsize)
    // to ALL other outputs. This can't be stored in one vector)
    //   dE/da_i = sum_k dE/do_k do_k/da_i
    // On the other hand, many terms vanish with usual error functions
+
+   // So here, we rely on the implementation in the error function
+   // (ErrFctSoftmCrossEntNgram) to actually compute the gradient
+   // wrt cross-entropy AND softmax (dE/da_i, NOT dE/do_i),
+   // so here we only forward it to the gradient wrt the linear part.
 
   MachLin::Backw(lrate, wdecay, eff_bsize);
 }

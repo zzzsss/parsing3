@@ -2,7 +2,7 @@
  * This file is part of the continuous space language and translation model toolkit
  * for statistical machine translation and large vocabulary speech recognition.
  *
- * Copyright 2014, Holger Schwenk, LIUM, University of Le Mans, France
+ * Copyright 2015, Holger Schwenk, LIUM, University of Le Mans, France
  *
  * The CSLM toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version 3 as
@@ -16,12 +16,12 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
- *
- * $Id: MachPar.cpp,v 1.34 2014/03/25 21:52:53 schwenk Exp $
  */
 
 using namespace std;
 #include <iostream>
+#include <sstream>
+#include <map>
 
 #include "Tools.h"
 #include "MachTab.h"
@@ -29,19 +29,24 @@ using namespace std;
 
 void MachPar::do_alloc()
 {
+  debug2("do_alloc MachPar %d x %d\n",idim,odim);
 #ifdef BLAS_CUDA
-  cudaSetDevice(cuda_dev);
+  Gpu::SetConfig(gpu_conf);
   if (data_out) cublasFree(data_out);
   if (grad_in) cublasFree(grad_in);
 
-  data_out = cuda_alloc(odim*bsize, "output data of parallel machine");
-  grad_in = cuda_alloc(idim*bsize, "input gradient of parallel machine");
+  data_out = Gpu::Alloc(odim*bsize, "output data of parallel machine");
+  grad_in = Gpu::Alloc(idim*bsize, "input gradient of parallel machine");
 
+  debug2(" - CUDA data_out alloc %lu bytes at %p\n",sizeof(REAL)*odim*bsize,(void*) data_out);
+  debug2(" - CUDA grad_in  alloc %lu bytes at %p\n",sizeof(REAL)*idim*bsize,(void*) grad_in);
 #else
   if (data_out) delete [] data_out;
   if (grad_in) delete [] grad_in;
   data_out = (odim*bsize>0) ? new REAL[odim*bsize] : NULL;
   grad_in = (idim*bsize>0) ? new REAL[idim*bsize] : NULL;
+  debug2(" - data_out alloc %lu bytes at %p\n",sizeof(REAL)*odim*bsize,(void*) data_out);
+  debug2(" - grad_in  alloc %lu bytes at %p\n",sizeof(REAL)*idim*bsize,(void*) grad_in);
 #endif
 }
 
@@ -49,16 +54,29 @@ void MachPar::do_alloc()
 MachPar::MachPar()
  : MachMulti()
 {
+  debug0("** constructor MachPar\n");
 }
 
 MachPar::MachPar(const MachPar &m)
  : MachMulti(m)
 {
+  debug0("** copy constructor MachPar\n");
 }
 
 MachPar::~MachPar()
 {
+  debug0("** destructor MachPar\n");
   // data_out and grad_in will be freed by Mach::~Mach()
+  for (unsigned int m=0; m<machs.size(); m++)
+  {
+#ifdef BLAS_CUDA
+    if (machs[m]->GetDataIn ()) cublasFree(machs[m]->GetDataIn ());
+    if (machs[m]->GetGradOut()) cublasFree(machs[m]->GetGradOut());
+#else
+    if (machs[m]->GetDataIn ()) delete [] machs[m]->GetDataIn ();
+    if (machs[m]->GetGradOut()) delete [] machs[m]->GetGradOut();
+#endif
+  }
 }
 
 MachPar *MachPar::Clone()
@@ -72,6 +90,7 @@ MachPar *MachPar::Clone()
 void MachPar::MachAdd(Mach *new_mach)
 {
   if (machs.empty()) {
+    debug0("** add first element to parallel machine\n");
     machs.push_back(new_mach);
 	// think about freeing memory
     idim=new_mach->GetIdim();
@@ -82,9 +101,9 @@ void MachPar::MachAdd(Mach *new_mach)
     grad_in = NULL;
     grad_out = NULL;
     do_alloc();
-    new_mach->SetGradOut(grad_out);
   }
   else {
+    debug0("** add new element to parallel machine\n");
     if (bsize!=new_mach->GetBsize())
       Error("bunch size of new parallel machine does not match");
     machs.push_back(new_mach);
@@ -94,6 +113,13 @@ void MachPar::MachAdd(Mach *new_mach)
     odim += new_mach->GetOdim();
     do_alloc();
   }
+#ifdef BLAS_CUDA
+  new_mach->SetDataIn (Gpu::Alloc(bsize * new_mach->GetIdim() * sizeof(REAL), "submachine input"));
+  new_mach->SetGradOut(Gpu::Alloc(bsize * new_mach->GetOdim() * sizeof(REAL), "submachine output gradients"));
+#else
+  new_mach->SetDataIn (new REAL[bsize * new_mach->GetIdim()]);
+  new_mach->SetGradOut(new REAL[bsize * new_mach->GetOdim()]);
+#endif
   activ_forw.push_back(true);
   activ_backw.push_back(true);
 }
@@ -110,39 +136,17 @@ Mach *MachPar::MachDel()
   return NULL;
 }
 
-// set pointer of input data
-void MachPar::SetDataIn(REAL *data)
-{
-  data_in=data;
-    // set input data of indiv machines one after each other
-    // this depends on the effective bsize !
-  for (unsigned int m=0; m<machs.size(); m++) {
-    machs[m]->SetDataIn(data);
-    data += bsize*machs[m]->GetIdim();
-  }
-}
-
-// set pointer of output gradient
-void MachPar::SetGradOut(REAL *data)
-{
-  grad_out=data;
-    // set output gradients of indiv machines one after each other
-  for (unsigned int m=0; m<machs.size(); m++) {
-    machs[m]->SetGradOut(data);
-    data += bsize*machs[m]->GetOdim();
-  }
-}
-
 
 //-----------------------------------------------
 // File output
 //-----------------------------------------------
 
-void MachPar::ReadData(ifstream &inpf, size_t s, int bs)
+void MachPar::ReadData(istream &inpf, size_t s, int bs)
 {
+  debug0("* read data of MachPar\n");
   MachMulti::ReadData(inpf, s, bs);
 
-     // calculate idim and odim and and allocate data_out and grad_in
+     // calculate idim and odim and allocate data_out and grad_in
   idim=odim=0;
   for (uint m=0; m<machs.size(); m++) {
     idim += machs[m]->GetIdim();
@@ -150,24 +154,60 @@ void MachPar::ReadData(ifstream &inpf, size_t s, int bs)
   }
   bsize = machs[0]->GetBsize();
   do_alloc();
+  for (unsigned int m=0; m<machs.size(); m++) {
+#ifdef BLAS_CUDA
+    machs[m]->SetDataIn (Gpu::Alloc(bsize * machs[m]->GetIdim() * sizeof(REAL), "submachine input"));
+    machs[m]->SetGradOut(Gpu::Alloc(bsize * machs[m]->GetOdim() * sizeof(REAL), "submachine output gradients"));
+#else
+    machs[m]->SetDataIn (new REAL[bsize * machs[m]->GetIdim()]);
+    machs[m]->SetGradOut(new REAL[bsize * machs[m]->GetOdim()]);
+#endif
+  }
 
-    // scanning for MachTab with shared addresses
-  REAL *tadr=NULL;
+  // this is no more needed -> everything is done in Mach 
+/*
+  // scanning for MachTab with shared addresses
+  std::map<int, REAL*> tadr;
   for (uint m=0; m<machs.size(); m++) {
     MachTab *mt= (MachTab*) machs[m];
     if (mt->GetMType()==file_header_mtype_tab) {
-      if (mt->GetTabAdr()) {
-        if (tadr) {
-        }
-        else {
-        }
-        tadr=mt->GetTabAdr();
-      }
-      else {
-        mt->SetTabAdr(tadr);
-      }
-    }
-  }
+      if(Mach::fileid >= file_header_version3){
+	if (tadr[mt->GetShareId()] == NULL) {
+	  debug3("Storing address (%p) of machine %d with share-id %d\n",mt->GetTabAdr(),m, mt->GetShareId());
+	  tadr[mt->GetShareId()] = mt->GetTabAdr();
+	    if(mt->GetTabAdr() == NULL) {
+	      std::stringstream oss ("In MachPar: machine "); 
+	      oss << m << " should have its weights allocated!\n";
+	      Error(oss.str().c_str());
+	    }
+	} else { 
+	  debug3("Setting address (%p) of machine %d with share-id %d\n",mt->GetTabAdr(),m, mt->GetShareId());
+	  mt->SetTabAdr(tadr[mt->GetShareId()]);
+        } 
+	*//*else {
+	    debug3("Machine %d with share-id '%s' already has its own weights at address (%p)\n",m, mt->GetShareId(), mt->GetTabAdr());
+	    if(mt->GetTabAdr() == NULL) {
+	      //std::ostringstream oss("In MachPar: machine ");
+	      std::stringstream oss ("In MachPar: machine "); 
+	      oss << m << " should have its weights allocated!\n";
+	      Error(oss.str().c_str());
+	    }
+	  }*/
+        /*} else { // before file_header_version3, all MachTab in a MachPar share the weights
+	    if(tadr[-1] == NULL ){
+		if(tadr[-1]) { debug2("Storing further address (%p) of machine %d\n",tadr[-1],m); } //  cout << "set NEW tadr" << endl; }
+		else { debug2("Storing address (%p) of machine %d\n",mt->GetTabAdr(),m); } //cout << "set tadr" << endl; }
+		tadr[-1]=mt->GetTabAdr();
+	    } else {
+		debug2("setting address of machine %d to %p\n",m,tadr[-1]);
+		//cout << "set address of machine " << m << " to " << tadr[-1] << endl;
+		//mt->FreeTabAdr();
+		mt->SetTabAdr(tadr[-1]);
+	    }
+	  }
+      } //if file_header_mtype_tab 
+    } // for all machines 
+*/
 }
 
 //
@@ -184,11 +224,12 @@ void MachPar::Info(bool detailed, char *txt)
     printf("%sParallel machine %d-%d, bs=%d, passes=%lu/%lu", txt, idim, odim, bsize, nb_forw, nb_backw);
     tm.disp(", ");
     printf("\n");
+    debug5("%s   data: %p -> %p, grad %p <- %p\n", txt, (void*)data_in, (void*)data_out, (void*)grad_in, (void*)grad_out);
     char ntxt[512];
     sprintf(ntxt,"%s  ", txt);
     for (unsigned int i=0; i<machs.size(); i++) machs[i]->Info(detailed, ntxt);
   }
-  printf("%stotal number of parameters: %d (%d MBytes)\n", txt, GetNbParams(), (int) (GetNbParams()*sizeof(REAL)/1048576));
+  printf("%stotal number of parameters: %lu (%d MBytes)\n", txt, GetNbParams(), (int) (GetNbParams()*sizeof(REAL)/1048576));
 }
 
 // TODO we do not organize correcty the input in the forward and backward pass with bunch mode !
@@ -197,8 +238,9 @@ void MachPar::Info(bool detailed, char *txt)
 
 
 // forward pass for all machines and copy output into cumulated output
-void MachPar::Forw(int eff_bsize)
+void MachPar::Forw(int eff_bsize, bool in_train)
 {
+  debug4("** MachPar::Forw: %p[%d] -> %p[%d]\n",(void*)data_in,idim,(void*)data_out,odim);
   if (machs.empty())
     Error("called Forw() for an empty parallel machine");
 
@@ -207,28 +249,66 @@ void MachPar::Forw(int eff_bsize)
   tm.start();
   if (eff_bsize<=0) eff_bsize=bsize;
 
-      // we need to set the pointers to the input data of indiv machines
-      // one after each other since this depends on the effective bsize !
-
-  REAL *iptr=data_in;
-  REAL *optr=data_out;
-  for (unsigned int m=0; m<machs.size(); m++) {
-    if (activ_forw[m]) {
-      machs[m]->SetDataIn(iptr);
-      machs[m]->Forw(eff_bsize);
 #ifdef BLAS_CUDA
-      cudaSetDevice(cuda_dev); // TODO: does this slow down ?
-      nppsCopy_32f(machs[m]->GetDataOut(),optr,eff_bsize*machs[m]->GetOdim());
+  Gpu::StreamSynchronize();
+#endif
+
+      // copy the input data of MachPar to the individual machines
+      // (they have their own input to ensure correct organisations of the batches)
+  REAL *iptr=data_in;
+  for (unsigned int m=0; m<machs.size(); m++) {
+    int m_idim = machs[m]->GetIdim();
+    if (activ_forw[m]) {
+      REAL* Mach_Data_In_Ptr= machs[m]->GetDataIn();
+#ifdef BLAS_CUDA
+      Gpu::SetConfig(machs[m]->GetGpuConfig());
+      Gpu::Memcpy2DAsync(Mach_Data_In_Ptr, m_idim*sizeof(REAL),
+                 iptr, idim*sizeof(REAL),
+                 m_idim*sizeof(REAL), eff_bsize,
+                 cudaMemcpyDeviceToDevice);
+      Gpu::CheckError("MachPar::Forw - After copying input of sub-machine");
 #else
-      memcpy(optr, machs[m]->GetDataOut(), eff_bsize*machs[m]->GetOdim()*sizeof(REAL));
+      for(int i=0; i<eff_bsize; i++)
+        memcpy(Mach_Data_In_Ptr + i*m_idim, iptr + i*idim, m_idim*sizeof(REAL));
 #endif
     }
-    else {
-    }
-    iptr += eff_bsize*machs[m]->GetIdim();
-    optr += eff_bsize*machs[m]->GetOdim();
+    iptr += m_idim;
   }
+
+    // forward all machines
+  for (unsigned int m=0; m<machs.size(); m++) {
+    if (activ_forw[m]) {
+      debug1("  MachPar[%d]: forward mach\n",m);
+      machs[m]->Forw(eff_bsize,in_train);
+    }
+    else {
+        // set output of inactive machines to zero
+#ifdef BLAS_CUDA
+      Gpu::MemSet(machs[m]->GetDataOut(), 0, machs[m]->GetOdim()*eff_bsize);
+#else
+      memset(machs[m]->GetDataOut(), 0, machs[m]->GetOdim()*eff_bsize);
+#endif
+    }
+  }
+
+      // copy the output data of the individual machines to MachPar's output
+      // we also do this for inactive machines to preserve the zero output
+  REAL *optr=data_out;
+  for (unsigned int m=0; m<machs.size(); m++) {
+    int m_odim = machs[m]->GetOdim();
+#ifdef BLAS_CUDA
+    Gpu::SetConfig(machs[m]->GetGpuConfig());
+    Gpu::Memcpy2DAsync(optr, odim*sizeof(REAL), machs[m]->GetDataOut(), m_odim*sizeof(REAL), m_odim*sizeof(REAL), eff_bsize, cudaMemcpyDeviceToDevice);
+    Gpu::CheckError("MachPar::Forw - After copying output of sub-machine");
+#else
+    for (int i=0; i<eff_bsize; i++)
+      memcpy(optr+i*odim, machs[m]->GetDataOut()+i*m_odim, m_odim*sizeof(REAL));
+#endif
+    optr += m_odim;
+  }
+
   nb_forw += eff_bsize; 
+  debug0("MachPar::Forw: done\n");
 
   tm.stop();
   debugMachOutp("MachPar",data_out,idim,odim,eff_bsize);
@@ -237,33 +317,63 @@ void MachPar::Forw(int eff_bsize)
 // backward pass for all machines and copy input gradient into cumulated gradient
 void MachPar::Backw(const float lrate, const float wdecay, int eff_bsize)
 {
+  debug4("** MachPar::Backw: %p[%d] <- %p[%d]\n",(void*)grad_in,idim,(void*)grad_out,odim);
   if (machs.empty())
     Error("called Backw() for an empty parallel machine");
   if (eff_bsize<=0) eff_bsize=bsize;
  
   tm.start();
 
-      // we need to set the pointers to output gradients of indiv machines
-      // one after each other since this depends on the effective bsize !
+      // copy the output gradients data of MachPar to the individual machines
+      // (they have their own gradients to ensure correct organisations of the batches)
 
-  REAL *gptr=grad_in;
-  REAL *optr=grad_out;
+  REAL *gptr=grad_out;
   for (unsigned int m=0; m<machs.size(); m++) {
+    int m_odim = machs[m]->GetOdim();
     if (activ_backw[m]) {
-      machs[m]->SetGradOut(optr);
-      machs[m]->Backw(lrate,wdecay,eff_bsize);
+      REAL* Mach_Grad_Out_Ptr= machs[m]->GetGradOut();
 #ifdef BLAS_CUDA
-      cudaSetDevice(cuda_dev); // TODO: does this slow down ?
-      nppsCopy_32f(machs[m]->GetGradIn(),gptr,eff_bsize*machs[m]->GetIdim());
+      Gpu::SetConfig(machs[m]->GetGpuConfig());
+      Gpu::Memcpy2DAsync(Mach_Grad_Out_Ptr, m_odim*sizeof(REAL),
+                 gptr, odim*sizeof(REAL),
+                 m_odim*sizeof(REAL), eff_bsize,
+                 cudaMemcpyDeviceToDevice);
+      Gpu::CheckError("MachPar::Forw - After copying gradient of sub-machine");
 #else
-      memcpy(gptr, machs[m]->GetGradIn(), eff_bsize*machs[m]->GetIdim()*sizeof(REAL));
+      for(int i=0; i<eff_bsize; i++)
+        memcpy(Mach_Grad_Out_Ptr + i*m_odim, gptr + i*odim, m_odim*sizeof(REAL));
 #endif
     }
-    else {
-    }
-    optr += eff_bsize*machs[m]->GetOdim();
-    gptr += eff_bsize*machs[m]->GetIdim();
+    gptr += m_odim;
   }
+
+  for (unsigned int m=0; m<machs.size(); m++) {
+    if (activ_backw[m])
+      machs[m]->Backw(lrate,wdecay,eff_bsize);
+    else {
+        // set input gradients of inactive machines to zero
+#ifdef BLAS_CUDA
+      Gpu::MemSet(machs[m]->GetGradIn(), 0, machs[m]->GetIdim()*eff_bsize);
+#else
+      memset(machs[m]->GetGradIn(), 0, machs[m]->GetIdim()*eff_bsize);
+#endif
+    }
+  }
+
+      // copy the input gradients of the individual machines to MachPar
+  gptr=grad_in;
+  for (unsigned int m=0; m<machs.size(); m++) {
+    int m_idim = machs[m]->GetIdim();
+#ifdef BLAS_CUDA
+    Gpu::SetConfig(machs[m]->GetGpuConfig());
+    Gpu::Memcpy2DAsync(gptr, idim*sizeof(REAL), machs[m]->GetGradIn(), m_idim*sizeof(REAL), m_idim*sizeof(REAL), eff_bsize, cudaMemcpyDeviceToDevice);
+    Gpu::CheckError("MachPar::Forw - After copying output of sub-machine");
+#else
+    for (int i=0; i<eff_bsize; i++)
+      memcpy(gptr+i*idim, machs[m]->GetGradIn()+i*m_idim, m_idim*sizeof(REAL));
+#endif
+  }
+
   nb_backw += eff_bsize; 
 
   tm.stop();

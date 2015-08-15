@@ -2,7 +2,7 @@
  * This file is part of the continuous space language and translation model toolkit
  * for statistical machine translation and large vocabulary speech recognition.
  *
- * Copyright 2014, Holger Schwenk, LIUM, University of Le Mans, France
+ * Copyright 2015, Holger Schwenk, LIUM, University of Le Mans, France
  *
  * The CSLM toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version 3 as
@@ -17,7 +17,7 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  *
- * $Id: MachConfig.h,v 1.6 2014/03/25 21:52:53 schwenk Exp $
+ *
  */
 
 #ifndef _MachConfig_h
@@ -29,12 +29,16 @@
 #include <boost/program_options/value_semantic.hpp>
 #include <boost/program_options/variables_map.hpp>
 #include <fstream>
+#include <map>
 #include <sstream>
 #include <string>
 #include <vector>
+#include <map>
 #include "MachMulti.h"
 #include "MachLin.h"
 #include "MachTab.h"
+
+
 
 template<class T>
 class opt_sem;
@@ -162,6 +166,15 @@ public:
   inline std::string get_input_file () const
   {
     const boost::program_options::variable_value &vv = this->vmGeneralOptions["input-file"];
+    return (vv.empty() ? std::string() : vv.as<std::string>());
+  }
+
+ /**
+  * get file name of the auxiliary data (or void string if not set)
+  */
+  inline std::string get_aux_file () const
+  {
+    const boost::program_options::variable_value &vv = this->vmGeneralOptions["aux-file"];
     return (vv.empty() ? std::string() : vv.as<std::string>());
   }
 
@@ -306,6 +319,16 @@ public:
   inline std::string get_tm_scores () const { return this->vmGeneralOptions["tm-scores"].as<std::string>(); }
 
   /**
+   * get learning rate parameters
+   */
+  inline std::string get_lrate () const { return this->vmGeneralOptions["lrate"].as<std::string>(); }
+
+  /**
+   * * get MachSeed : seed value for weights random init
+   */
+  inline int get_MachSeed () const { return this->vmGeneralOptions["MachSeed"].as<int>();}
+
+  /**
    * get number of hypothesis to read per n-best
    */
   inline int get_inn () const { return this->vmGeneralOptions["inn"].as<int>(); }
@@ -319,6 +342,11 @@ public:
    * get offset to add to n-best ID
    */
   inline int get_offs () const { return this->vmGeneralOptions["offs"].as<int>(); }
+
+  /**
+   * get the dimension of auxiliary data
+   */
+  inline int get_aux_dim () const { return this->vmGeneralOptions["aux-dim"].as<int>(); }
 
   /**
    * get number of scores in phrase table
@@ -366,6 +394,11 @@ public:
   inline int get_tm_pos () const { return this->vmGeneralOptions["tm-pos"].as<int>(); }
 
   /**
+   * get position of target words
+   */
+  inline int get_tg_pos () const { return this->vmGeneralOptions["target-pos"].as<int>(); }
+
+  /**
    * get buffer size
    */
   inline int get_buf_size () const { return this->vmGeneralOptions["buf-size"].as<int>(); }
@@ -396,14 +429,19 @@ public:
   inline REAL get_random_init_bias () const { return this->rInitBias; }
 
   /**
-   * get initial learning rate
+   * get value for clipping weights
    */
-  inline REAL get_lrate_beg () const { return this->vmGeneralOptions["lrate-beg"].as<REAL>(); }
+  inline REAL get_clip_weights () const { return this->rClipWeights; }
 
   /**
-   * get learning rate multiplier for exponential decrease
+   * get value for clipping gradients on weights
    */
-  inline REAL get_lrate_mult () const { return this->vmGeneralOptions["lrate-mult"].as<REAL>(); }
+  inline REAL get_clip_gradients_weights () const { return this->rClipGradWeights; }
+
+  /**
+   * get value for clipping gradients on biases
+   */
+  inline REAL get_clip_gradients_bias () const { return this->rClipGradBias; }
 
   /**
    * get coefficient of weight decay
@@ -440,11 +478,36 @@ public:
    */
   inline bool get_server () const { return (this->vmGeneralOptions.count("server") > 0); }
 
+  /**
+   * get state of stable sorting
+   */
+  inline bool get_unstable_sort () const { return (this->vmGeneralOptions.count("unstable-sort") > 0); }
+
+  /**
+   * get state of using word classes in the output layer
+   */
+  inline bool get_use_word_class () const { return (this->vmGeneralOptions.count("use-word-class") > 0); }
+
+  /**
+   * get state of using factors 
+   */
+  inline bool get_use_factors () const { return (this->vmGeneralOptions.count("use-factors") > 0); }
+
+  /**
+   * get layer specification to dump activities when processing n-grams
+   */
+  inline std::string get_layerfile () const
+  {
+    const boost::program_options::variable_value &vv = this->vmGeneralOptions["dump-activities"];
+    return (vv.empty() ? std::string() : vv.as<std::string>());
+  }
+
 #ifdef BLAS_CUDA
   /**
    * get CUDA devices
+   * @returns list of indexes (eg ":0:2" for devices 0 and 2) or number of devices
    */
-  std::vector<int> get_cuda_devices () const { return this->vmGeneralOptions["cuda-device"].as<std::vector<int> >(); }
+  std::string get_cuda_devices () const;
 #endif
 
 
@@ -463,6 +526,7 @@ private:
     MachDescrIncomplete,
     ProbReadMachName,
     UnknownMachType,
+    UnknownMachName,
     UnknownMachCode,
     MachWithoutEqualChar,
     ProbReadMachParams,
@@ -476,10 +540,14 @@ private:
   bool bNeedConfFile; ///< configuration file is required on command line
   bool bReadMachOnly; ///< read machine structure without creating new object
   int  iBlockSize;    ///< general block size for faster training
+  int  iRepeat;    ///< repeat sub-machines 
   REAL rPercDropOut;   ///< general percentage of drop-out
   REAL rInitProjLayer; ///< general value for random initialization of the projection layer
   REAL rInitWeights;   ///< general value for random initialization of the weights
   REAL rInitBias;      ///< general value for random initialization of the bias
+  REAL rClipWeights;     ///< general value for clipping weights
+  REAL rClipGradWeights; ///< general value for clipping gradients on weights
+  REAL rClipGradBias;    ///< general value for clipping gradients on biases
   std::string sProgName; ///< program name
   std::string sConfFile; ///< configuration file name
   std::ifstream ifsConf; ///< configuration file stream
@@ -495,7 +563,8 @@ private:
   boost::program_options::options_description odMachTabConf;    ///< options for a table lookup machine
   boost::program_options::positional_options_description podCommandLine; ///< options without name
   boost::program_options::variables_map vmGeneralOptions; ///< map of general options
-
+  std::map<std::string,Mach*> mMachNameMap; ///< map of machine names
+  
   /**
    * open configuration file
    * @return false in case of error, true otherwise
@@ -506,11 +575,10 @@ private:
    * reads next machine block from configuration file
    * @param pNewMach set to new machine object pointer, or NULL if 'end' mark is read (and possibly in case of error)
    * @param iBlockSize block size for faster training
-   * @param prLookUpTable look-up table for each MachTab in a MachPar (default NULL)
    * @return true if 'end' mark is read, false otherwise
    * @note error code is set if an error occurred
    */
-  bool read_next_machine (Mach *&pNewMach, int iBlockSize, REAL *prLookUpTable = NULL);
+  bool read_next_machine (Mach *&pNewMach, int iBlockSize);
 
   /**
    * creates a multiple machine, reads his parameters and reads submachine blocks
@@ -525,13 +593,12 @@ private:
    * creates a simple machine and reads his parameters
    * @param iMachType type of simple machine
    * @param iBlockSize block size for faster training
-   * @param prLookUpTable look-up table for each MachTab in a MachPar (default NULL)
    * @param bMachLin true if the machine is a linear machine, default false otherwise
    * @param bMachTab true if the machine is a table lookup machine, default false otherwise
    * @return new machine object (may be NULL in case of error)
    * @note error code is set if an error occurred
    */
-  Mach *read_simple_machine (int iMachType, int iBlockSize, REAL *prLookUpTable = NULL, bool bMachLin = false, bool bMachTab = false);
+  Mach *read_simple_machine (int iMachType, int iBlockSize, bool bMachLin = false, bool bMachTab = false);
 
   /**
    * reads machine parameters and fills it in given map
@@ -542,7 +609,7 @@ private:
   bool read_machine_parameters (const boost::program_options::options_description &odMachineConf, boost::program_options::variables_map &vmMachParams);
 
   /**
-   * parses machine parameters (dimensions and other options)
+   * parses machine parameters
    * @param vsTokens vector of tokens
    * @return vector of options
    * @throw boost::program_options::error object in case of error

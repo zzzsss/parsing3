@@ -2,7 +2,7 @@
  * This file is part of the continuous space language and translation model toolkit
  * for statistical machine translation and large vocabulary speech recognition.
  *
- * Copyright 2014, Holger Schwenk, LIUM, University of Le Mans, France
+ * Copyright 2015, Holger Schwenk, LIUM, University of Le Mans, France
  *
  * The CSLM toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version 3 as
@@ -17,7 +17,7 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  *
- * $Id: MachSplit.cpp,v 1.47 2014/03/25 21:52:53 schwenk Exp $
+ *
  */
 
 using namespace std;
@@ -25,35 +25,36 @@ using namespace std;
 
 #include "Tools.h"
 #include "MachSplit.h"
+
+#ifdef BLAS_CUDA
 #include "Gpu.cuh"
+#endif
 
 void MachSplit::do_alloc()
 {
 #ifdef BLAS_CUDA
-  cudaSetDevice(cuda_dev);
-  grad_in = cuda_alloc(idim*bsize, "input gradient in split machine");
+  Gpu::SetConfig(gpu_conf);
+  grad_in = Gpu::Alloc(idim*bsize, "input gradient in split machine");
 
-  int dev_count = (cuda_devs.back() + 1);
-  cudaGetDeviceCount(&dev_count);
+  size_t dev_count = Gpu::GetDeviceCount();
   gpu_dev_data_in.reserve(dev_count);
   gpu_dev_grad_in.reserve(dev_count);
   gpu_dev_data_in.resize(dev_count, NULL);
   gpu_dev_grad_in.resize(dev_count, NULL);
 
   // allocate local grad_in and data_in buffers for each GPU
-  printf("#### GPU allocate local data for %lu GPU\n", cuda_devs.size());
-  for (uint i=0; i<cuda_devs.size(); i++) {
-    int dev = cuda_devs[i];
-    if (dev == cuda_dev) {
+  printf("#### GPU allocate local data for %lu GPU\n", dev_count);
+  for (size_t dev=0; dev<dev_count; dev++) {
+    if (dev == Gpu::GetDevice(gpu_conf)) {
       // no local buffer copy on master GPU
-      printf("#### GPU %d: use local data_in from MachSplit\n", cuda_dev);
+      printf("#### GPU %d: use local data_in from MachSplit\n", Gpu::GetCudaDevice(dev));
       gpu_dev_grad_in[dev] = grad_in;
     }
     else {
-      cudaSetDevice(dev);
-      gpu_dev_data_in[dev] = cuda_alloc(idim*bsize*sizeof(REAL), "MachSplit: GPU local data_in");
-      printf("#### GPU %d: allocate local data_in=%p\n", dev, gpu_dev_data_in[dev]);
-      gpu_dev_grad_in[dev] = cuda_alloc(idim*bsize*sizeof(REAL), "MachSplit::Backw tmp for AXPY");
+      Gpu::SetDevice(dev);
+      gpu_dev_data_in[dev] = Gpu::Alloc(idim*bsize*sizeof(REAL), "MachSplit: GPU local data_in");
+      printf("#### GPU %d: allocate local data_in=%p\n", Gpu::GetCudaDevice(dev), gpu_dev_data_in[dev]);
+      gpu_dev_grad_in[dev] = Gpu::Alloc(idim*bsize*sizeof(REAL), "MachSplit::Backw tmp for AXPY");
     }
   }
 #else
@@ -82,17 +83,20 @@ void MachSplit::do_delete()
 MachSplit::MachSplit()
  : MachMulti()
 {
+  debug0("** constructor MachSplit\n");
   data_out=grad_out=NULL;	// important to prevent freeing!
 }
 
 MachSplit::MachSplit(const MachSplit &m)
  : MachMulti(m)
 {
+  debug0("** copy constructor MachSplit\n");
   data_out=grad_out=NULL;   // important to prevent freeing!
 }
 
 MachSplit::~MachSplit()
 {
+  debug0("** destructor MachSplit\n");
   do_delete();
 }
 
@@ -106,6 +110,7 @@ MachSplit *MachSplit::Clone()
  
 void MachSplit::MachAdd(Mach *new_mach)
 {
+  debug0("*** MachSplit::MachAdd()");
 
     // REMARK: there is no common output layer no output gradient !!
     //         input gradient is cumulated
@@ -117,6 +122,7 @@ void MachSplit::MachAdd(Mach *new_mach)
     idim=new_mach->GetIdim();
     odim=new_mach->GetOdim();
     bsize=new_mach->GetBsize();
+    debug1("*** adding 1st machine: setting output dim to %d\n", odim);
     data_in=NULL; // will be set by MachSplit::SetDataIn()
     new_mach->SetDataIn(data_in);
     new_mach->SetGradOut(NULL); // must be done by Trainer()
@@ -124,6 +130,7 @@ void MachSplit::MachAdd(Mach *new_mach)
     do_alloc();
   }
   else {
+    debug1("*** add new machine of odim %d to split machine\n",new_mach->GetOdim());
     if (bsize!=new_mach->GetBsize())
       Error("bunch size of new split machine does not match");
     if (idim!=new_mach->GetIdim())
@@ -133,9 +140,10 @@ void MachSplit::MachAdd(Mach *new_mach)
       // resize output, we just change odim, no allocation is done since outputs are individual
       // idim does not change !
     odim += new_mach->GetOdim();
+    debug2("*** adding %dth machines: resize output dim to %d\n", (int) machs.size(), odim);
 #ifdef BLAS_CUDA
-    int dev = new_mach->GetCudaDevice();
-    if (dev == cuda_dev)
+    size_t dev = Gpu::GetDevice(new_mach->GetGpuConfig());
+    if (dev == Gpu::GetDevice(gpu_conf))
       new_mach->SetDataIn(data_in);   // master GPU is locally chained
     else
       new_mach->SetDataIn(gpu_dev_data_in[dev]);  // remote GPU has its own copy of data_in (data will be transfered by Forw())
@@ -147,6 +155,7 @@ void MachSplit::MachAdd(Mach *new_mach)
 
   activ_forw.push_back(true);
   activ_backw.push_back(true);
+  debug4("*** data_in=%p, grad_in=%p, data_out=%p, grad_out=%p\n", data_in, grad_in, data_out, grad_out);
 }
 
 
@@ -181,22 +190,23 @@ void MachSplit::SetDataIn(REAL *data)
 {
   data_in=data;
     // all machines point on the same input
+  debug1("*** MachSplit::SetDataIn() setting all machine to %p\n", data_in); 
 #ifdef BLAS_CUDA
-  if (cuda_devs.size()==1) { // only one GPU device
+  if (Gpu::GetDeviceCount()==1) { // only one GPU device
     printf("#### CUDA set data_in for one GPU\n");
     for (uint m=0; m<machs.size(); m++) {
       machs[m]->SetDataIn(data_in);
     }
   }
-  else {	// multiple GPU devices (no need to use cudaSetDevice() here since we manipulate CPU classes)
-    printf("#### CUDA set data_in for %lu GPU\n", cuda_devs.size());
+  else {	// multiple GPU devices (no need to use Gpu::SetConfig() here since we manipulate CPU classes)
+    printf("#### CUDA set data_in for %lu GPU\n", Gpu::GetDeviceCount());
     for (uint m=0; m<machs.size(); m++) {
-      int d = machs[m]->GetCudaDevice();
-      if (d == cuda_dev)
+      size_t d = Gpu::GetDevice(machs[m]->GetGpuConfig());
+      if (d == Gpu::GetDevice(gpu_conf))
         machs[m]->SetDataIn(data_in);	// master GPU is locally chained
       else
         machs[m]->SetDataIn(gpu_dev_data_in[d]);  // remote GPU has its own copy of data_in (data will be transfered by Forw())
-      printf("### - mach %d is on GPU %d with input %p\n", m, d, machs[m]->GetDataIn());
+      printf("### - mach %d is on GPU %d with input %p\n", m, Gpu::GetCudaDevice(d), machs[m]->GetDataIn());
     }
   }
 #else
@@ -228,17 +238,16 @@ REAL* MachSplit::GetDataOut(int mid)
 //-----------------------------------------------
 
 
-void MachSplit::ReadData(ifstream &inpf, size_t s, int bs)
+void MachSplit::ReadData(istream &inpf, size_t s, int bs)
 {
+  debug0("* read data of MachSplit\n");
 #ifdef BLAS_CUDA
-  if (s!=machs.size()) {
-    cerr << "ERROR: data block of split machine has " << s << " machines (" << machs.size() << " were expected)" << endl;    Error();
-  }
+  if (s!=machs.size())
+    ErrorN("data block of split machine has %zu machines (%zu were expected)", s, machs.size());
 
   odim=0;
-  size_t stDevIndex = 0;
-  for (vector<Mach*>::iterator it = machs.begin(); it!=machs.end(); ++it, stDevIndex++) {
-    cudaSetDevice(cuda_devs[stDevIndex % cuda_devs.size()]);
+  for (vector<Mach*>::iterator it = machs.begin(); it!=machs.end(); ++it) {
+    Gpu::NewConfig();
     (*it) = Mach::Read(inpf, bs);
     odim += (*it)->GetOdim();
   }
@@ -256,7 +265,7 @@ void MachSplit::ReadData(ifstream &inpf, size_t s, int bs)
   do_delete();
   do_alloc();
 #ifdef BLAS_CUDA
-  if (cuda_devs.size() > 1) cudaSetDevice(cuda_dev);
+  Gpu::SetConfig(gpu_conf);
 #endif
 
   for (uint m=0; m<machs.size(); m++) {
@@ -284,7 +293,7 @@ void MachSplit::Info(bool detailed, char *txt)
     sprintf(ntxt,"%s  ", txt);
     for (unsigned int i=0; i<machs.size(); i++) machs[i]->Info(detailed, ntxt);
   }
-  printf("%stotal number of parameters: %d (%d MBytes)\n", txt, GetNbParams(), GetNbParams()*(int) sizeof(REAL)/1048576);
+  printf("%stotal number of parameters: %lu (%d MBytes)\n", txt, GetNbParams(), (int) (GetNbParams()*sizeof(REAL)/1048576));
 }
 
 
@@ -301,23 +310,27 @@ void MachSplit::Info(bool detailed, char *txt)
 //    the master GPU copys the data to this local buffers
 //    there is only one buffer even when a GPU processes multiple parts of the split machine !
 //
-void MachSplit::Forw(int eff_bsize)
+void MachSplit::Forw(int eff_bsize, bool in_train)
 {
+  debug3("** MachSplit::Forw: mach=%p data: %p <- %p\n", this, data_in, data_out);
   if (machs.empty())
     Error("called Forw() for an empty split machine");
 
   debugMachInp("MachSplit",data_in,idim,odim,eff_bsize);
 
+#ifdef BLAS_CUDA
+  Gpu::StreamSynchronize();
+#endif
   tm.start();
 
   if (eff_bsize<=0) eff_bsize=bsize;
 
 #ifdef BLAS_CUDA
     // copy the current input data to the other GPU devices
-  if (cuda_devs.size() > 1)
-    for (uint i=0; i<cuda_devs.size(); i++) {
-      int d = cuda_devs[i];
+  if (Gpu::GetDeviceCount() > 1)
+    for (size_t d=0; d<Gpu::GetDeviceCount(); d++) {
       if (NULL != gpu_dev_data_in[d]) {
+        debug3("#### CUDA: copy input from %p to %p on device %d\n",data_in, gpu_dev_data_in[d], Gpu::GetCudaDevice(d));
         cudaMemcpy(gpu_dev_data_in[d], data_in, idim*eff_bsize*sizeof(REAL), cudaMemcpyDeviceToDevice);	// CUDA knows the device by the unified address space
       }
     }
@@ -325,15 +338,20 @@ void MachSplit::Forw(int eff_bsize)
 
   for (unsigned int m=0; m<machs.size(); m++) {
     if (activ_forw[m]) {
-      machs[m]->Forw(eff_bsize);
+      debug2("MachSplit::Forw mach=%d @%p\n",m,machs[m]);
+      machs[m]->Forw(eff_bsize,in_train);
         // its the responsibility of the Trainer to collect the individual outputs
-    }
-    else {
-      Error("  MachSplit: forw deactivated\n");
     }
   }
 #ifdef BLAS_CUDA
-  if (cuda_devs.size()>1) cudaSetDevice(cuda_dev);	// reset to master GPU
+  // synchronize to all streams
+  for (unsigned int m=0; m<machs.size(); m++) {
+    if (activ_forw[m]) {
+      Gpu::SetConfig(machs[m]->GetGpuConfig());
+      Gpu::StreamSynchronize();
+    }
+  }
+  Gpu::SetConfig(gpu_conf);	// reset to master GPU
 #endif
   nb_forw += eff_bsize;
 
@@ -345,6 +363,7 @@ void MachSplit::Forw(int eff_bsize)
 // backward pass for all machines and cumulate gradient at input
 void MachSplit::Backw(const float lrate, const float wdecay, int eff_bsize)
 {
+  debug3("** MachSplit::Backw: mach=%p grads: %p <- %p\n", this, grad_in, grad_out);
   if (machs.empty())
     Error("called Backw() for an empty split machine");
 
@@ -357,7 +376,7 @@ void MachSplit::Backw(const float lrate, const float wdecay, int eff_bsize)
      // verify that the output gradients of the individual machines were set by the Trainer
   for (unsigned int m=0; m<machs.size(); m++) {
     if (! machs[m]->GetGradOut())
-      Error("MachSplit::Backw() the gradient of machine %d is not set", (int) m);
+      ErrorN("MachSplit::Backw() this=%p, the output gradient of machine %d @%p is not set", this, (int) m, machs[m]);
   }
 
 #ifdef BLAS_CUDA
@@ -366,18 +385,22 @@ void MachSplit::Backw(const float lrate, const float wdecay, int eff_bsize)
 
    // backward 1st machine
   if (activ_backw[0]) {
+    debug1("MachSplit: back first mach @%p\n",machs[0]);
     machs[0]->Backw(lrate,wdecay,eff_bsize);
 #ifdef BLAS_CUDA
     last_grad_in = machs[0]->GetGradIn();
-    cuda_check_error("MachSplit::Backw after 1st mach");
+    Gpu::CheckError("MachSplit::Backw after 1st mach");
 #else
     memcpy(grad_in, machs[0]->GetGradIn(), idim*eff_bsize*sizeof(REAL));
 #endif
   }
   else {
       // clear the gradient so we can cumulate the following ones
+    debug1("MachSplit: zero grads of first mach @%p\n",machs[0]);
 #ifdef BLAS_CUDA
-    cudaMemset(grad_in, 0.0, idim*eff_bsize*sizeof(REAL));
+    Gpu::SetConfig(machs[0]->GetGpuConfig());
+    Gpu::MemsetAsync(grad_in, 0.0, idim*eff_bsize*sizeof(REAL));
+    Gpu::StreamSynchronize();
     last_grad_in = grad_in;
 #else
     memset(grad_in, 0.0, idim*eff_bsize*sizeof(REAL));
@@ -386,34 +409,47 @@ void MachSplit::Backw(const float lrate, const float wdecay, int eff_bsize)
 
      // backward following machines, add gradient on existing ones
 #ifdef BLAS_CUDA
+  for (unsigned int m=1; m<machs.size(); m++) {
+    if (activ_backw[m]) {
+      debug2("  MachSplit[%d]: GPU backw mach @%p\n",m, machs[m]);
+      machs[m]->Backw(lrate,wdecay,eff_bsize);
+      Gpu::CheckError("MachSplit::Backw after following mach");
+    }
+    else {
+      debug1("  MachSplit[%d]: GPU backw deactivated\n",m);
+    }
+  }
+  debug0("  MachSplit: GPU add up gradients\n");
+  Gpu::SetConfig(machs[0]->GetGpuConfig());
   int size = idim*eff_bsize;
   for (unsigned int m=1; m<machs.size(); m++) {
     if (activ_backw[m]) {
-      machs[m]->Backw(lrate,wdecay,eff_bsize);
-      cuda_check_error("MachSplit::Backw after following mach");
+      Gpu::StreamSynchronize();
+      Gpu::SetConfig(machs[m]->GetGpuConfig());
       REAL * grad_ptr = machs[m]->GetGradIn();
       REAL onef = 1.f;
       int one = 1;
-      int dev = machs[m]->GetCudaDevice();
+      size_t dev = Gpu::GetDevice(machs[m]->GetGpuConfig());
       if (gpu_dev_grad_in[dev] != last_grad_in) {
-        cudaMemcpy(gpu_dev_grad_in[dev], last_grad_in, size*sizeof(REAL), cudaMemcpyDeviceToDevice);
+        Gpu::MemcpyAsync(gpu_dev_grad_in[dev], last_grad_in, size*sizeof(REAL), cudaMemcpyDeviceToDevice);
         last_grad_in = gpu_dev_grad_in[dev];
       }
+      debug6("AXPY(%d, %f, %p, %d %p, %d)\n", size, onef, grad_ptr, one, gpu_dev_grad_in[dev], one);
       AXPY(size, onef, grad_ptr, one, gpu_dev_grad_in[dev], one);
-      cuda_check_error("MachSplit::Backw after following mach AXPY");
-    }
-    else {
+      Gpu::CheckError("MachSplit::Backw after following mach AXPY");
     }
   }
   if (grad_in != last_grad_in)
-    cudaMemcpy(grad_in, last_grad_in, size*sizeof(REAL), cudaMemcpyDeviceToDevice);
+    Gpu::MemcpyAsync(grad_in, last_grad_in, size*sizeof(REAL), cudaMemcpyDeviceToDevice);
+  Gpu::StreamSynchronize();
 
-  if (cuda_devs.size()>1) cudaSetDevice(cuda_dev);
-  cuda_check_error("MachSplit::Backw end");
+  Gpu::SetConfig(gpu_conf);
+  Gpu::CheckError("MachSplit::Backw end");
 
 #else
   for (unsigned int m=1; m<machs.size(); m++) {
     if (activ_backw[m]) {
+      debug2("  MachSplit[%d]: CPU backw mach @%p\n",m, machs[m]);
       machs[m]->Backw(lrate,wdecay,eff_bsize);
       REAL * grad_ptr = machs[m]->GetGradIn();
       int size = idim*eff_bsize;
@@ -422,6 +458,7 @@ void MachSplit::Backw(const float lrate, const float wdecay, int eff_bsize)
       AXPY(&size, &onef, grad_ptr, &one, grad_in, &one);
     }
     else {
+      debug1("  MachSplit[%d]: CPU backw deactivated\n",m);
     }
   }
 #endif

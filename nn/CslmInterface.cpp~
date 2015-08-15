@@ -54,7 +54,7 @@ static inline void write_conf_no_split(parsing_conf* parameters,int dict_count,i
 		WRITE_CONF_ONE(width,parameters->CONF_NN_h_size[i]);
 		width = parameters->CONF_NN_h_size[i];
 	}
-	//3.output layer -- no dropout at output layer
+	//3.output layer
 	if(outdim>1){
 		//output multiclass-class(0 or 1)
 		fout << "Softmax = " << width << "x" << outdim << " fanio-init-weights=1.0 drop-out=0.0\n";

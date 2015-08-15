@@ -2,7 +2,7 @@
  * This file is part of the continuous space language and translation model toolkit
  * for statistical machine translation and large vocabulary speech recognition.
  *
- * Copyright 2014, Holger Schwenk, LIUM, University of Le Mans, France
+ * Copyright 2015, Holger Schwenk, LIUM, University of Le Mans, France
  *
  * The CSLM toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version 3 as
@@ -17,7 +17,7 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  *
- * $Id: MachTanh.h,v 1.18 2014/03/25 21:52:53 schwenk Exp $
+ *
  *
  * sigmoidal machine:  output = tanh(weights * input + biases)
  */
@@ -37,12 +37,12 @@ private:
 protected:
   MachTanh(const MachTanh &m);			// create a copy of the machine
 public:
-  MachTanh(const int=0, const int=0, const int=128, const ulong=0, const ulong=0);	
+  MachTanh(const int=0, const int=0, const int=128, const ulong=0, const ulong=0, const int shareid=-1, const bool xdata=false);	
   virtual ~MachTanh();
   virtual MachTanh *Clone() {return new MachTanh(*this);}	// create a copy of the machine
   virtual int GetMType() {return file_header_mtype_tanh;};	// get type of machine
   virtual void Info(bool=false, char *txt=(char*)"");	// display (detailed) information on machine
-  virtual void Forw(int=0);	// calculate outputs for current inputs
+  virtual void Forw(int=0, bool=false);	// calculate outputs for current inputs
     // backprop gradients from output to input and update all weights
   virtual void Backw (const float lrate, const float wdecay, int=0);
 };

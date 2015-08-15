@@ -2,7 +2,7 @@
  * This file is part of the continuous space language and translation model toolkit
  * for statistical machine translation and large vocabulary speech recognition.
  *
- * Copyright 2014, Holger Schwenk, LIUM, University of Le Mans, France
+ * Copyright 2015, Holger Schwenk, LIUM, University of Le Mans, France
  *
  * The CSLM toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version 3 as
@@ -17,7 +17,7 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  *
- * $Id: MachSplit.h,v 1.26 2014/03/25 21:52:53 schwenk Exp $
+ *
  *
  * Split one input into several output layers:
  *   - all the indiv machines must have the same input dimension and bsize
@@ -66,7 +66,7 @@ private:
   void do_alloc();	// perform allocation of dynamic data structures
   void do_delete();	// delete data structures
 protected:
-  virtual void ReadData(ifstream&, size_t, int=0); // read binary data
+  virtual void ReadData(istream&, size_t, int=0); // read binary data
   MachSplit(const MachSplit &);			// create a copy of the machine (without submachines)
 public:
   MachSplit();	// create initial sequence with no machine
@@ -93,12 +93,12 @@ public:
     return NULL;
   }
   virtual void SetGradOut(REAL *g) {		 // set pointer of output gradient
-    printf("WARNIG: MachSplit::SetGradOut() has no output gradient for the whole machine\n");
+    printf("WARNING: MachSplit::SetGradOut() has no output gradient for the whole machine\n");
   }
 
     // standard functions
   virtual void Info(bool=false, char *txt=(char*)"");	// display (detailed) information on machine
-  virtual void Forw(int=0);	// calculate outputs for current inputs
+  virtual void Forw(int=0, bool=false);	// calculate outputs for current inputs
   virtual void Backw(const float lrate, const float wdecay, int=0);	// calculate gradients at input for current gradients at output
 };
 

@@ -2,7 +2,7 @@
  * This file is part of the continuous space language and translation model toolkit
  * for statistical machine translation and large vocabulary speech recognition.
  *
- * Copyright 2014, Holger Schwenk, LIUM, University of Le Mans, France
+ * Copyright 2015, Holger Schwenk, LIUM, University of Le Mans, France
  *
  * The CSLM toolkit is free software; you can redistribute it and/or modify it
  * under the terms of the GNU Lesser General Public License version 3 as
@@ -17,7 +17,7 @@
  * along with this library; if not, write to the Free Software Foundation,
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  *
- * $Id: MachMulti.cpp,v 1.32 2014/03/25 21:52:53 schwenk Exp $
+ *
  */
 
 using namespace std;
@@ -33,12 +33,14 @@ using namespace std;
 MachMulti::MachMulti()
  : Mach(0,0,0)
 {
+  debug0("** constructor MachMulti\n");
   machs.clear();
 }
 
 MachMulti::MachMulti(const MachMulti &m)
  : Mach(m)
 {
+  debug0("** copy constructor MachMulti\n");
   machs.clear();
 }
 
@@ -48,6 +50,7 @@ MachMulti::MachMulti(const MachMulti &m)
 
 MachMulti *MachMulti::Clone()
 {
+  debug1("** MachMulti::Clone %p\n", this);
   MachMulti *m = new MachMulti(*this);
   if (m != NULL)
     m->CloneSubmachs(*this);
@@ -56,7 +59,9 @@ MachMulti *MachMulti::Clone()
 
 void MachMulti::CloneSubmachs(const MachMulti &mm)
 {
+  debug1("** MachMulti::CloneSubmachs %p\n", &mm);
   for (unsigned int m=0; m<mm.machs.size(); m++) {
+    debug2("**  - clone machine %d at %p\n",m,mm.machs[m]);
     this->MachAdd( mm.machs[m]->Clone() );
     if (!activ_forw.empty())
       activ_forw.back() = mm.activ_forw[m];
@@ -71,6 +76,7 @@ void MachMulti::CloneSubmachs(const MachMulti &mm)
 
 MachMulti::~MachMulti()
 {
+  debug1("** destructor MachMulti %lx\n", (luint) this);
   MachMulti::Delete();
   machs.clear();
 }
@@ -98,8 +104,8 @@ Mach *MachMulti::MachDel()
   return NULL;
 }
 
-int MachMulti::GetNbParams() {
-  int sum=0;
+ulong MachMulti::GetNbParams() {
+  ulong sum=0;
 
   for (vector<Mach*>::iterator it = machs.begin(); it!=machs.end(); ++it) {
     sum += (*it)->GetNbParams();
@@ -112,13 +118,15 @@ int MachMulti::GetNbParams() {
 //-----------------------------------------------
 
 
-void MachMulti::WriteParams(ofstream &of) {
+void MachMulti::WriteParams(ostream &of) {
+  debug0("* write params of MachMulti\n");
   Mach::WriteParams(of);
   int nbm=machs.size();
   of.write((char*) &nbm, sizeof(int));
 }
 
-void MachMulti::WriteData(ofstream &outf) {
+void MachMulti::WriteData(ostream &outf) {
+  debug0("* writing data of multiple machine to file\n");
   int nbm=machs.size(), s=sizeof(REAL);
   outf.write((char*) &nbm, sizeof(int));
   outf.write((char*) &s, sizeof(int));
@@ -131,8 +139,9 @@ void MachMulti::WriteData(ofstream &outf) {
 // File input
 //-----------------------------------------------
 
-void MachMulti::ReadParams(ifstream &inpf, bool with_alloc)
+void MachMulti::ReadParams(istream &inpf, bool with_alloc)
 {
+  debug0("* read params of type MachMulti\n");
   if (machs.size() > 0)
     Error("Trying to read multiple machine into non empty data structures\n");
 
@@ -148,11 +157,11 @@ void MachMulti::ReadParams(ifstream &inpf, bool with_alloc)
   }
 }
 
-void MachMulti::ReadData(ifstream &inpf, size_t s, int bs)
+void MachMulti::ReadData(istream &inpf, size_t s, int bs)
 {
-  if (s!=machs.size()) {
-    cerr << "ERROR: data block of multiple machine has " << s << " machines (" << machs.size() << " were expected)" << endl;    Error();
-  } 
+  debug0("* read data of MachMulti\n");
+  if (s!=machs.size())
+    ErrorN("data block of multiple machine has %zu machines (%zu were expected)", s, machs.size());
   
   for (vector<Mach*>::iterator it = machs.begin(); it!=machs.end(); ++it) {
     (*it) = Mach::Read(inpf, bs);
@@ -170,10 +179,10 @@ void MachMulti::SetBsize(int bs)
   for (uint i=0; i<machs.size(); i++) machs[i]->SetBsize(bs);
 }
 
-void MachMulti::ResetNbEx()
+void MachMulti::SetNbEx(ulong nf, ulong nb)
 {
-  Mach::ResetNbEx();
-  for (uint i=0; i<machs.size(); i++) machs[i]->ResetNbEx();
+  Mach::SetNbEx(nf, nb);
+  for (uint i=0; i<machs.size(); i++) machs[i]->SetNbEx(nf, nb);
 }
 
 void MachMulti::Info(bool detailed, char *txt)
@@ -197,10 +206,27 @@ void MachMulti::Info(bool detailed, char *txt)
     sprintf(ntxt,"%s  ", txt);
     for (unsigned int i=0; i<machs.size(); i++) machs[i]->Info(detailed, ntxt);
   }
-  printf("%stotal number of parameters: %d (%d MBytes)\n", txt, GetNbParams(), (int) (GetNbParams()*sizeof(REAL)/1048576));
+  printf("%stotal number of parameters: %lu (%d MBytes)\n", txt, GetNbParams(), (int) (GetNbParams()*sizeof(REAL)/1048576));
 }
 
-void MachMulti::Forw(int eff_bszie)
+bool MachMulti::CopyParams(Mach* mach)
+{
+  MachMulti* machmulti = static_cast<MachMulti*>(mach);
+  size_t nb_machs = this->machs.size();
+  if (    Mach::CopyParams(mach)
+      && (machmulti->machs.size() == nb_machs) ) {
+    this->activ_forw  = machmulti->activ_forw;
+    this->activ_backw = machmulti->activ_backw;
+    for (size_t i = 0 ; i < nb_machs ; i++)
+      if (!(this->machs[i]->CopyParams(machmulti->machs[i])))
+        return false;
+    return true;
+  }
+  else
+    return false;
+}
+
+void MachMulti::Forw(int eff_bsize, bool in_train)
 {
   if (machs.empty())
     Error("called Forw() for an empty multiple machine");
