@@ -19,8 +19,10 @@ void Process::train()
 	for(int i=cur_iter;i<parameters->CONF_NN_ITER || whether_keep_trainning();i++){	//at least NN_ITER iters
 		if(cur_iter>0)
 			write_restart_conf();
-		if(cur_iter==parameters->CONF_NN_FIXVEC)
+		if(cur_iter==parameters->CONF_NN_FIXVEC){
+			cout << "!! starting to fix tabs from now." << endl;
 			mach->noupdate_tab();
+		}
 		nn_train_one_iter();
 		cout << "-- Iter done, waiting for test dev:" << endl;
 		double this_result = nn_dev_test(parameters->CONF_dev_file,parameters->CONF_output_file+".dev",parameters->CONF_dev_file);

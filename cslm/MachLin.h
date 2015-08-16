@@ -31,6 +31,7 @@
 
 class MachLin : public Mach, public Shareable
 {
+  friend class CslmInterface;
 private:
   void do_alloc();	// perform allocation of dynamic data structures
 protected:
