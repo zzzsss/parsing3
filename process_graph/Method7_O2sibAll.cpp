@@ -35,7 +35,7 @@ void Method7_O2sibAll::each_prepare_data_oneiter()
 	if(data_right==0 || !whether_o1_filter){
 	//sweep all once and count
 	FeatureGenO1* feat_temp_o1 = new FeatureGenO1(dict,parameters->CONF_x_window,
-					parameters->CONF_add_distance,parameters->CONF_add_pos,parameters->CONF_add_direction);
+					parameters->CONF_add_distance,parameters->CONF_add_pos,parameters->CONF_add_direction,parameters->CONF_NN_MVEC);
 	bool** all_noprob_o1 = new bool*[sentences];
 	int all_tokens_train=0,all_token_filter_wrong=0;
 	for(int i=0;i<sentences;i++){
@@ -233,7 +233,7 @@ vector<int>* Method7_O2sibAll::each_test_one(DependencyInstance* x)
 	if(parameters->CONF_NN_highO_o1mach.length() > 0 &&
 			(parameters->CONF_NN_highO_score_combine || parameters->CONF_NN_highO_o1filter)){
 		FeatureGenO1* feat_temp_o1 = new FeatureGenO1(dict,parameters->CONF_x_window,
-				parameters->CONF_add_distance,parameters->CONF_add_pos,parameters->CONF_add_direction);
+				parameters->CONF_add_distance,parameters->CONF_add_pos,parameters->CONF_add_direction,parameters->CONF_NN_MVEC);
 		double* scores_o1 = get_scores_o1(x,parameters,mach_o1,feat_temp_o1);	//same parameters
 		ret = parse_o2sib(x,scores_o1);
 		delete []scores_o1;

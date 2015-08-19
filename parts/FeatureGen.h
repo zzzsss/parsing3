@@ -17,12 +17,14 @@ protected:
 	IntHashMap* filter_map;
 	static const int ASSUMING_MAX_POS = 512;	//pos always in the first 500 of the dict
 	static const int ASSUMING_MAX_POS_SHIFT = 9;
+	static const int MVEC_H=0,MVEC_M=1,MVEC_C=2,MVEC_G=3;
 
 	Dict* dictionary;
 	int window_size;
 	int distance;	//whether add distance feature
 	int pos_add;	//whether add pos
 	int dir_add;
+	int multi_vec;
 
 public:
 	int get_xdim()		{return xdim;}
@@ -35,8 +37,9 @@ public:
 	virtual ~FeatureGen(){}
 	virtual int fill_one(REAL*,DependencyInstance*,int head,int mod,int modc_grand=-1,int grand=-1)=0;	//for all situations
 	virtual void deal_with_corpus(vector<DependencyInstance*>*);
-	FeatureGen(Dict* d,int w,int di,int apos,int dir):
-		xdim(0),filter_map(0),dictionary(d),window_size(w),distance(di),pos_add(apos),dir_add(dir){}
+	FeatureGen(Dict* d,int w,int di,int apos,int dir,int mvec):
+		xdim(0),filter_map(0),dictionary(d),window_size(w),distance(di),
+		pos_add(apos),dir_add(dir),multi_vec(mvec){}
 
 	//for extra information(1.filter ) --- now @deprecated
 	virtual void add_filter(vector<DependencyInstance*>*)=0;

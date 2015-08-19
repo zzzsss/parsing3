@@ -42,12 +42,12 @@ public:
 		if(if_testing){
 			if(! feat_gen)	//when testing
 				feat_gen = new FeatureGenO2sib(dict,parameters->CONF_x_window,parameters->CONF_add_distance,
-						parameters->CONF_add_pos,parameters->CONF_add_direction);
+						parameters->CONF_add_pos,parameters->CONF_add_direction,parameters->CONF_NN_MVEC);
 			feat_gen->deal_with_corpus(dev_test_corpus);
 		}
 		else{
 			feat_gen = new FeatureGenO2sib(dict,parameters->CONF_x_window,parameters->CONF_add_distance,
-					parameters->CONF_add_pos,parameters->CONF_add_direction);
+					parameters->CONF_add_pos,parameters->CONF_add_direction,parameters->CONF_NN_MVEC);
 			feat_gen->deal_with_corpus(training_corpus);
 		}
 	}

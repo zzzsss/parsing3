@@ -77,6 +77,7 @@ int* CONF_NN_h_size;	//hsizes: array
 double CONF_NN_drop;
 int CONF_NN_act;	//activation functions
 int CONF_NN_FIXVEC;	//no update on embeddings any longer
+int CONF_NN_MVEC;	//multiple vecs for different positions
 
 //use o1-mach for higher-order <must with the same other parameters>
 int CONF_NN_highO_embed_init;
@@ -155,6 +156,7 @@ parsing_conf(string conf_file)
 	CONF_NN_h_size = 0;
 	CONF_NN_drop = 0;
 	CONF_NN_FIXVEC = 100000000;			//this means never
+	CONF_NN_MVEC = 0;
 	CONF_NN_highO_embed_init = 0;
 	CONF_NN_highO_score_combine = 1;
 	CONF_NN_highO_o1filter = 1;
@@ -247,6 +249,7 @@ parsing_conf(string conf_file)
 		else if(buf=="nn_drop")	fin >> CONF_NN_drop;
 		else if(buf=="nn_act") fin >> CONF_NN_act;
 		else if(buf=="nn_fixv")	fin >> CONF_NN_FIXVEC;
+		else if(buf=="nn_mvec") fin >> CONF_NN_MVEC;
 		//o2sib use o1
 		else if(buf=="nn_o1mach") fin >> CONF_NN_highO_o1mach;
 		else if(buf=="nn_o1mach_init") fin >> 	CONF_NN_highO_embed_init;

@@ -11,7 +11,7 @@
 #include "FeatureGen.h"
 class FeatureGenO2sib: public FeatureGen{
 public:
-	FeatureGenO2sib(Dict* d,int w,int di,int apos,int dir);
+	FeatureGenO2sib(Dict* d,int w,int di,int apos,int dir,int);
 	virtual int fill_one(REAL*,DependencyInstance*,int head,int mod,int mod_center,int no_use=-1);
 	virtual ~FeatureGenO2sib(){}
 	virtual int get_order(){return 2;}

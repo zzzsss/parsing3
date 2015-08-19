@@ -11,7 +11,7 @@
 #include "FeatureGen.h"
 class FeatureGenO3g: public FeatureGen{
 public:
-	FeatureGenO3g(Dict* d,int w,int di,int apos,int dir);
+	FeatureGenO3g(Dict* d,int w,int di,int apos,int dir,int);
 	virtual int fill_one(REAL*,DependencyInstance*,int head,int mod,int mod_center,int g);
 	virtual ~FeatureGenO3g(){}
 	virtual int get_order(){return 2;}

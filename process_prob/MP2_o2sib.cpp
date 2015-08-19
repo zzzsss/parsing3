@@ -25,8 +25,8 @@ void MP2_o2sib::nn_train_one_iter()
 	//---always perform filtering
 	//sweep all once and count
 	if(all_scores_o1==0){
-	FeatureGenO1* feat_temp_o1 = new FeatureGenO1(dict,parameters->CONF_x_window,
-					parameters->CONF_add_distance,parameters->CONF_add_pos,parameters->CONF_add_direction);
+	FeatureGenO1* feat_temp_o1 = new FeatureGenO1(dict,parameters->CONF_x_window,parameters->CONF_add_distance,
+					parameters->CONF_add_pos,parameters->CONF_add_direction,parameters->CONF_NN_MVEC);
 	all_scores_o1 = new double*[sentences];
 	for(int i=0;i<sentences;i++){
 		DependencyInstance* x = training_corpus->at(i);
@@ -315,8 +315,8 @@ void MP2_o2sib::nn_train_one_iter()
 vector<int>* MP2_o2sib::each_test_one(DependencyInstance* x)
 {
 	int length = x->length();
-	FeatureGenO1* feat_temp_o1 = new FeatureGenO1(dict,parameters->CONF_x_window,
-			parameters->CONF_add_distance,parameters->CONF_add_pos,parameters->CONF_add_direction);
+	FeatureGenO1* feat_temp_o1 = new FeatureGenO1(dict,parameters->CONF_x_window,parameters->CONF_add_distance,
+		parameters->CONF_add_pos,parameters->CONF_add_direction,parameters->CONF_NN_MVEC);
 	//filter
 	double* scores_o1_filter = get_scores_o1(x,parameters,mach_o1_filter,feat_temp_o1);	//same parameters
 	bool *whether_cut_o1 = get_noprob_o1(length,scores_o1_filter);

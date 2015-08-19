@@ -7,7 +7,7 @@
 
 #include "FeatureGenO2g.h"
 
-FeatureGenO2g::FeatureGenO2g(Dict* d,int w,int di,int apos,int dir):FeatureGen(d,w,di,apos,dir)
+FeatureGenO2g::FeatureGenO2g(Dict* d,int w,int di,int apos,int dir,int mv):FeatureGen(d,w,di,apos,dir,mv)
 {
 	xdim = 3*w;
 	if(apos)

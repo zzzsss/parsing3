@@ -33,7 +33,7 @@ REAL CslmInterface::tanh_table_tanh(REAL nn)
 		return tanh_table[n];
 }
 
-const char* cslm_activations[] = {"Tanh","Nope"};
+const char* cslm_activations[] = {"Tanh","LinRectif","Nope"};
 #define WRITE_CONF_ONE(a1,a2) \
 	fout << cslm_activations[parameters->CONF_NN_act] << " = " << (int)(a1) << "x" << (int)(a2) << " fanio-init-weights=1.0\n";
 static inline void write_conf_no_split(parsing_conf* parameters,int dict_count,int xdim,int outdim)
@@ -120,11 +120,15 @@ void CslmInterface::mach_split_share()
 //specified init
 CslmInterface* CslmInterface::create_one(parsing_conf* parameters,FeatureGen* f,int outdim)
 {
+	//0.5 dictionary count
+	int dict_count = f->get_dict()->get_count();
+	if(parameters->CONF_NN_MVEC)
+		dict_count *= (1+f->get_order());
 	//1.conf file
 	if(parameters->CONF_NN_split)
-		write_conf_split(parameters,f->get_dict()->get_count(),f->get_xdim(),outdim,f->get_order()+1);
+		write_conf_split(parameters,dict_count,f->get_xdim(),outdim,f->get_order()+1);
 	else
-		write_conf_no_split(parameters,f->get_dict()->get_count(),f->get_xdim(),outdim);
+		write_conf_no_split(parameters,dict_count,f->get_xdim(),outdim);
 	//2. get machine
 	MachConfig mach_config(true);
 	//for mach_config

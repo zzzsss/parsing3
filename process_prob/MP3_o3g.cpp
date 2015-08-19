@@ -29,8 +29,8 @@ void MP3_o3g::nn_train_one_iter()
 	//---always perform filtering
 	//sweep all once and count
 	if(all_scores_o1==0){
-	FeatureGenO1* feat_temp_o1 = new FeatureGenO1(dict,parameters->CONF_x_window,
-					parameters->CONF_add_distance,parameters->CONF_add_pos,parameters->CONF_add_direction);
+	FeatureGenO1* feat_temp_o1 = new FeatureGenO1(dict,parameters->CONF_x_window,parameters->CONF_add_distance,
+		parameters->CONF_add_pos,parameters->CONF_add_direction,parameters->CONF_NN_MVEC);
 	all_scores_o1 = new double*[sentences];
 	for(int i=0;i<sentences;i++){
 		DependencyInstance* x = training_corpus->at(i);
@@ -494,7 +494,7 @@ vector<int>* MP3_o3g::each_test_one(DependencyInstance* x)
 	double* score_of_o2g = 0;
 	int length = x->length();
 	FeatureGenO1* feat_temp_o1 = new FeatureGenO1(dict,parameters->CONF_x_window,
-			parameters->CONF_add_distance,parameters->CONF_add_pos,parameters->CONF_add_direction);
+			parameters->CONF_add_distance,parameters->CONF_add_pos,parameters->CONF_add_direction,parameters->CONF_NN_MVEC);
 	//filter
 	double* scores_o1_filter = get_scores_o1(x,parameters,mach_o1_filter,feat_temp_o1);	//same parameters
 	bool *whether_cut_o1 = get_noprob_o1(length,scores_o1_filter);
@@ -509,7 +509,7 @@ vector<int>* MP3_o3g::each_test_one(DependencyInstance* x)
 	//o2sib
 	if(parameters->CONF_MP_o2sibmach.length() > 0){
 		FeatureGenO2sib* feat_temp_o2sib = new FeatureGenO2sib(dict,parameters->CONF_x_window,
-				parameters->CONF_add_distance,parameters->CONF_add_pos,parameters->CONF_add_direction);
+				parameters->CONF_add_distance,parameters->CONF_add_pos,parameters->CONF_add_direction,parameters->CONF_NN_MVEC);
 		score_of_o2sib = get_scores_o2sib(x,parameters,mach_o2g_score,feat_temp_o2sib,whether_cut_o1);	//same parameters
 		delete feat_temp_o2sib;
 	}

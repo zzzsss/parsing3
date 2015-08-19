@@ -184,7 +184,7 @@ void Process::check_o1_filter(string m_name,string cutting)
 	mach = NNInterface::Read(m_name);
 	dev_test_corpus = read_corpus(parameters->CONF_test_file);
 	FeatureGenO1* feat_temp_o1 = new FeatureGenO1(dict,parameters->CONF_x_window,
-			parameters->CONF_add_distance,parameters->CONF_add_pos,parameters->CONF_add_direction);
+			parameters->CONF_add_distance,parameters->CONF_add_pos,parameters->CONF_add_direction,parameters->CONF_NN_MVEC);
 	feat_temp_o1->deal_with_corpus(dev_test_corpus);
 	if(mach->GetIdim() != feat_temp_o1->get_xdim()){
 		cout << "Wrong mach...\n";

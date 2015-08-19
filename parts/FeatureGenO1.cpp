@@ -7,7 +7,7 @@
 
 #include "FeatureGenO1.h"
 
-FeatureGenO1::FeatureGenO1(Dict* d,int w,int di,int apos,int dir):FeatureGen(d,w,di,apos,dir)
+FeatureGenO1::FeatureGenO1(Dict* d,int w,int di,int apos,int dir,int mv):FeatureGen(d,w,di,apos,dir,mv)
 {
 	xdim = 2*w;
 	if(apos)
@@ -19,22 +19,28 @@ FeatureGenO1::FeatureGenO1(Dict* d,int w,int di,int apos,int dir):FeatureGen(d,w
 
 int FeatureGenO1::fill_one(REAL* to_fill,DependencyInstance* ins,int head,int mod,int no_use1,int no_use2)
 {
+	int off_h=0,off_m=0;
+	if(multi_vec){
+		int count = dictionary->get_count();
+		off_h = count * MVEC_H;
+		off_m = count * MVEC_M;
+	}
 	//head-context-(distance)  |  modifier...
 	int backward = window_size/2;	//window_size should be odd...
 	int leng = ins->forms->size();
 
 	//1.head
 	for(int i=head-backward;i<=head+backward;i++){
-		if(i<0)				*to_fill = dictionary->get_index(&dictionary->WORD_START,0);	//must exist
-		else if(i>=leng)	*to_fill = dictionary->get_index(&dictionary->WORD_END,0);	//must exist
-		else				*to_fill = ins->index_forms->at(i);
+		if(i<0)				*to_fill = off_h+dictionary->get_index(&dictionary->WORD_START,0);	//must exist
+		else if(i>=leng)	*to_fill = off_h+dictionary->get_index(&dictionary->WORD_END,0);	//must exist
+		else				*to_fill = off_h+ins->index_forms->at(i);
 		to_fill ++;
 	}
 	if(pos_add){
 		for(int i=head-backward;i<=head+backward;i++){
-			if(i<0)			*to_fill = dictionary->get_index(&dictionary->POS_START,0);	//must exist
-			else if(i>=leng)*to_fill = dictionary->get_index(&dictionary->POS_END,0);	//must exist
-			else			*to_fill = ins->index_pos->at(i);
+			if(i<0)			*to_fill = off_h+dictionary->get_index(&dictionary->POS_START,0);	//must exist
+			else if(i>=leng)*to_fill = off_h+dictionary->get_index(&dictionary->POS_END,0);	//must exist
+			else			*to_fill = off_h+ins->index_pos->at(i);
 			to_fill ++;
 		}
 	}
@@ -51,21 +57,21 @@ int FeatureGenO1::fill_one(REAL* to_fill,DependencyInstance* ins,int head,int mo
 
 	//2.modifier
 	for(int i=mod-backward;i<=mod+backward;i++){
-		if(i<0)				*to_fill = dictionary->get_index(&dictionary->WORD_START,0);	//must exist
-		else if(i>=leng)	*to_fill = dictionary->get_index(&dictionary->WORD_END,0);	//must exist
-		else				*to_fill = ins->index_forms->at(i);
+		if(i<0)				*to_fill = off_m+dictionary->get_index(&dictionary->WORD_START,0);	//must exist
+		else if(i>=leng)	*to_fill = off_m+dictionary->get_index(&dictionary->WORD_END,0);	//must exist
+		else				*to_fill = off_m+ins->index_forms->at(i);
 		to_fill ++;
 	}
 	if(pos_add){
 		for(int i=mod-backward;i<=mod+backward;i++){
-			if(i<0)			*to_fill = dictionary->get_index(&dictionary->POS_START,0);	//must exist
-			else if(i>=leng)*to_fill = dictionary->get_index(&dictionary->POS_END,0);	//must exist
-			else			*to_fill = ins->index_pos->at(i);
+			if(i<0)			*to_fill = off_m+dictionary->get_index(&dictionary->POS_START,0);	//must exist
+			else if(i>=leng)*to_fill = off_m+dictionary->get_index(&dictionary->POS_END,0);	//must exist
+			else			*to_fill = off_m+ins->index_pos->at(i);
 			to_fill ++;
 		}
 	}
 	if(distance){
-		*to_fill = dictionary->get_index(head-mod);
+		*to_fill = off_m+dictionary->get_index(head-mod);
 		to_fill ++;
 	}
 

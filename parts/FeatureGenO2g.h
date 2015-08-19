@@ -8,10 +8,13 @@
 #ifndef PARTS_FEATUREGENO2G_H_
 #define PARTS_FEATUREGENO2G_H_
 
+/*
+	!! maybe giving up this O2g !!
+*/
 #include "FeatureGen.h"
 class FeatureGenO2g: public FeatureGen{
 public:
-	FeatureGenO2g(Dict* d,int w,int di,int apos,int dir);
+	FeatureGenO2g(Dict* d,int w,int di,int apos,int dir,int);
 	virtual int fill_one(REAL*,DependencyInstance*,int head,int mod,int g,int no_use=-1);
 	virtual ~FeatureGenO2g(){}
 	virtual int get_order(){return 2;}
