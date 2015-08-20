@@ -18,6 +18,8 @@
 #include "process_prob/MP1_o1.h"
 #include "process_prob/MP2_o2sib.h"
 #include "process_prob/MP3_o3g.h"
+#include "process_graph2/Method10_o1.h"
+#include "process_graph2/Method11_mmo1.h"
 
 /* <Version 1.6>
  * 		-- usage:	(mode 3 and 4 are for debugging)
@@ -64,6 +66,12 @@ int main(int argc,char **argv)
 		break;
 	case 9:
 		x = new Method9_O3g(conf);
+		break;
+	case 10:
+		x = new Method10_o1(conf);
+		break;
+	case 11:
+		x = new Method11_mmo1(conf);
 		break;
 	case -1:
 		x = new MP1_o1(conf);
