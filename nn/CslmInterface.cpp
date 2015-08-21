@@ -57,7 +57,7 @@ static inline void write_conf_no_split(parsing_conf* parameters,int dict_count,i
 	//3.output layer -- no dropout at output layer
 	if(outdim>1){
 		//output multiclass-class(0 or 1)
-		fout << "SoftmaxStable = " << width << "x" << outdim << " fanio-init-weights=1.0 drop-out=0.0\n";
+		fout << "Softmax = " << width << "x" << outdim << " fanio-init-weights=1.0 drop-out=0.0\n";
 	}
 	else{
 		//linear output score
@@ -96,7 +96,7 @@ static inline void write_conf_split(parsing_conf* parameters,int dict_count,int 
 	width = parameters->CONF_NN_h_size[parameters->CONF_NN_plus_layers-1];
 	//3.output
 	if(outdim>1)
-		fout << "SoftmaxStable = " << width << "x" << outdim << " fanio-init-weights=1.0\n";
+		fout << "Softmax = " << width << "x" << outdim << " fanio-init-weights=1.0\n";
 	else
 		fout << "Linear = " << width << "x" << 1 << " fanio-init-weights=1.0\n";
 	fout << "#End\n";

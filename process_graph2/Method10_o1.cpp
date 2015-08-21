@@ -55,14 +55,26 @@ void Method10_o1::nn_train_one_iter()
 				}
 			}
 		}
-		//3.forward
+		//3.training
+		assign_x = data;
+		assign_g = gradient;
 		all_forward += real_num_forw;
-		REAL* mach_y = mach->mach_forward(data,real_num_forw);
-		for(int nn=0;nn<real_num_forw*mach->GetOdim();nn++)
-			gradient[nn] -= mach_y[nn];
-		//4.backward
-		mach->mach_forwback(data,gradient,cur_lrate, parameters->CONF_NN_WD,real_num_forw);
-		delete []mach_y;
+		int bsize = mach->GetWidth();
+		for(int nn=0;nn<real_num_forw;nn+=bsize){
+			int this_num = bsize;
+			if(real_num_forw < (nn+bsize))
+				this_num = real_num_forw - nn;
+			mach->SetDataIn(assign_x);
+			mach->Forw(this_num);
+			mach->SetGradOut(assign_g);
+			REAL* this_output = mach->GetDataOut();
+			for(int kk=0;kk<this_num*mach->GetOdim();kk++){
+				assign_g[kk] -= this_output[kk];
+			}
+			mach->Backw(cur_lrate, parameters->CONF_NN_WD,this_num);
+			assign_x += this_num*mach->GetIdim();
+			assign_g += this_num*mach->GetOdim();
+		}
 	}
 	cout << "Iter done, skip " << sentences_skip << " sentences and f&b " << all_forward << endl;
 }
