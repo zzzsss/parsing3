@@ -7,7 +7,6 @@
 
 #include "Csnn.h"
 
-
 //--prepares--
 void Csnn::construct_caches(){
 	//this is done when init and read
@@ -28,4 +27,66 @@ void Csnn::prepare_caches(){
 		if(the_option->NN_dropout > 0)
 			(*i)->gen_dropout(the_option->NN_dropout);
 	}
+}
+
+void Csnn::construct_params(){
+	//init all the params
+	p_out = new nn_wb(the_option->NN_hidden_size,the_option->NN_out_size);
+	p_out->get_init(the_option->NN_init_wbrange);
+	p_h = new nn_wb(the_option->get_NN_rsize(),the_option->NN_hidden_size);
+	p_h->get_init(the_option->NN_init_wbrange);
+	//special untied param
+	int all = the_option->NN_pnum*the_option->NN_pnum+1;
+	p_untied = new vector<nn_wb*>(all,0);
+	p_untied->at(0) = new nn_wb(the_option->get_NN_wv_wrsize(get_order()),the_option->NN_wrsize);
+	(p_untied->at(0))->get_init(the_option->NN_init_wbrange);
+	//the embeddings
+	p_word = new nn_wv(the_option->NN_wnum,the_option->NN_wsize);
+	p_word->get_init(the_option->NN_init_wvrange);
+	p_pos = new nn_wv(the_option->NN_pnum,the_option->NN_psize);
+	p_pos->get_init(the_option->NN_init_wvrange);
+	p_distance = new nn_wv(the_option->NN_dnum,the_option->NN_dsize);
+	p_distance->get_init(the_option->NN_init_wvrange);
+}
+
+void Csnn::read_params(std::ifstream fin){
+	p_out = new nn_wb(fin);
+	p_h = new nn_wb(fin);
+	//special untied param
+	int un_num = 0;
+	fin.read((char*)&un_num,sizeof(int));
+	int all = the_option->NN_pnum*the_option->NN_pnum+1;
+	p_untied = new vector<nn_wb*>(all,0);
+	for(int i=0;i<un_num;i++){
+		int tmp_index = 0;
+		fin.read((char*)&tmp_index,sizeof(int));
+		p_untied->at(tmp_index) = new nn_wb(fin);
+	}
+	//embeddings
+	p_word = new nn_wv(fin);
+	p_pos = new nn_wv(fin);
+	p_distance = new nn_wv(fin);
+}
+
+void Csnn::write_params(std::ofstream fout){
+	p_out->write_params(fout);
+	p_h->write_params(fout);
+	//special untied param
+	int all = the_option->NN_pnum*the_option->NN_pnum+1;
+	int un_num = 0;
+	for(int i=0;i<all;i++){
+		if(p_untied->at(i) != 0)
+			un_num ++;
+	}
+	fout.write((char*)&un_num,sizeof(int));
+	for(int i=0;i<all;i++){
+		if(p_untied->at(i) != 0){
+			fout.write((char*)&i,sizeof(int));
+			p_untied->at(i)->write_params(fout);
+		}
+	}
+	//embeddings
+	p_word->write_params(fout);
+	p_pos->write_params(fout);
+	p_distance->write_params(fout);
 }

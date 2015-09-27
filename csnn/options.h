@@ -8,9 +8,14 @@
 #ifndef CSNN_OPTIONS_H_
 #define CSNN_OPTIONS_H_
 
+#include <fstream>
 //options related to nn
 class nn_options{
 public:
+	int NN_wnum;	//number of words
+	int NN_pnum;	//number of pos
+	int NN_dnum;	//number of distances
+
 	int NN_wsize;	//word embed size
 	int NN_psize;	//pos embed size
 	int NN_dsize;	//distance embed size
@@ -31,6 +36,11 @@ public:
 	int NN_init_bsize;		//default bsize(this can be adjusted)
 	REAL NN_dropout;		//dropout rate
 
+	REAL NN_init_wbrange;
+	REAL NN_init_wvrange;
+
+	REAL NN_untied_rate;	//random percentage of training samples given to untied ones
+
 	int get_NN_srsize(){
 		if(NN_add_sent)
 			return NN_srsize;
@@ -46,6 +56,14 @@ public:
 			basis += order*(NN_wsize+NN_psize);
 		return basis;
 	}
+
+	//init and r/w
+	nn_options(){default_init();}
+	nn_options(std::ifstream fin){read(fin);}
+
+	void default_init(){}
+	void read(std::ifstream fin){}
+	void write(std::ofstream fout){}
 };
 
 #endif /* CSNN_OPTIONS_H_ */

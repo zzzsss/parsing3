@@ -1,5 +1,5 @@
 /*
-	This is a small toolkit just aimed to probive some nn tools.
+	This is a small toolkit just aimed to provide some nn tools.
 	Similar to CSLM toolkit, but for simplicity do not have any conf-specified modules.
 	Try to combine layers into one big machine and the structure is hard-coded
 	<by zzs; start from 2015.9>
@@ -39,7 +39,7 @@ protected:
 	//the parameters
 	nn_wb *p_out;	//hidden -> out
 	nn_wb *p_h;		//repr -> hidden
-	vector<nn_wb*> *p_untied;	//untied for 3-1: has number of nPOS*nPOS
+	vector<nn_wb*> *p_untied;	//untied for 3-1: has number of nPOS*nPOS+1 (the index 0 is the default one)
 	nn_wv *p_word;
 	nn_wv *p_pos;
 	nn_wv *p_distance;
@@ -47,12 +47,34 @@ protected:
 	void construct_caches();			//init and read
 	void prepare_caches();				//before minibatch
 	void construct_params();			//init
-	void read_params(std::ifstream fin);	//read
+
+	//binary mode r/w
+	void read_params(std::ifstream fin);	//read	--- !!AFTER the options are ready
 	void write_params(std::ofstream fout);	//write
 
 public:
+	//from scratch
 	void get_init(nn_options * o){
 		the_option = o;
+		construct_caches();
+		construct_params();
+	}
+	//read from file
+	void read_init(std::string fname){
+		std::ifstream fin;
+		fin.open(fname.c_str(),ifstream::binary);
+		the_option = new nn_options(fin);
+		read_params(fin);
+		fin.close();
+		construct_caches();
+	}
+	//write out
+	void write(std::string fname){
+		std::ofstream fout;
+		fout.open(fname.c_str(),ifstream::binary);
+		the_option->write(fout);
+		write_params(fout);
+		fout.close();
 	}
 	virtual ~Csnn(){}
 };

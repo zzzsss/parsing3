@@ -11,6 +11,7 @@
 #include "nn_math.h"
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
 #include<boost/unordered_set.hpp>
 typedef boost::unordered_set<int> IntSet;
 
@@ -74,6 +75,24 @@ public:
 	void forward(int index,REAL* out);
 	void backward(int index,const REAL* grad);
 	void update(int way,REAL lrate,REAL wdecay,REAL m_alpha,REAL rms_smooth,int mbsize);
+
+	//binary r/w
+	nn_wv(std::ifstream fin):updating(true){
+		fin.read((char*)&num,sizeof(int));
+		fin.read((char*)&dim,sizeof(int));
+		int all = num*dim;	//int is enough
+		hit_index = new IntSet(HIT_INDEX_SIZE);
+		w = new REAL[all];
+		w_grad = new REAL[all];
+		w_moment = new REAL[all];
+		w_square = new REAL[all];
+		fin.read((char*)&w,sizeof(REAL)*all);
+	}
+	void write_params(std::ofstream fout){
+		fout.write((char*)&num,sizeof(int));
+		fout.write((char*)&dim,sizeof(int));
+		fout.write((char*)&w,sizeof(REAL)*num*dim);
+	}
 };
 
 

@@ -11,6 +11,7 @@
 #include "nn_math.h"
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
 
 //the linear parameter: w and b (weight and bias)
 class nn_wb{
@@ -82,6 +83,29 @@ public:
 	void forward(/*const*/REAL* in,REAL* out,int bsize);							//forward setting
 	void backward(/*const*/REAL* ograd,REAL* igrad,/*const*/REAL* in,int bsize);	//backward accumulate
 	void update(int way,REAL lrate,REAL wdecay,REAL m_alpha,REAL rms_smooth,int mbsize);
+
+	//binary r/w
+	nn_wb(std::ifstream fin):updating(true){
+		fin.read((char*)&idim,sizeof(int));
+		fin.read((char*)&odim,sizeof(int));
+		int all = idim*odim;	//int is enough
+		w = new REAL[all];
+		b = new REAL[odim];
+		w_grad = new REAL[all];
+		b_grad = new REAL[odim];
+		w_moment = new REAL[all];
+		b_moment = new REAL[odim];
+		w_square = new REAL[all];
+		b_square = new REAL[odim];
+		fin.read((char*)&w,sizeof(REAL)*all);
+		fin.read((char*)&b,sizeof(REAL)*odim);
+	}
+	void write_params(std::ofstream fout){
+		fout.write((char*)&idim,sizeof(int));
+		fout.write((char*)&odim,sizeof(int));
+		fout.write((char*)&w,sizeof(REAL)*idim*odim);
+		fout.write((char*)&b,sizeof(REAL)*odim);
+	}
 };
 
 
