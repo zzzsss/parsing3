@@ -11,18 +11,19 @@
 void Csnn::construct_caches(){
 	//this is done when init and read
 	c_allcaches = new vector<nn_cache*>();
-	c_out = new nn_cache(the_option->NN_init_bsize,the_option->NN_out_size);	c_allcaches->push_back(c_out);
-	c_h = new nn_cache(the_option->NN_init_bsize,the_option->NN_hidden_size);	c_allcaches->push_back(c_h);
-	c_repr = new nn_cache(the_option->NN_init_bsize,the_option->get_NN_rsize());	c_allcaches->push_back(c_repr);
-	c_wrepr = new nn_cache(the_option->NN_init_bsize,the_option->NN_wrsize);	c_allcaches->push_back(c_wrepr);
-	c_srepr = new nn_cache(the_option->NN_init_bsize,the_option->get_NN_srsize());	c_allcaches->push_back(c_srepr);
-	c_wv = new nn_cache(the_option->NN_init_bsize,the_option->get_NN_wv_wrsize(get_order()));	c_allcaches->push_back(c_wv);
+	c_out = new nn_cache(0,the_option->NN_out_size);	c_allcaches->push_back(c_out);
+	c_h = new nn_cache(0,the_option->NN_hidden_size);	c_allcaches->push_back(c_h);
+	c_repr = new nn_cache(0,the_option->get_NN_rsize());	c_allcaches->push_back(c_repr);
+	c_wrepr = new nn_cache(0,the_option->NN_wrsize);	c_allcaches->push_back(c_wrepr);
+	c_srepr = new nn_cache(0,the_option->get_NN_srsize());	c_allcaches->push_back(c_srepr);
+	c_wv = new nn_cache(0,the_option->get_NN_wv_wrsize(get_order()));	c_allcaches->push_back(c_wv);
 }
 
-void Csnn::prepare_caches(){
+void Csnn::prepare_caches(int bsize){
 	//only need to clear all the gradients and get possible drop-out ready
 	//this is done before each MiniBatch
 	for(vector<nn_cache*>::iterator i=c_allcaches->begin();i!=c_allcaches->end();i++){
+		(*i)->resize(bsize);
 		(*i)->clear_gradients();
 		if(the_option->NN_dropout > 0)
 			(*i)->gen_dropout(the_option->NN_dropout);
@@ -90,3 +91,24 @@ void Csnn::write_params(std::ofstream fout){
 	p_pos->write_params(fout);
 	p_distance->write_params(fout);
 }
+
+//-----------main methods-------------------------------
+//if testing, no adding untied-nnwb, untied_rate<=0 means no untied
+REAL* Csnn::forward(nn_input* in,int testing,REAL untied_rate)
+{
+	//1.prepare inputs
+	this_input = in;
+	this_bsize = in->get_numi();
+	this_mbsize += this_bsize;
+	prepare_caches(this_bsize);
+	f_inputs();		/**********VIRTUAL***********/	//now c_wv ready, and here also prepare this_untied_index
+
+	//2.1:input->wrepr --- need take care of untied
+	if(testing){
+
+	}
+	else{
+
+	}
+}
+

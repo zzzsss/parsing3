@@ -33,13 +33,10 @@ public:
 	int NN_act;				//the activation function
 	int NN_out_prob;		//whether add softmax
 
-	int NN_init_bsize;		//default bsize(this can be adjusted)
 	REAL NN_dropout;		//dropout rate
 
 	REAL NN_init_wbrange;
 	REAL NN_init_wvrange;
-
-	REAL NN_untied_rate;	//random percentage of training samples given to untied ones
 
 	int get_NN_srsize(){
 		if(NN_add_sent)

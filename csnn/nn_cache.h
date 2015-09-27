@@ -24,20 +24,25 @@ private:
 	REAL* values;
 	REAL* gradients;
 	REAL* dropout;
+
+	REAL* values_before;	//for those activation methods which need original values
 public:
-	nn_cache(long b,long l):bsize(b),length(l),values(0),gradients(0),dropout(0){
+	nn_cache(long b,long l):bsize(b),length(l),values(0),gradients(0),dropout(0),values_before(0){
 		long all = bsize*length;
 		if(all > 0){
 			values = new REAL[all];
 			gradients = new REAL[all];
 			dropout = new REAL[all];
+			values_before = new REAL[all];
 		}
 	}
 	~nn_cache(){
 		delete []values;
 		delete []gradients;
 		delete []dropout;
+		delete []values_before;
 	}
+	REAL* get_values_before(){return values_before;}
 	REAL* get_values(){return values;}
 	REAL* get_gradients(){return gradients;}
 	bool* get_dropout(){return dropout;}

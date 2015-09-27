@@ -32,7 +32,7 @@ private:
 	REAL* w_square;	//square for AdaGrad
 
 public:
-	nn_wv(int n,int d):updating(true),num(n),dim(d){
+	nn_wv(int n,int d):updating(false),num(n),dim(d){
 		int all = n*d;	//int is enough
 		hit_index = new IntSet(HIT_INDEX_SIZE);
 		w = new REAL[all];

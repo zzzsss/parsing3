@@ -33,7 +33,7 @@ private:
 	REAL* b_square;
 
 public:
-	nn_wb(int i,int o):updating(true),idim(i),odim(o){
+	nn_wb(int i,int o):updating(false),idim(i),odim(o){
 		int all = i*o;	//int is enough
 		w = new REAL[all];
 		b = new REAL[o];

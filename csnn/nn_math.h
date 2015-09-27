@@ -18,6 +18,14 @@ void opt_update(int way,int n,REAL lrate,REAL wdecay,REAL m_alpha,REAL rms_smoot
 			REAL* w,REAL* grad,REAL* momentum,REAL* square,int mbsize);
 bool opt_changelrate(int way);
 
+//3.activation functions
+enum{
+	ACT_TANH,ACT_HTANH,ACT_LRECT,ACT_TANHCUBE
+};
+void act_f(int which,REAL* x,int n,REAL* xb);
+void act_b(int which,const REAL* x,REAL* g,int n,REAL* xb);
+
+
 }
 
 #endif

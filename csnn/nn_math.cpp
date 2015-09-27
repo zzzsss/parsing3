@@ -122,6 +122,68 @@ namespace nn_math{
 			exit(1);
 		}
 	}
+
+	//3.activation functions
+	void act_f(int which,REAL* x,int n,REAL* xb){
+		switch(which){
+		case ACT_TANH:
+			for(int i=0;i<n;i++,x++)
+				*x = tanh(*x);
+			break;
+		case ACT_HTANH:
+			for(int i=0;i<n;i++,x++){
+				if(*x > 1)	*x = 1;
+				else if(*x < -1)	*x=-1;
+			}
+			break;
+		case ACT_LRECT:
+			for(int i=0;i<n;i++,x++){
+				if(*x < 0)	*x = 0;
+			}
+			break;
+		case ACT_TANHCUBE:	//tanh(l^3+l)
+			for(int i=0;i<n;i++,x++,xb++){
+				REAL tmp = *x;
+				*xb = tmp;
+				*x += tmp*tmp*tmp;
+				*x = tanh(*x);
+			}
+			break;
+		default:
+			std::cerr << "Unknown opt method." << std::endl;
+			exit(1);
+		}
+	}
+	void act_b(int which,const REAL* x,REAL* g,int n,REAL* xb){
+		switch(which){
+		case ACT_TANH:	//d(tanh) = 1-tanh^2
+			for(int i=0;i<n;i++,x++,g++)
+				*g *= (1 - *x * *x);
+			break;
+		case ACT_HTANH:
+			for(int i=0;i<n;i++,x++,g++){
+				if(*x > 1 || *x < -1)
+					*g = 0;
+			}
+			break;
+		case ACT_LRECT:
+			for(int i=0;i<n;i++,x++,g++){
+				if(*x < 0)
+					*g = 0;
+			}
+			break;
+		case ACT_TANHCUBE:	//d = g*(1-t^2)*(3x^2+1)
+			for(int i=0;i<n;i++,x++,g++,xb++){
+				*g *= (1 - *x * *x);
+				REAL tmp = *xb;
+				*g *= (3*tmp*tmp+1);
+			}
+			break;
+		default:
+			std::cerr << "Unknown opt method." << std::endl;
+			exit(1);
+		}
+	}
 };
 
 

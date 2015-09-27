@@ -25,6 +25,7 @@ class Csnn{
 protected:
 	//order of parsing --- bad design, maybe
 	virtual int get_order()=0;
+	virtual void f_inputs()=0;
 	//options
 	nn_options *the_option;
 	//the caches
@@ -45,12 +46,18 @@ protected:
 	nn_wv *p_distance;
 
 	void construct_caches();			//init and read
-	void prepare_caches();				//before minibatch
+	void prepare_caches(int);				//before minibatch
 	void construct_params();			//init
 
 	//binary mode r/w
 	void read_params(std::ifstream fin);	//read	--- !!AFTER the options are ready
 	void write_params(std::ofstream fout);	//write
+
+	//sth tmp for forward/backward/update
+	nn_input* this_input;
+	int this_bsize;			//one-time bsize
+	int this_mbsize;		//minibatch's instance number
+	vector<int> this_untied_index;
 
 public:
 	//from scratch
@@ -77,6 +84,20 @@ public:
 		fout.close();
 	}
 	virtual ~Csnn(){}
+
+	//main methods
+	//-- SHOULD BE: while(MiniBatch){prepare_batch;while(sent){f;b;}update;}
+	void prepare_batch(){
+		this_input=0;
+		this_bsize=0;
+		this_mbsize=0;
+	}
+	//forward for one sentence, untied_rate==0 when no untied, ==1 when untied if possible
+	REAL* forward(nn_input* in,int testing,REAL untied_rate);	//return new ones
+	//backward and accumulate the gradients --- should be immediately after a forward
+	void backward(REAL* gradients);
+	//update parameters
+	void update(int way,REAL lrate,REAL wdecay,REAL m_alpha,REAL rms_smooth);
 };
 
 #endif
