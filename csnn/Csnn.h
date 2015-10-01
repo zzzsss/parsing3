@@ -24,8 +24,10 @@
 class Csnn{
 protected:
 	//order of parsing --- bad design, maybe
+	//only the input part need to be order-specified
 	virtual int get_order()=0;
 	virtual void f_inputs()=0;
+	virtual void b_inputs()=0;
 	//options
 	nn_options *the_option;
 	//the caches
@@ -83,17 +85,13 @@ public:
 		write_params(fout);
 		fout.close();
 	}
-	virtual ~Csnn(){}
+	virtual ~Csnn(){}	//need-to-do:clear
 
 	//main methods
 	//-- SHOULD BE: while(MiniBatch){prepare_batch;while(sent){f;b;}update;}
-	void prepare_batch(){
-		this_input=0;
-		this_bsize=0;
-		this_mbsize=0;
-	}
-	//forward for one sentence, untied_rate==0 when no untied, ==1 when untied if possible
-	REAL* forward(nn_input* in,int testing,REAL untied_rate);	//return new ones
+	void prepare_batch();
+	//forward for one sentence
+	REAL* forward(nn_input* in,int testing);	//return new ones
 	//backward and accumulate the gradients --- should be immediately after a forward
 	void backward(REAL* gradients);
 	//update parameters

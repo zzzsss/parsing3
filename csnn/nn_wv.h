@@ -31,6 +31,12 @@ private:
 	REAL* w_moment;	//momentum
 	REAL* w_square;	//square for AdaGrad
 
+	void init_clear(){
+		memset(w_grad,0,sizeof(REAL)*num*dim);
+		memset(w_moment,0,sizeof(REAL)*num*dim);
+		memset(w_square,0,sizeof(REAL)*num*dim);
+	}
+
 public:
 	nn_wv(int n,int d):updating(false),num(n),dim(d){
 		int all = n*d;	//int is enough
@@ -44,9 +50,7 @@ public:
 		REAL c=range*2.0;
 		for (int i=0; i<num*dim; i++)
 			w[i]=c*(drand48()-0.5);
-		memset(w_grad,0,sizeof(REAL)*num*dim);
-		memset(w_moment,0,sizeof(REAL)*num*dim);
-		memset(w_square,0,sizeof(REAL)*num*dim);
+		init_clear();
 	}
 	void get_init_one(int index,REAL* value){	//init one
 		memcpy(w+index*dim,value,sizeof(REAL)*dim);
@@ -77,7 +81,7 @@ public:
 	void update(int way,REAL lrate,REAL wdecay,REAL m_alpha,REAL rms_smooth,int mbsize);
 
 	//binary r/w
-	nn_wv(std::ifstream fin):updating(true){
+	nn_wv(std::ifstream fin):updating(false){
 		fin.read((char*)&num,sizeof(int));
 		fin.read((char*)&dim,sizeof(int));
 		int all = num*dim;	//int is enough
@@ -87,6 +91,7 @@ public:
 		w_moment = new REAL[all];
 		w_square = new REAL[all];
 		fin.read((char*)&w,sizeof(REAL)*all);
+		init_clear();
 	}
 	void write_params(std::ofstream fout){
 		fout.write((char*)&num,sizeof(int));

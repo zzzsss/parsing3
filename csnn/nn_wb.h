@@ -14,6 +14,7 @@
 #include <fstream>
 
 //the linear parameter: w and b (weight and bias)
+// two ways of init: 1:nn_wb(i,o);get_init(range);	2.nn_wb(fin)
 class nn_wb{
 private:
 	bool updating;
@@ -31,6 +32,15 @@ private:
 	//gradient accumulated square --- for AdaGrad
 	REAL* w_square;
 	REAL* b_square;
+
+	void init_clear(){
+		memset(w_grad,0,sizeof(REAL)*idim*odim);
+		memset(w_moment,0,sizeof(REAL)*idim*odim);
+		memset(w_square,0,sizeof(REAL)*idim*odim);
+		memset(b_grad,0,sizeof(REAL)*odim);
+		memset(b_moment,0,sizeof(REAL)*odim);
+		memset(b_square,0,sizeof(REAL)*odim);
+	}
 
 public:
 	nn_wb(int i,int o):updating(false),idim(i),odim(o){
@@ -52,12 +62,7 @@ public:
 		c=range*2.0;
 		for (int i=0; i<odim; i++)
 			b[i]=c*(drand48()-0.5);
-		memset(w_grad,0,sizeof(REAL)*idim*odim);
-		memset(w_moment,0,sizeof(REAL)*idim*odim);
-		memset(w_square,0,sizeof(REAL)*idim*odim);
-		memset(b_grad,0,sizeof(REAL)*odim);
-		memset(b_moment,0,sizeof(REAL)*odim);
-		memset(b_square,0,sizeof(REAL)*odim);
+		init_clear();
 	}
 	void clear_grad(){
 		memset(w_grad,0,sizeof(REAL)*idim*odim);
@@ -85,7 +90,7 @@ public:
 	void update(int way,REAL lrate,REAL wdecay,REAL m_alpha,REAL rms_smooth,int mbsize);
 
 	//binary r/w
-	nn_wb(std::ifstream fin):updating(true){
+	nn_wb(std::ifstream fin):updating(false){
 		fin.read((char*)&idim,sizeof(int));
 		fin.read((char*)&odim,sizeof(int));
 		int all = idim*odim;	//int is enough
@@ -99,6 +104,7 @@ public:
 		b_square = new REAL[odim];
 		fin.read((char*)&w,sizeof(REAL)*all);
 		fin.read((char*)&b,sizeof(REAL)*odim);
+		init_clear();
 	}
 	void write_params(std::ofstream fout){
 		fout.write((char*)&idim,sizeof(int));

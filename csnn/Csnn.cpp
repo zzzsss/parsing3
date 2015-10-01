@@ -93,14 +93,36 @@ void Csnn::write_params(std::ofstream fout){
 }
 
 //-----------main methods-------------------------------
-//if testing, no adding untied-nnwb, untied_rate<=0 means no untied
-REAL* Csnn::forward(nn_input* in,int testing,REAL untied_rate)
+void Csnn::prepare_batch()
+{
+	this_input=0;
+	this_bsize=0;
+	this_mbsize=0;
+	//clear gradients --- no need, done after updating
+	/*
+	p_out->clear_grad();
+	p_h->clear_grad();
+	for(int i=0;i<p_untied->size();i++)
+		if(p_untied->at(i) != 0)
+			p_untied->at(i)->clear_grad();
+	p_word->clear_grad();
+	p_pos->clear_grad();
+	p_distance->clear_grad();
+	*/
+	//inactive several params
+	for(int i=0;i<p_untied->size();i++)
+		if(p_untied->at(i) != 0)
+			p_untied->at(i)->set_updating(false);
+}
+
+REAL* Csnn::forward(nn_input* in,int testing)
 {
 	//1.prepare inputs
 	this_input = in;
 	this_bsize = in->get_numi();
 	this_mbsize += this_bsize;
 	prepare_caches(this_bsize);
+	this_untied_index.clear();
 	f_inputs();		/**********VIRTUAL***********/	//now c_wv ready, and here also prepare this_untied_index
 
 	//2.1:input->wrepr --- need take care of untied
@@ -110,5 +132,50 @@ REAL* Csnn::forward(nn_input* in,int testing,REAL untied_rate)
 	else{
 
 	}
+
+	//2.x: combine and get c_repr, and then activate and drop-out
+
+	//3: repr->hidden
+
+	//3.x: activate and possible drop-out
+
+	//4. hidden->out
+
+	//4.x: possible softmax
 }
 
+void Csnn::backward(REAL* gradients)
+{
+	//1:prepare the output gradient --- ignore softmax (this is done by outside)
+
+	//2:out->hidden
+
+	//2.x:hidden
+
+	//3:hidden->repr
+
+	//3.x:repr and split it
+
+	//4.1:wrepr->input --- the untied
+
+	//5: the input wv
+}
+
+void Csnn::update(int way,REAL lrate,REAL wdecay,REAL m_alpha,REAL rms_smooth)
+{
+	if(p_out->need_updating())
+		p_out->update(way,lrate,wdecay,m_alpha,rms_smooth,this_mbsize);
+	if(p_h->need_updating())
+		p_h->update(way,lrate,wdecay,m_alpha,rms_smooth,this_mbsize);
+	for(int i=0;i<p_untied->size();i++){
+		nn_wb* ttt = p_untied->at(i);
+		if(ttt != 0 && ttt->need_updating())
+			ttt->update(way,lrate,wdecay,m_alpha,rms_smooth,this_mbsize);
+	}
+	if(p_word->need_updating())
+		p_word->update(way,lrate,wdecay,m_alpha,rms_smooth,this_mbsize);
+	if(p_pos->need_updating())
+		p_pos->update(way,lrate,wdecay,m_alpha,rms_smooth,this_mbsize);
+	if(p_distance->need_updating())
+		p_distance->update(way,lrate,wdecay,m_alpha,rms_smooth,this_mbsize);
+}

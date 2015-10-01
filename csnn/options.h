@@ -25,6 +25,9 @@ public:
 	int NN_add_average;		//whether add average feature
 	int NN_add_sent;		//whether add sentence features
 
+	int NN_untied_dim;		//0,1,2: 0 means no untied, 1 means based on m, 2 means h-m
+	REAL NN_untied_2brate;	//when dim==2, maybe need some back-off with random when training
+
 	int NN_out_size;		//output size
 	int NN_hidden_size;		//hidden size(near output)
 	int NN_wrsize;			//word repr size
