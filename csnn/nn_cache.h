@@ -15,6 +15,8 @@
 
 #include "nn_math.h"
 #include <cstdlib>
+#include <vector>
+using std::vector;
 
 class nn_cache{
 private:
@@ -32,7 +34,7 @@ public:
 		if(all > 0){
 			values = new REAL[all];
 			gradients = new REAL[all];
-			dropout = new REAL[all];
+			dropout = new REAL[length];	//dropout
 			values_before = new REAL[all];
 		}
 	}
@@ -47,8 +49,8 @@ public:
 	REAL* get_gradients(){return gradients;}
 	bool* get_dropout(){return dropout;}
 	void gen_dropout(REAL rate){
-		for(long i=0;i<bsize*length;i++)
-			dropout[i] = (drand48()<rate) ? 1 : 0;
+		for(long i=0;i<length;i++)
+			dropout[i] = (drand48()<rate) ? 0 : 1;	//0 means to perform dropout
 	}
 	void clear_values(){
 		for(long i=0;i<bsize*length;i++)
@@ -62,22 +64,83 @@ public:
 		clear_values();
 		clear_gradients();
 	}
-	//special value of -1 means no change
 	//!! delete old data when expand
-	void resize(long b,long l=-1){
+	void resize(long b){
 		long old_all = bsize*length;
-		if(b >= 0)
-			bsize = b;
-		if(l >= 0)
-			length = l;
-		long all = bsize*length;
+		long all = b*length;
 		if(all > old_all){
+			bsize = b;
 			delete []values;
 			delete []gradients;
 			delete []dropout;
 			values = new REAL[all];
 			gradients = new REAL[all];
 			dropout = new REAL[all];
+		}
+	}
+
+	//combine and dispatch
+	void combine_cache_value(vector<nn_cache*> list,int this_bsize){
+		int offset = 0;
+		for(int i=0;i<list.size();i++){
+			nn_cache* tmp = list[i];
+			for(int t=0;t<this_bsize;t++)
+				memcpy(values+length*t+offset,tmp->values+tmp->length*t,tmp->length*sizeof(REAL));
+			offset += tmp->length;
+		}
+	}
+	void dispatch_cache_grad(vector<nn_cache*> list,int this_bsize){
+		int offset = 0;
+		for(int i=0;i<list.size();i++){
+			nn_cache* tmp = list[i];
+			for(int t=0;t<this_bsize;t++)
+				memcpy(tmp->gradients+tmp->length*t,values+gradients*t+offset,tmp->length*sizeof(REAL));
+			offset += tmp->length;
+		}
+	}
+	//active or back-grad
+	void activate(int which,int bs,REAL drop_rate,int testing){
+		nn_math::act_f(which,values,bs*length,values_before);
+		if(drop_rate > 0){
+			if(testing){
+				nn_math::op_y_mult_a(bs*length,values,1-drop_rate);
+			}
+			else{
+				for(int i=0;i<bs*length;i++)
+					if(dropout[i%length]==0)
+						values[i] = 0;
+			}
+		}
+	}
+	void backgrad(int which,int bs,REAL drop_rate){
+		nn_math::act_b(which,values,gradients,bs*length,values_before);
+		if(drop_rate > 0){
+			//no testing
+			for(int i=0;i<bs*length;i++)
+				if(dropout[i%length]==0)
+					gradients[i] = 0;
+		}
+	}
+	void calc_softmax(int bs){
+		for(int b=0;b<bs;b++){
+		    // Get the maximum value of data_out on row b
+		    REAL max = values[b*length];
+		    for (int i=1; i<length; i++) {
+		      REAL x = values[b*length + i];
+		      if (x > max)
+		        max = x;
+		    }
+		    // Compute exp(x - max) inplace for each x in row b of data_out, and their sum
+		    REAL sum_exp = 0.;
+		    for (int i=0; i<length; i++) {
+		      REAL exp_x = exp(values[b*length + i] - max);
+		      sum_exp += exp_x;
+		      values[b*length + i] = exp_x;
+		    }
+		    // Normalize the row, dividing all values by sum_exp
+		    for (int i=0; i<length; i++) {
+		    	values[b*length + i] /= sum_exp;
+		    }
 		}
 	}
 };

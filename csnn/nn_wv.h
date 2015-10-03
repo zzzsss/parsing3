@@ -38,7 +38,7 @@ private:
 	}
 
 public:
-	nn_wv(int n,int d):updating(false),num(n),dim(d){
+	nn_wv(int n,int d):updating(true),num(n),dim(d){
 		int all = n*d;	//int is enough
 		hit_index = new IntSet(HIT_INDEX_SIZE);
 		w = new REAL[all];
@@ -81,7 +81,7 @@ public:
 	void update(int way,REAL lrate,REAL wdecay,REAL m_alpha,REAL rms_smooth,int mbsize);
 
 	//binary r/w
-	nn_wv(std::ifstream fin):updating(false){
+	nn_wv(std::ifstream fin):updating(true){
 		fin.read((char*)&num,sizeof(int));
 		fin.read((char*)&dim,sizeof(int));
 		int all = num*dim;	//int is enough

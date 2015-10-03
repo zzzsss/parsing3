@@ -43,7 +43,7 @@ private:
 	}
 
 public:
-	nn_wb(int i,int o):updating(false),idim(i),odim(o){
+	nn_wb(int i,int o):updating(true),idim(i),odim(o){
 		int all = i*o;	//int is enough
 		w = new REAL[all];
 		b = new REAL[o];
@@ -90,7 +90,7 @@ public:
 	void update(int way,REAL lrate,REAL wdecay,REAL m_alpha,REAL rms_smooth,int mbsize);
 
 	//binary r/w
-	nn_wb(std::ifstream fin):updating(false){
+	nn_wb(std::ifstream fin):updating(true){
 		fin.read((char*)&idim,sizeof(int));
 		fin.read((char*)&odim,sizeof(int));
 		int all = idim*odim;	//int is enough

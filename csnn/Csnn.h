@@ -48,7 +48,8 @@ protected:
 	nn_wv *p_distance;
 
 	void construct_caches();			//init and read
-	void prepare_caches(int);				//before minibatch
+	void prepare_caches(int);			//before f/b
+	void prepare_dropout();				//before minibatch
 	void construct_params();			//init
 
 	//binary mode r/w
@@ -59,7 +60,7 @@ protected:
 	nn_input* this_input;
 	int this_bsize;			//one-time bsize
 	int this_mbsize;		//minibatch's instance number
-	vector<int> this_untied_index;
+	vector<int> this_untied_index;	//size is this_bsize
 
 public:
 	//from scratch
