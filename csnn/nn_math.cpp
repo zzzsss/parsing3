@@ -41,7 +41,7 @@ namespace nn_math{
 		GEMM(&tA,&tB,&m,&n,&dimk,&a,A,&lda,B,&ldb,&b,C,&ldc);
 	}
 
-	//2.opt updates
+	//2.opt updates --- min loss function
 	/* details:	(choose some from the DLBook)
 		1.SGD:					[1]g=sum(grad)/#inst; [2]w-=a1*g;
 		2.SGD with momentum:	[1]g=sum(grad)/#inst; [2]v*=a2	[3]v-=a1*g	[4]w+=v

@@ -17,6 +17,7 @@
 #include <vector>
 #include <string>
 #include <fstream>
+using namespace std;
 
 //----------------------CSNN-----------------------
 //the specified nn for the specified structure for the specified task
@@ -51,6 +52,7 @@ protected:
 	void prepare_caches(int);			//before f/b
 	void prepare_dropout();				//before minibatch
 	void construct_params();			//init
+	void clear_params();				//clear gradients of params
 
 	//binary mode r/w
 	void read_params(std::ifstream fin);	//read	--- !!AFTER the options are ready
@@ -97,6 +99,9 @@ public:
 	void backward(REAL* gradients);
 	//update parameters
 	void update(int way,REAL lrate,REAL wdecay,REAL m_alpha,REAL rms_smooth);
+
+	//check gradients
+	void check_gradients(nn_input* in, vector<REAL>* goals);
 };
 
 #endif

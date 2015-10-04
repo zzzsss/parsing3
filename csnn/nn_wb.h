@@ -112,6 +112,10 @@ public:
 		fout.write((char*)&w,sizeof(REAL)*idim*odim);
 		fout.write((char*)&b,sizeof(REAL)*odim);
 	}
+
+	//only for gradient check
+	REAL* get_w(int index){return &w[index];}
+	REAL get_g(int index){return w_grad[index];}
 };
 
 

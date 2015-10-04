@@ -37,6 +37,18 @@ void Csnn::prepare_dropout(){
 	}
 }
 
+void Csnn::clear_params(){
+	//clear gradients --- for all params
+	p_out->clear_grad();
+	p_h->clear_grad();
+	for(int i=0;i<p_untied->size();i++)
+		if(p_untied->at(i) != 0)
+			p_untied->at(i)->clear_grad();
+	p_word->clear_grad();
+	p_pos->clear_grad();
+	p_distance->clear_grad();
+}
+
 void Csnn::construct_params(){
 	//init all the params
 	p_out = new nn_wb(the_option->NN_hidden_size,the_option->NN_out_size);
@@ -105,17 +117,7 @@ void Csnn::prepare_batch()
 	this_input=0;
 	this_bsize=0;
 	this_mbsize=0;
-	//clear gradients --- no need, done after updating
-	/*
-	p_out->clear_grad();
-	p_h->clear_grad();
-	for(int i=0;i<p_untied->size();i++)
-		if(p_untied->at(i) != 0)
-			p_untied->at(i)->clear_grad();
-	p_word->clear_grad();
-	p_pos->clear_grad();
-	p_distance->clear_grad();
-	*/
+
 	//inactive several params
 	for(int i=0;i<p_untied->size();i++)
 		if(p_untied->at(i) != 0)
@@ -217,8 +219,28 @@ void Csnn::backward(REAL* gradients)
 	c_repr->dispatch_cache_grad(tmp_list,this_bsize);	//here gradient not adding, but really too lazy to change it
 
 	//4.1:wrepr->input --- the untied
+	if(the_option->NN_untied_dim==0){
+		//no untied, matrix * matrix
+		p_untied->at(0)->backward(c_repr->get_gradients(),c_wv->get_gradients(),c_wv->get_values(),this_bsize);
+	}
+	else{
+		//untied --- one by one
+		int input_size = p_untied->at(0)->geti();
+		int output_size = p_untied->at(0)->geto();
+		REAL* ptr_in = c_wv->get_gradients();
+		REAL* ptr_in_v = c_wv->get_values();
+		REAL* ptr_out = c_wrepr->get_gradients();
+		for(int i=0;i<this_bsize;i++){
+			nn_wb* tmp = p_untied->at(this_untied_index[i]);
+			tmp->backward(ptr_out,ptr_in,ptr_in_v,1);
+			ptr_in += input_size;
+			ptr_out += output_size;
+		}
+	}
 
 	//5: the input wv
+	// - no activation
+	b_inputs();			/**********VIRTUAL***********/
 }
 
 void Csnn::update(int way,REAL lrate,REAL wdecay,REAL m_alpha,REAL rms_smooth)
