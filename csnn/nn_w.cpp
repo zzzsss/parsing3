@@ -53,11 +53,16 @@ void nn_wb::update(int way,REAL lrate,REAL wdecay,REAL m_alpha,REAL rms_smooth,i
 
 //----------------------------------------------------------
 //for nn_wv
-void nn_wv::forward(int index,REAL* out)
+void nn_wv::forward(int index,REAL* out,int adding)
 {
-	if(index<0)
-		memset(out,0,sizeof(REAL)*dim);
-	memcpy(out,w+index*dim,sizeof(REAL)*dim);
+	if(!adding){
+		if(index<0)
+			memset(out,0,sizeof(REAL)*dim);
+		memcpy(out,w+index*dim,sizeof(REAL)*dim);
+	}
+	else if(index>=0){
+		nn_math::op_y_plus_ax(dim,out,w+index*dim,1);
+	}
 }
 
 void nn_wv::backward(int index,const REAL* grad)

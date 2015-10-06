@@ -76,7 +76,7 @@ public:
 
 	//three important operations
 	//forward and backward only consider one wv
-	void forward(int index,REAL* out);
+	void forward(int index,REAL* out,int adding=0);
 	void backward(int index,const REAL* grad);
 	void update(int way,REAL lrate,REAL wdecay,REAL m_alpha,REAL rms_smooth,int mbsize);
 

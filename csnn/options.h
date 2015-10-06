@@ -61,7 +61,28 @@ public:
 	nn_options(){default_init();}
 	nn_options(std::ifstream fin){read(fin);}
 
-	void default_init(){}
+	void default_init(){
+		NN_wnum = 50000;
+		NN_pnum = 50;
+		NN_dnum = 20;
+		NN_wsize = 50;	//word embedding
+		NN_psize = 30;
+		NN_dsize = 20;
+		NN_win = 5;
+		NN_add_average = 1;
+		NN_add_sent = 1;
+		NN_untied_dim = 0;
+		NN_untied_2brate = 0.3;
+		//NN_out_size = ??;
+		NN_hidden_size = 40;
+		NN_wrsize = 200;
+		//NN_srsize = 100;
+		NN_act = 0;		//ACT_TANH
+		NN_out_prob = 1;
+		NN_dropout = 0;
+		NN_init_wbrange = 0.1;
+		NN_init_wvrange = 0.1;
+	}
 	void read(std::ifstream fin){}
 	void write(std::ofstream fout){}
 };

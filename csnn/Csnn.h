@@ -29,6 +29,11 @@ protected:
 	virtual int get_order()=0;
 	virtual void f_inputs()=0;
 	virtual void b_inputs()=0;
+	static const int HAS_HEAD[3][4] = {
+			{-1,0,-1,-1},	//h,m
+			{-1,0,0,-1},	//h,m,s
+			{3,0,0,-1}		//h,m,s,g
+	};
 	//options
 	nn_options *the_option;
 	//the caches
@@ -102,6 +107,26 @@ public:
 
 	//check gradients
 	void check_gradients(nn_input* in, vector<REAL>* goals);
+};
+
+/************  three orders of nn  ********************/
+
+class CsnnO1: public Csnn{
+	virtual int get_order(){return 1;}
+	virtual void f_inputs(){Csnn::f_inputs();}
+	virtual void b_inputs(){Csnn::b_inputs();}
+};
+
+class CsnnO2: public Csnn{
+	virtual int get_order(){return 2;}
+	virtual void f_inputs(){Csnn::f_inputs();}
+	virtual void b_inputs(){Csnn::b_inputs();}
+};
+
+class CsnnO3: public Csnn{
+	virtual int get_order(){return 3;}
+	virtual void f_inputs(){Csnn::f_inputs();}
+	virtual void b_inputs(){Csnn::b_inputs();}
 };
 
 #endif
