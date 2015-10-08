@@ -18,11 +18,12 @@ DependencyInstance::DependencyInstance(){
 	//combined_feats = new vector<string*>();
 }
 DependencyInstance::DependencyInstance(std::vector<string*> *forms,
-		std::vector<string*> *postags,std::vector<int> *heads){
+		std::vector<string*> *postags,std::vector<string*> *deprels,std::vector<int> *heads){
 	init();
 	this->forms = forms;
 	this->heads = heads;
 	this->postags = postags;
+	this->deprels = deprels;
 }
 int DependencyInstance::length(){
 	return (int)(forms->size());

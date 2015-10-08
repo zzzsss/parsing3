@@ -1,0 +1,158 @@
+/*
+ * Dictionary.cpp
+ *
+ *  Created on: Oct 8, 2015
+ *      Author: zzs
+ */
+
+#include "Dictionary.h"
+
+string Dictionary::POS_START = "<pos-s>";
+string Dictionary::POS_END = "<pos-e>";
+string Dictionary::POS_UNK = "<pos-unk>";
+string Dictionary::WORD_START = "<w-s>";
+string Dictionary::WORD_END = "<w-e>";
+string Dictionary::WORD_UNK = "<w-unk>";
+
+//main construction process
+void Dictionary::construct_dictionary(vector<DependencyInstance*>* corpus,void* construct_info)
+{
+	printf("-Start to build dictionary\n");
+	int count = 0;
+	//1.pos
+	count = 0;
+	map_pos->insert(pair<string*, int>(&POS_START,count++));
+	map_pos->insert(pair<string*, int>(&POS_END,count++));
+	map_pos->insert(pair<string*, int>(&POS_UNK,count++));
+	for(int i=0;i<corpus->size();i++){
+		DependencyInstance* one = corpus->at(i);
+		vector<string*>* one_pos = one->postags;
+		int sen_length = one_pos->size();
+		for(int j=0;j<sen_length;j++){
+			string* to_find = one_pos->at(j);
+			HashMap::iterator iter = map_pos->find(to_find);
+			if(iter == map_pos->end())
+				map_pos->insert(pair<string*, int>(to_find,count++));
+		}
+	}
+	//2.deprel
+	count = 0;
+	for(int i=0;i<corpus->size();i++){
+		DependencyInstance* one = corpus->at(i);
+		vector<string*>* one_rel = one->deprels;
+		int sen_length = one_rel->size();
+		for(int j=0;j<sen_length;j++){
+			string* to_find = one_rel->at(j);
+			HashMap::iterator iter = map_deprel->find(to_find);
+			if(iter == map_deprel->end()){
+				map_deprel->insert(pair<string*, int>(to_find,count++));
+				list_deprel->push_back(to_find);
+			}
+		}
+	}
+	//3.words
+	//3.1: the frequency
+	HashMap word_freq(CONS_size_word);
+	for(int i=0;i<corpus->size();i++){
+		DependencyInstance* one = corpus->at(i);
+		vector<string*>* one_word = one->forms;
+		int sen_length = one_word->size();
+		for(int j=0;j<sen_length;j++){
+			string* to_find = one_word->at(j);
+			HashMap::iterator iter = word_freq.find(to_find);
+			if(iter == word_freq.end())
+				word_freq.insert(pair<string*, int>(to_find,1));
+			else
+				word_freq.emplace(to_find,iter->second+1);
+		}
+	}
+	//3.2:construct
+	count = 0;
+	map_word->insert(pair<string*, int>(&WORD_START,count++));
+	map_word->insert(pair<string*, int>(&WORD_END,count++));
+	map_word->insert(pair<string*, int>(&WORD_UNK,count++));
+	for(HashMap::iterator iter=word_freq.begin();iter!=word_freq.end();iter++){
+		if(iter->second < remove_single){}
+		else
+			map_word->insert(pair<string*, int>(iter->first,count++));
+	}
+
+	printf("--Final finish dictionary building, words %d,pos %d,deprel %d.\n",
+			getnum_word(),getnum_pos(),getnum_deprel());
+}
+
+//io
+void Dictionary::write(string file)
+{
+	printf("-Writing dict to %s.\n",file.c_str());
+	ofstream fout;
+	fout.open(file.c_str(),ofstream::out);
+	vector<HashMap*> the_list;
+	the_list.push_back(map_pos);the_list.push_back(map_deprel);the_list.push_back(map_word);
+	//write out
+	for(int i=0;i<the_list.size();i++){
+		HashMap* the_map = the_list[i];
+		fout << the_list[i]->size() << "\n";
+		for(HashMap::iterator i = the_map->begin();i!=the_map->end();i++){
+			fout << *(i->first) << "\t" << i->second << "\n";
+		}
+	}
+	fout.close();
+	printf("-Writing finished.\n");
+}
+Dictionary::Dictionary(string file)
+{
+	remove_single = -1;	//no need
+	map_word = new HashMap(CONS_size_word);
+	map_pos = new HashMap(CONS_size_pos);
+	map_deprel = new HashMap(CONS_size_rel);
+	list_deprel = new vector<string*>();
+	printf("-Reading dict from %s.\n",file.c_str());
+	ifstream fin;
+	fin.open(file.c_str(),ifstream::in);
+	vector<HashMap*> the_list;
+	the_list.push_back(map_pos);the_list.push_back(map_deprel);the_list.push_back(map_word);
+	//read in
+	for(int i=0;i<the_list.size();i++){
+		HashMap* the_map = the_list[i];
+		int the_size;
+		fin >> the_size;
+		for(int i=0;i<the_size;i++){
+			string tmp_str;
+			int index;
+			fin >> tmp_str >> index;
+			the_map->insert(pair<string*, int>(new string(tmp_str),index));
+		}
+		//check
+		if(the_map->size() != the_size){
+			cerr << "!!! Error with the dictionary file." << endl;
+		}
+	}
+	fin.close();
+	printf("--Final reading dictionary, words %d,pos %d,deprel %d.\n",
+			getnum_word(),getnum_pos(),getnum_deprel());
+}
+
+//indexing
+int Dictionary::get_index_word(string* s){
+	HashMap::iterator iter = map_word->find(s);
+	if(iter == map_word->end())
+		return map_word->find(&WORD_UNK)->second;
+	else
+		return iter->second;
+}
+int Dictionary::get_index_pos(string* s){
+	HashMap::iterator iter = map_pos->find(s);
+	if(iter == map_pos->end())
+		return map_pos->find(&POS_UNK)->second;
+	else
+		return iter->second;
+}
+int Dictionary::get_index_deprel(string* s){
+	HashMap::iterator iter = map_pos->find(s);	//must be there
+	return iter->second;
+}
+string* Dictionary::get_str_deprel(int index){
+	return list_deprel->at(index);
+}
+

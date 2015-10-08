@@ -19,17 +19,17 @@ public:
 	//vector<string*>* cpostags;
 	vector<string*>* postags;
 	//vector<vector<string*>*>* feats;
-	vector<int>* heads;
-	//vector<string*>* deprels;
-	//vector<RelationalFeature*>* relFeats;
-	//vector<string*>* combined_feats;	//combined features when considering POS
+	vector<int>* heads;				//to-predict
+	vector<string*>* deprels;
 
-	//used when decoding --- set later
+	//used when decoding --- set up after construction of dictionary
 	vector<int>* index_forms;
 	vector<int>* index_pos;
+	vector<int>* ideprels;		//to-predict (index of deprels)
 
 	DependencyInstance();
-	DependencyInstance(vector<string*>* forms, vector<string*>* postags,vector<int>* heads);
+	DependencyInstance(vector<string*>* forms, vector<string*>* postags,
+			std::vector<string*> *deprels,vector<int>* heads);
 	~DependencyInstance();
 	//void setFeatureVector(FeatureVector* fv);
 	int length();

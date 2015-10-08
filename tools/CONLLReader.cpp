@@ -44,6 +44,7 @@ DependencyInstance* CONLLReader::getNext(){
 	vector<string*>* forms = new vector<string*>(length + 1);
 	vector<string*>* pos = new vector<string*>(length + 1);
 	vector<int>* heads = new vector<int>(length + 1);
+	vector<string*>* deprel = new vector<string*>(length + 1);
 
 	/* add root */
 	string tmp = string("<root>");
@@ -51,14 +52,16 @@ DependencyInstance* CONLLReader::getNext(){
 	tmp = string("<root-POS>");
 	(*pos)[0] = new string(tmp);
 	(*heads)[0] = -1;
+	(*deprel)[0] = 0;	//NULL
 	
 	for(int i = 0; i < length; i++){
 		//the new form
 		vector<string*>* info = (*lineList)[i];
 		(*forms)[i + 1] = normalize((*info)[1]);
 		//identify pos away ...
-		(*pos)[i + 1] = new string("_pos_"+*((*info)[4]));
+		(*pos)[i + 1] = (*info)[4];
 		(*heads)[i + 1] = Util::stringToInt((*info)[8]);
+		(*deprel)[i + 1] = (*info)[9];
 		vector<string*>::iterator iter;
 		for(iter = info->begin(); iter != info->end(); iter++){
 			//cout<<(*iter)->c_str()<<" ";
@@ -68,7 +71,7 @@ DependencyInstance* CONLLReader::getNext(){
 		delete(info);
 	}
 	delete(lineList);
-	return new DependencyInstance(forms,pos,heads);
+	return new DependencyInstance(forms,pos,deprel,heads);
 }
 
 string* CONLLReader::normalize(string* s){
