@@ -30,9 +30,9 @@ public:
 
 	nn_input(int i,int w,vector<int>* il,vector<int>* wl,vector<int>* pl,nn_input_helper* h):
 		num_inst(i),num_width(w),inputs(il),wordl(wl),posl(pl),helper(h){}
+	~nn_input(){delete inputs;}	//only delete this part
 	int get_numi(){return num_inst;}
 	int get_numw(){return num_width;}
-
 };
 
 

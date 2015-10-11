@@ -18,6 +18,7 @@
 #include <fstream>
 #include "HashMap.h"
 #include "../tools/DependencyInstance.h"
+#include "../csnn/nn_input_helper.h"
 using namespace std;
 
 //the dictionary
@@ -60,6 +61,9 @@ public:
 	//io
 	Dictionary(string file);
 	void write(string file);
+	//the helper
+	static nn_input_helper* common_helper;
+	nn_input_helper* get_helper();
 };
 
 

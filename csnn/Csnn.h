@@ -89,11 +89,30 @@ public:
 	void write(std::string fname){
 		std::ofstream fout;
 		fout.open(fname.c_str(),ifstream::binary);
+		//first write order
+		int order = get_order();
+		fout.write((char*)&order,sizeof(order));
 		the_option->write(fout);
 		write_params(fout);
 		fout.close();
 	}
 	virtual ~Csnn(){}	//need-to-do:clear
+	static Csnn* read(string fname){
+		std::ifstream fin;
+		fin.open(fname.c_str(),ifstream::binary);
+		int order;
+		fin.read((char*)&order,sizeof(order));
+		fin.close();
+		Csnn* ret = 0;
+		switch(order){
+		case 1:	ret = new CsnnO1(); break;
+		case 2:	ret = new CsnnO2(); break;
+		case 3:	ret = new CsnnO3(); break;
+		default: cerr << "!!! Unknown csnn order..." << endl; break;
+		}
+		ret->read_init(fname);	//construct
+		return ret;
+	}
 
 	//main methods
 	//-- SHOULD BE: while(MiniBatch){prepare_batch;while(sent){f;b;}update;}
@@ -107,6 +126,16 @@ public:
 
 	//check gradients
 	void check_gradients(nn_input* in, vector<REAL>* goals);
+
+	//no-more updating of TAB
+	void noupdate_tab(){
+		p_word->set_updating(false);
+		p_pos->set_updating(false);
+		p_distance->set_updating(false);
+	}
+	int get_odim(){	//!!!! careful
+		return p_out->geto();
+	}
 };
 
 /************  three orders of nn  ********************/

@@ -14,6 +14,19 @@ string Dictionary::WORD_START = "<w-s>";
 string Dictionary::WORD_END = "<w-e>";
 string Dictionary::WORD_UNK = "<w-unk>";
 
+//helper for special info
+nn_input_helper* Dictionary::common_helper = 0;
+nn_input_helper* Dictionary::get_helper(){
+	if(common_helper == 0){
+		common_helper = new common_helper();
+		common_helper->start_word = get_index_word(&WORD_START);
+		common_helper->end_word = get_index_word(&WORD_END);
+		common_helper->start_pos = get_index_pos(&POS_START);
+		common_helper->end_pos = get_index_pos(&POS_END);
+	}
+	return common_helper;
+}
+
 //main construction process
 void Dictionary::construct_dictionary(vector<DependencyInstance*>* corpus,void* construct_info)
 {

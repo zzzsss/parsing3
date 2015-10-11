@@ -24,9 +24,9 @@ public:
 			str = (*x->forms)[i];
 			fprintf(writer, "%s\t_\t", str->c_str());
 
-			fprintf(writer, "_\t%s\t_\t_\t_\t%d\t", (*x->postags)[i], (*x->heads)[i]);
+			fprintf(writer, "_\t%s\t_\t_\t_\t%d\t", (*x->postags)[i], (*x->predict_heads)[i]);
 
-			fprintf(writer, "%s\n", (*x->deprels)[i]);
+			fprintf(writer, "%s\n", (*x->predict_deprels)[i]);
 		}
 		fputc('\n', writer);
 	}

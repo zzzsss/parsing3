@@ -3,19 +3,15 @@
 using namespace std;
 
 void DependencyInstance::init(){
-	forms = NULL;
-	heads = NULL;
-	postags = NULL;
-	index_forms = NULL;
-	index_pos = NULL;
-	//combined_feats = NULL;
-}
-DependencyInstance::DependencyInstance(){
-	init();
-	forms = new vector<string*>();
-	heads = new vector<int>();
-	postags = new vector<string*>();
-	//combined_feats = new vector<string*>();
+	forms=0;
+	postags=0;
+	heads=0;
+	deprels=0;
+	index_forms=0;
+	index_pos=0;
+	index_deprels=0;
+	predict_heads=0;
+	predict_deprels=0;
 }
 DependencyInstance::DependencyInstance(std::vector<string*> *forms,
 		std::vector<string*> *postags,std::vector<string*> *deprels,std::vector<int> *heads){
@@ -56,9 +52,8 @@ DependencyInstance::~DependencyInstance(){
 	delete(postags);
 	delete(forms);
 	delete(heads);
+	delete(deprels);
 	delete(index_forms);
 	delete(index_pos);
-	forms = NULL;
-	heads = NULL;
 }
 
