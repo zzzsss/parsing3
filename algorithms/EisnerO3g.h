@@ -31,13 +31,14 @@ inline int get_index_o3g(int len,int g,int h,int m,int c)
 	return key;
 }
 
-inline int get_index2_o3g(int len,int g,int h,int c,int m)
+inline int get_index2_o3g(int len,int g,int h,int c,int m,int l=0,int ln=1)
 {
 	//get for scores: S[g][h][c][m] (S[0][0][c][m];S[g][h][-][m]=>S[g][h][h][m])
 	int key = g;
 	key = key * len + h;
 	key = key * len + c;
 	key = key * len + m;
+	key = key * ln + l;
 	return key;
 }
 

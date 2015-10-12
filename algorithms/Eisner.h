@@ -30,11 +30,12 @@ inline int get_index(int len,int s,int t,int lr,int c)
 	return key;
 }
 //the index2 -- scores
-// -- unified with S[h][m]
-inline int get_index2(int len,int h,int m)
+// -- unified with S[h][m][label] (default 1 label --- for compatibility)
+inline int get_index2(int len,int h,int m,int l=0,int ln=1)
 {
 	int key = h;
 	key = key * len + m;
+	key = key * ln + l;
 	return key;
 }
 

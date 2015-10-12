@@ -64,6 +64,11 @@ protected:
 	static double* rearrange_scores_o2sib(DependencyInstance* x,Csnn* m,nn_input* t,double* fscores,bool prob_ouput,bool prob_trans,double* rscores_o1);
 	static double* rearrange_scores_o3g(DependencyInstance* x,Csnn* m,nn_input* t,double* fscores,bool prob_ouput,bool prob_trans,double* rscores_o1,double* rscores_o2sib);
 
+	//3.2:parse (take care of the labeled situation)
+	void parse_o1(DependencyInstance* x);
+	void parse_o2sib(DependencyInstance* x);
+	void parse_o3g(DependencyInstance* x);
+
 public:
 	Process(string);
 	virtual ~Process(){}

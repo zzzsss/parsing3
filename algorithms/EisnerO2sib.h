@@ -1,7 +1,7 @@
 /*
  * EisnerO2sib.h
  *
- *  Created on: 2015Äê3ÔÂ18ÈÕ
+ *  Created on: 2015.3.18
  *      Author: zzs
  */
 
@@ -34,12 +34,13 @@ inline int get_index_o2sib(int len,int s,int t,int lr,int c)
 }
 
 //here different from Eisner.h::get_index2 (no direction -> it depends on h and m)
-inline int get_index2_o2sib(int len,int h,int c,int m)
+inline int get_index2_o2sib(int len,int h,int c,int m,int l=0,int ln=1)
 {
 	//get for scores: S[h][c][m] (S[h][-][m]=>S[h][h][m])
 	int key = h;
 	key = key * len + c;
 	key = key * len + m;
+	key = key * ln + l;
 	return key;
 }
 

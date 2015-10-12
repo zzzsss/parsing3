@@ -13,6 +13,7 @@
 #include <vector>
 using namespace std;
 
+/***************************************GIVING UP****************************************/
 // ----------- for decoding o2g ----------------
 
 #define Negative_Infinity_O2g -1e100
@@ -40,6 +41,6 @@ inline int get_index2_o2g(int len,int g,int h,int m)
 }
 
 extern vector<int>* decodeProjective_o2g(int length,double* scores);
-extern double* encodeMarginals_o2g(const int length,const double* scores);
+//extern double* encodeMarginals_o2g(const int length,const double* scores);
 
 #endif /* ALGORITHMS_EISNERO2G_H_ */

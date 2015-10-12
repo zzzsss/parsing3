@@ -267,4 +267,5 @@ void Csnn::update(int way,REAL lrate,REAL wdecay,REAL m_alpha,REAL rms_smooth)
 		p_pos->update(way,lrate,wdecay,m_alpha,rms_smooth,this_mbsize);
 	if(p_distance->need_updating())
 		p_distance->update(way,lrate,wdecay,m_alpha,rms_smooth,this_mbsize);
+	this_mbsize = 0;
 }
