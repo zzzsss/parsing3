@@ -26,7 +26,7 @@ public:
 
 			fprintf(writer, "_\t%s\t_\t_\t_\t%d\t", (*x->postags)[i], (*x->predict_heads)[i]);
 
-			fprintf(writer, "%s\n", (*x->predict_deprels)[i]);
+			fprintf(writer, "%s\n", (*x->predict_deprels_str)[i]);
 		}
 		fputc('\n', writer);
 	}

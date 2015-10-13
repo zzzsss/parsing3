@@ -12,6 +12,7 @@ class DependencyInstance{
 private:
 	void init();
 public:
+	//GET from init
 	vector<string*>* forms;
 	vector<string*>* postags;
 	vector<int>* heads;
@@ -22,18 +23,17 @@ public:
 	vector<int>* index_pos;
 	vector<int>* index_deprels;
 
-	//to-predict
+	//to-predict --- GET from decoder
 	vector<int>* predict_heads;
 	vector<int>* predict_deprels;
+
+	//GET before output
+	vector<string*>* predict_deprels_str;
 
 	DependencyInstance();
 	DependencyInstance(vector<string*>* forms, vector<string*>* postags,
 			std::vector<string*> *deprels,vector<int>* heads);
 	~DependencyInstance();
-	//void setFeatureVector(FeatureVector* fv);
 	int length();
-	string toString();
-	//void writeObject(ObjectWriter &out);
-	//void readObject(ObjectReader &in);
 };
 #endif

@@ -19,6 +19,7 @@ void Process::nn_train_prepare()
 	cout << "3.get dict from scratch:" << endl;
 	dict = new Dictionary(training_corpus,hp->CONF_dict_remove);
 	dict->write(hp->CONF_dict_file);
+	dict->prepare_corpus(training_corpus);	//get those indexes
 	//4.create machine
 	cout << "4.get mach from scratch:" << endl;
 	each_create_machine();		/*************VIRTUAL************/
@@ -74,6 +75,7 @@ double Process::nn_dev_test(string to_test,string output,string gold)
 	time_t now;
 	//also assuming test-file itself is gold file(this must be true with dev file)
 	dev_test_corpus = read_corpus(to_test);
+	dict->prepare_corpus(dev_test_corpus);	//get those indexes
 	int token_num = 0;	//token number
 	int miss_count = 0;
 	time(&now);
@@ -90,6 +92,7 @@ double Process::nn_dev_test(string to_test,string output,string gold)
 	}
 	time(&now);
 	cout << "#--Finish at " << ctime(&now) << std::flush;
+	dict->prepare_deprel_str(dev_test_corpus);	//get deprel's strings
 	write_corpus(dev_test_corpus,output);
 	string ttt;
 	double rate = (double)(token_num-miss_count) / token_num;

@@ -50,6 +50,9 @@ public:
 	int get_index_deprel(string*);
 	string* get_str_deprel(int);
 
+	void prepare_corpus(vector<DependencyInstance*>* corpus);
+	void prepare_deprel_str(vector<DependencyInstance*>* corpus);
+
 	Dictionary(vector<DependencyInstance*>* corpus,int remove,void* construct_info=0){
 		map_word = new HashMap(CONS_size_word);
 		map_pos = new HashMap(CONS_size_pos);

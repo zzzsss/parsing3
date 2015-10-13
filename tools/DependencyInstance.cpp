@@ -12,6 +12,7 @@ void DependencyInstance::init(){
 	index_deprels=0;
 	predict_heads=0;
 	predict_deprels=0;
+	predict_deprels_str=0;
 }
 DependencyInstance::DependencyInstance(std::vector<string*> *forms,
 		std::vector<string*> *postags,std::vector<string*> *deprels,std::vector<int> *heads){
@@ -25,22 +26,6 @@ int DependencyInstance::length(){
 	return (int)(forms->size());
 }
 
-//printing
-string DependencyInstance::toString(){
-	string tmp = string();
-	for(int i=0;i<length();i++){
-		tmp += i;
-		tmp += ":";
-		tmp += *forms->at(i);
-		tmp += "/";
-		tmp += *postags->at(i);
-		tmp += "/";
-		tmp += heads->at(i);
-		tmp += ";";
-	}
-	return tmp;
-}
-
 DependencyInstance::~DependencyInstance(){
 	vector<string*>::iterator iter;
 	for(iter = forms->begin(); iter != forms->end(); ++iter){
@@ -49,11 +34,18 @@ DependencyInstance::~DependencyInstance(){
 	for(iter = postags->begin(); iter != postags->end(); ++iter){
 		delete (*iter);
 	}
-	delete(postags);
+	for(iter = deprels->begin(); iter != deprels->end(); ++iter){
+		delete (*iter);
+	}
 	delete(forms);
+	delete(postags);
 	delete(heads);
 	delete(deprels);
 	delete(index_forms);
 	delete(index_pos);
+	delete index_deprels;
+	delete predict_heads;
+	delete predict_deprels;
+	delete predict_deprels_str;	//!!don't delete the string here, they are from dictionary
 }
 

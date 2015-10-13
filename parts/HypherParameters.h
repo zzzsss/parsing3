@@ -39,14 +39,19 @@ double CONF_NN_LMULT;			//-1~0: schedule rate
 double CONF_NN_WD;				//weight decay
 
 double CONF_NN_resample;				//re-sample rate
-int CONF_NN_FIXVEC;	//no update on embeddings any longer
+int CONF_NN_FIXVEC;						//no update on embeddings any longer
 
 //1.4-others
 int CONF_dict_remove;	//remove words appears only less than this times
 int CONF_random_seed;
-int CONF_score_prob;	//whether give transform score, only for M1 (0,1)
 int CONF_minibatch;		//how many sentences for a batch(this is not bsize of nn)
 int CONF_labeled;		//labeled or not
+
+//1.5-scores
+int CONF_score_prob;	//whether give transform score, only for M1 (0,1)
+double CONF_score_o1filter_cut;
+int CONF_score_combine_o1;
+int CONF_score_combine_o2sib;
 
 };
 

@@ -169,3 +169,32 @@ string* Dictionary::get_str_deprel(int index){
 	return list_deprel->at(index);
 }
 
+//deal with corpus
+//use the hash maps to get the three indexes
+void Dictionary::prepare_corpus(vector<DependencyInstance*>* corpus)
+{
+	for(vector<DependencyInstance*>::iterator i=corpus->begin();i!=corpus->end();i++){
+		DependencyInstance* inst = *i;
+		int len = inst->length();
+		inst->index_forms = new vector<int>(len);
+		inst->index_pos = new vector<int>(len);
+		inst->index_deprels = new vector<int>(len);
+		for(int t=0;t<len;t++){
+			inst->index_forms->at(t) = get_index_word(inst->forms->at(t));
+			inst->index_forms->at(t) = get_index_pos(inst->postags->at(t));
+			inst->index_deprels->at(t) = get_index_deprel(inst->deprels->at(t));
+		}
+	}
+}
+//get deprel-strs, only before output (CONLLWriter)
+void Dictionary::prepare_deprel_str(vector<DependencyInstance*>* corpus)
+{
+	for(vector<DependencyInstance*>::iterator i=corpus->begin();i!=corpus->end();i++){
+		DependencyInstance* inst = *i;
+		int len = inst->length();
+		inst->predict_deprels_str = new vector<string*>();
+		for(int t=0;t<len;t++){
+			inst->predict_deprels_str = get_str_deprel(inst->predict_deprels->at(t));
+		}
+	}
+}

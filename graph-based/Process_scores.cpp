@@ -125,34 +125,6 @@ double* Process::forward_scores_o3g(DependencyInstance* x,Csnn* m,nn_input** t,n
 	return tmp_scores;
 }
 
-//prepare bool for high-order filtering
-//-score is the rearrange-score and here must be unlabeled prob
-//-cut>0 means absolute,cut<0 means compared to max
-bool* get_cut_o1(int len,double* scores,double cut)
-{
-	double* scores_max = new double[len];
-	for(int m=1;m<len;m++){	//each token's max-score head
-		scores_max[m] = scores[get_index2(len,0,m)];
-		for(int h=1;h<len;h++){
-			if(h==m) continue;
-			double tmp_s = scores[get_index2(len,h,m)];
-			if(tmp_s > scores_max[m])
-				scores_max[m] = tmp_s;
-		}
-	}
-	bool* ret = new bool[len*len];
-	for(int m=1;m<len;m++){
-		for(int h=0;h<len;h++){
-			if(h==m) continue;
-			if(cut<0)
-				ret[get_index2(len,h,m)] = (scores[get_index2(len,h,m)] < (scores_max[m]*-1*cut));
-			else
-				ret[get_index2(len,h,m)] = (scores[get_index2(len,h,m)] < cut);
-		}
-	}
-	return ret;
-}
-
 //-----------------------------------rearrange------------------------------------------
 #include "Process_trans.cpp"	//special
 // x for length, m for odim, t for outputs, fscores for forward-scores(no arrange)
