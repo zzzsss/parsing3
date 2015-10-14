@@ -111,18 +111,6 @@ namespace nn_math{
 		}
 	}
 
-	bool opt_changelrate(int way){
-		switch(way){
-		case OPT_SGD: case OPT_SGD_MOMENTUM:
-			return true;
-		case OPT_ADAGRAD: case OPT_RMSPROP: case OPT_ADAM:
-			return false;
-		default:
-			std::cerr << "Unknown opt method." << std::endl;
-			exit(1);
-		}
-	}
-
 	//3.activation functions
 	void act_f(int which,REAL* x,int n,REAL* xb){
 		switch(which){

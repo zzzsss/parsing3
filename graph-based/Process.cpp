@@ -17,8 +17,10 @@ Process::Process(string conf)
 
 
 //---------------------------LRATE-------------------------------//
-int Process::set_lrate_one_iter()
+int Process::set_lrate_one_iter()	//currently: return has no meaning
 {
+	if(!nn_math::opt_changelrate[hp->CONF_UPDATE_WAY])
+		return 0;
 	if(hp->CONF_NN_LMULT<0 && cur_iter>0){
 		//special schedule in (-1,0)
 		if(hp->CONF_NN_LMULT > -1){
@@ -26,16 +28,20 @@ int Process::set_lrate_one_iter()
 				cur_lrate *= (-1 * hp->CONF_NN_LMULT);
 				lrate_cut_times++;
 				last_cut_iter = cur_iter;
+				return 1;
 			}
 			else if((cur_iter-last_cut_iter) >= hp->CONF_NN_ITER_force_half){
 				//force cut
 				cur_lrate *= (-1 * hp->CONF_NN_LMULT);
 				lrate_force_cut_times++;
 				last_cut_iter = cur_iter;
+				return 1;
 			}
+			else
+				return 0;
 		}
 	}
-	return 1;
+	return 0;
 }
 
 int Process::whether_keep_trainning()

@@ -42,9 +42,9 @@ protected:
 	Csnn* mach;
 
 	//0.virtuals
-	virtual void each_create_machine();
-	virtual void each_train_one_iter();
-	virtual void each_test_one(DependencyInstance*);		//set predict_head or predict_deprels here
+	virtual void each_create_machine()=0;
+	virtual void each_train_one_iter()=0;
+	virtual void each_test_one(DependencyInstance*)=0;		//set predict_head or predict_deprels here
 
 	//1.1:helper-learning rate
 	int set_lrate_one_iter();	//lrate schedule

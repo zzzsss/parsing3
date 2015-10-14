@@ -15,7 +15,6 @@ using std::string;
 class HypherParameters{
 public:
 	nn_options hp_nn;	//used by nn
-
 public:
 //1.0
 int CONF_method;	//which method
@@ -38,13 +37,18 @@ int CONF_NN_ITER_force_half;	//force cut half if no cutting for how many iters
 double CONF_NN_LMULT;			//-1~0: schedule rate
 double CONF_NN_WD;				//weight decay
 
+int CONF_UPDATE_WAY;	//see nn_math.h: OPT_*
+int CONF_NESTEROV_MOMENTUM;	//set to 1 if update with it firstly
+double CONF_MOMENTUM_ALPHA;
+double CONF_RMS_SMOOTH;
+
 double CONF_NN_resample;				//re-sample rate
 int CONF_NN_FIXVEC;						//no update on embeddings any longer
+int CONF_minibatch;		//how many sentences for a batch(this is not bsize of nn)
 
 //1.4-others
 int CONF_dict_remove;	//remove words appears only less than this times
 int CONF_random_seed;
-int CONF_minibatch;		//how many sentences for a batch(this is not bsize of nn)
 int CONF_labeled;		//labeled or not
 
 //1.5-scores
@@ -52,6 +56,9 @@ int CONF_score_prob;	//whether give transform score, only for M1 (0,1)
 double CONF_score_o1filter_cut;
 int CONF_score_combine_o1;
 int CONF_score_combine_o2sib;
+string CONF_score_mach_fo1;		//o1-filter mach
+string CONF_score_mach_so1;		//o1-scorer mach
+string CONF_score_mach_so2sib;	//o2sib-scorer mach
 
 };
 

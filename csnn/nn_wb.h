@@ -88,6 +88,7 @@ public:
 	void forward(/*const*/REAL* in,REAL* out,int bsize);							//forward setting
 	void backward(/*const*/REAL* ograd,REAL* igrad,/*const*/REAL* in,int bsize);	//backward accumulate
 	void update(int way,REAL lrate,REAL wdecay,REAL m_alpha,REAL rms_smooth,int mbsize);
+	void nesterov_update(int way,REAL m_alpha);
 
 	//binary r/w
 	nn_wb(std::ifstream fin):updating(true){

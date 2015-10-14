@@ -49,6 +49,7 @@ protected:
 	nn_wb *p_out;	//hidden -> out
 	nn_wb *p_h;		//repr -> hidden
 	vector<nn_wb*> *p_untied;	//untied for 3-1: has number of nPOS*nPOS+1 (the index 0 is the default one)
+	vector<int> *p_untied_touched;	//whether this minibatch has influenced one
 	nn_wv *p_word;
 	nn_wv *p_pos;
 	nn_wv *p_distance;
@@ -59,19 +60,18 @@ protected:
 	void construct_params();			//init
 	void clear_params();				//clear gradients of params
 
-	//binary mode r/w
-	void read_params(std::ifstream fin);	//read	--- !!AFTER the options are ready
-	void write_params(std::ofstream fout);	//write
-
 	//sth tmp for forward/backward/update
 	nn_input* this_input;
 	int this_bsize;			//one-time bsize
 	int this_mbsize;		//minibatch's instance number
 	vector<int> this_untied_index;	//size is this_bsize
 
-public:
+	// -- the init and io process
+	//binary mode r/w
+	void read_params(std::ifstream fin);	//read	--- !!AFTER the options are ready
+	void write_params(std::ofstream fout);	//write
 	//from scratch
-	void get_init(nn_options * o){
+	void create_init(nn_options * o){
 		the_option = o;
 		construct_caches();
 		construct_params();
@@ -80,11 +80,16 @@ public:
 	void read_init(std::string fname){
 		std::ifstream fin;
 		fin.open(fname.c_str(),ifstream::binary);
+		int order;
+		fin.read((char*)&order,sizeof(order));	//!!first order
 		the_option = new nn_options(fin);
 		read_params(fin);
 		fin.close();
 		construct_caches();
 	}
+
+public:
+	virtual ~Csnn(){}	//need-to-do:clear
 	//write out
 	void write(std::string fname){
 		std::ofstream fout;
@@ -96,7 +101,6 @@ public:
 		write_params(fout);
 		fout.close();
 	}
-	virtual ~Csnn(){}	//need-to-do:clear
 	static Csnn* read(string fname){
 		std::ifstream fin;
 		fin.open(fname.c_str(),ifstream::binary);
@@ -113,6 +117,17 @@ public:
 		ret->read_init(fname);	//construct
 		return ret;
 	}
+	static Csnn* create(int order,nn_options * o){
+		Csnn* ret = 0;
+		switch(order){
+		case 1:	ret = new CsnnO1(); break;
+		case 2:	ret = new CsnnO2(); break;
+		case 3:	ret = new CsnnO3(); break;
+		default: cerr << "!!! Unknown csnn order..." << endl; break;
+		}
+		ret->create_init(o);
+		return ret;
+	}
 
 	//main methods
 	//-- SHOULD BE: while(MiniBatch){prepare_batch;while(sent){f;b;}update;}
@@ -123,6 +138,7 @@ public:
 	void backward(REAL* gradients);
 	//update parameters
 	void update(int way,REAL lrate,REAL wdecay,REAL m_alpha,REAL rms_smooth);
+	void nesterov_update(int way,REAL m_alpha);
 
 	//check gradients
 	void check_gradients(nn_input* in, vector<REAL>* goals);

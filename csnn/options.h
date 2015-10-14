@@ -15,6 +15,9 @@ public:
 	int NN_wnum;	//number of words
 	int NN_pnum;	//number of pos
 	int NN_dnum;	//number of distances
+	int NN_out_prob;		//whether add softmax
+	int NN_out_size;		//output size
+	//------------------THOSE above need setting before training------------//
 
 	int NN_wsize;	//word embed size
 	int NN_psize;	//pos embed size
@@ -28,13 +31,10 @@ public:
 	int NN_untied_dim;		//0,1,2: 0 means no untied, 1 means based on m, 2 means h-m
 	REAL NN_untied_2brate;	//when dim==2, maybe need some back-off with random when training
 
-	int NN_out_size;		//output size
+	int NN_act;				//the activation function
 	int NN_hidden_size;		//hidden size(near output)
 	int NN_wrsize;			//word repr size
 	int NN_srsize;			//sentence repr size
-
-	int NN_act;				//the activation function
-	int NN_out_prob;		//whether add softmax
 
 	REAL NN_dropout;		//dropout rate
 
@@ -62,10 +62,13 @@ public:
 	nn_options(std::ifstream fin){read(fin);}
 
 	void default_init(){
-		//number of ...
+		//!! need setting !!
 		NN_wnum = 50000;
 		NN_pnum = 50;
 		NN_dnum = 20;
+		//NN_out_prob = ?;		//whether add softmax
+		//NN_out_size = ?;		//output size
+
 		//embedding size
 		NN_wsize = 50;
 		NN_psize = 30;
@@ -76,12 +79,11 @@ public:
 		NN_add_sent = 0;
 		NN_untied_dim = 0;
 		NN_untied_2brate = 0.2;
-		//NN_out_size = ??;
+		NN_act = 0;		//ACT_TANH
 		NN_hidden_size = 100;
 		NN_wrsize = 200;
 		//NN_srsize = 100;
-		NN_act = 0;		//ACT_TANH
-		NN_out_prob = 1;
+
 		NN_dropout = 0;
 		NN_init_wbrange = 0.1;
 		NN_init_wvrange = 0.1;

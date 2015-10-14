@@ -51,6 +51,13 @@ void nn_wb::update(int way,REAL lrate,REAL wdecay,REAL m_alpha,REAL rms_smooth,i
 	clear_grad();
 }
 
+void nn_wb::nesterov_update(int way,REAL m_alpha)
+{
+	//Nesterov update before mini-batch (currently only for nn_wb)
+	nn_math::op_y_plus_ax(idim*odim,w,w_moment,m_alpha);
+	nn_math::op_y_plus_ax(odim,b,b_moment,m_alpha);
+}
+
 //----------------------------------------------------------
 //for nn_wv
 void nn_wv::forward(int index,REAL* out,int adding)

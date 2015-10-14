@@ -60,6 +60,7 @@ void Csnn::construct_params(){
 	p_untied = new vector<nn_wb*>(all,0);
 	p_untied->at(0) = new nn_wb(the_option->get_NN_wv_wrsize(get_order()),the_option->NN_wrsize);
 	(p_untied->at(0))->get_init(the_option->NN_init_wbrange);
+	p_untied_touched = new vector<int>(p_untied->size(),0);
 	//the embeddings
 	p_word = new nn_wv(the_option->NN_wnum,the_option->NN_wsize);
 	p_word->get_init(the_option->NN_init_wvrange);
@@ -77,6 +78,7 @@ void Csnn::read_params(std::ifstream fin){
 	fin.read((char*)&un_num,sizeof(int));
 	int all = the_option->NN_pnum*the_option->NN_pnum+1;
 	p_untied = new vector<nn_wb*>(all,0);
+	p_untied_touched = new vector<int>(p_untied->size(),0);
 	for(int i=0;i<un_num;i++){
 		int tmp_index = 0;
 		fin.read((char*)&tmp_index,sizeof(int));
@@ -118,10 +120,9 @@ void Csnn::prepare_batch()
 	this_bsize=0;
 	this_mbsize=0;
 
-	//inactive several params
-	for(int i=0;i<p_untied->size();i++)
-		if(p_untied->at(i) != 0)
-			p_untied->at(i)->set_updating(false);
+	//inactive
+	delete []p_untied_touched;
+	p_untied_touched = new vector<int>(p_untied->size(),0);
 	//set dropout if ...
 	prepare_dropout();
 }
@@ -145,6 +146,7 @@ REAL* Csnn::forward(nn_input* in,int testing)
 		//no untied --- matrix * matrix
 		nn_wb* tmp = p_untied->at(0);
 		tmp->forward(c_wv->get_values(),c_wrepr->get_values(),this_bsize);
+		p_untied_touched->at(0) = 1;
 		break;
 
 		case 1: case 2:
@@ -166,7 +168,8 @@ REAL* Csnn::forward(nn_input* in,int testing)
 				tmp->get_init(the_option->NN_init_wbrange);
 			}
 			tmp->forward(ptr_in,ptr_out,1);
-			tmp->set_updating(true);	//really update
+			p_untied_touched->at(this_untied_index[i]) = 1;
+			//NOT-THIS-ONE: tmp->set_updating(true);	//really update
 			ptr_in += input_size;
 			ptr_out += output_size;
 		}
@@ -176,11 +179,13 @@ REAL* Csnn::forward(nn_input* in,int testing)
 		cerr << "!!! Unknown untied-dim" << endl;
 		break;
 	}
+	//2.1.x: active and drop-out
+	c_wrepr->activate(the_option->NN_act,this_bsize,the_option->NN_dropout,testing);
 
 	//2.x: combine and get c_repr, and then activate and drop-out
 	vector<nn_cache*> tmp_list;tmp_list.push_back(c_wrepr);tmp_list.push_back(c_srepr);
 	c_repr->combine_cache_value(tmp_list,this_bsize);
-	c_repr->activate(the_option->NN_act,this_bsize,the_option->NN_dropout,testing);
+	//!!NO ACTHERE!! -- c_repr->activate(the_option->NN_act,this_bsize,the_option->NN_dropout,testing);
 
 	//3: repr->hidden
 	p_h->forward(c_repr->get_values(),c_h->get_values(),this_bsize);
@@ -221,14 +226,17 @@ void Csnn::backward(REAL* gradients)
 	p_h->backward(c_h->get_gradients(),c_repr->get_gradients(),c_repr->get_values(),this_bsize);
 
 	//3.x:repr and split it
-	c_repr->backgrad(the_option->NN_act,this_bsize,the_option->NN_dropout);
+	//!!NO-BACKGRAD HERE!! -- c_repr->backgrad(the_option->NN_act,this_bsize,the_option->NN_dropout);
 	vector<nn_cache*> tmp_list;tmp_list.push_back(c_wrepr);tmp_list.push_back(c_srepr);
 	c_repr->dispatch_cache_grad(tmp_list,this_bsize);	//here gradient not adding, but really too lazy to change it
+
+	//4.0.x: wrepr backgrad
+	c_wrepr->backgrad(the_option->NN_act,this_bsize,the_option->NN_dropout);
 
 	//4.1:wrepr->input --- the untied
 	if(the_option->NN_untied_dim==0){
 		//no untied, matrix * matrix
-		p_untied->at(0)->backward(c_repr->get_gradients(),c_wv->get_gradients(),c_wv->get_values(),this_bsize);
+		p_untied->at(0)->backward(c_wrepr->get_gradients(),c_wv->get_gradients(),c_wv->get_values(),this_bsize);
 	}
 	else{
 		//untied --- one by one
@@ -258,7 +266,7 @@ void Csnn::update(int way,REAL lrate,REAL wdecay,REAL m_alpha,REAL rms_smooth)
 		p_h->update(way,lrate,wdecay,m_alpha,rms_smooth,this_mbsize);
 	for(int i=0;i<p_untied->size();i++){
 		nn_wb* ttt = p_untied->at(i);
-		if(ttt != 0 && ttt->need_updating())
+		if(ttt != 0 && ttt->need_updating() && p_untied_touched->at(i))
 			ttt->update(way,lrate,wdecay,m_alpha,rms_smooth,this_mbsize);
 	}
 	if(p_word->need_updating())
@@ -268,4 +276,23 @@ void Csnn::update(int way,REAL lrate,REAL wdecay,REAL m_alpha,REAL rms_smooth)
 	if(p_distance->need_updating())
 		p_distance->update(way,lrate,wdecay,m_alpha,rms_smooth,this_mbsize);
 	this_mbsize = 0;
+}
+
+void Csnn::nesterov_update(int way,REAL m_alpha)
+{
+	//if no momentum
+	if(!nn_math::opt_hasmomentum[way]){
+		//cerr << "!! warning this update-way has no momentum." << endl;
+		return;
+	}
+	//currently only for nn_wb
+	if(p_out->need_updating())
+		p_out->nesterov_update(way,m_alpha);
+	if(p_h->need_updating())
+		p_h->nesterov_update(way,m_alpha);
+	for(int i=0;i<p_untied->size();i++){
+		nn_wb* ttt = p_untied->at(i);
+		if(ttt != 0 && ttt->need_updating())
+			ttt->nesterov_update(way,m_alpha);
+	}
 }

@@ -18,12 +18,15 @@ public:
 	int end_pos;
 
 	static const int DIST_MAX=10,DIST_MIN=-10;
-	int get_distance_index(int distance){
+	static int get_distance_index(int distance){
 		if(distance < DIST_MIN)
 			distance = DIST_MIN;
 		else if(distance > DIST_MAX)
 			distance = DIST_MAX;
 		return distance-DIST_MIN;
+	}
+	static int get_distance_num(){
+		return DIST_MAX-DIST_MIN+1;
 	}
 };
 
