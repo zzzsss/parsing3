@@ -7,6 +7,22 @@
 
 #include "Process.h"
 
+//be careful about the magic numbers
+static inline void TMP_push234(vector<int>* l,int h,int m,int c=-100,int g=-100)
+{
+	l->push_back(h);
+	l->push_back(m);
+	if(c >= -1){
+		l->push_back(c);
+		if(g>=-1)
+			l->push_back(g);
+	}
+}
+static inline bool TMP_check234(int h1,int h2,int c1=-100,int c2=-100,int g1=-100,int g2=-100)
+{
+	return (h1==h2)&&(c1==c2)&&(g1==g2);
+}
+
 // the routine for getting scores
 // -- m means the current machine(might not be the same as options)
 // -- t for assigning inputs, need outside to delete it
@@ -16,19 +32,29 @@ double* Process::forward_scores_o1(DependencyInstance* x,Csnn* m,nn_input** t,nn
 	//default order1 parsing
 	int odim = m->get_odim();	//1 or 2 for no-labeled, otherwise...
 	int length = x->length();
+	//- for output goals
+	bool is_labeled = m->get_output_prob();
+	int nope_goal = m->get_classdim();	//for no-rel
 	//prepare scores
 	int num_pair_togo = 0;
 	vector<int>* the_inputs = new vector<int>();
+	vector<int>* the_goals = new vector<int>();
 	//loop --- (h,m)
 	for(int m=1;m<length;m++){
 		for(int h=0;h<length;h++){
 			if(m != h){
-				the_inputs->push_back(h);the_inputs->push_back(m);
+				TMP_push234(the_inputs,h,m);
+				if(!testing){	//when training, prepare the goals
+					if(TMP_check234(x->heads->at(m),h))
+						the_goals->push_back(is_labeled?(x->index_deprels->at(m)):0);
+					else
+						the_goals->push_back(nope_goal);
+				}
 				num_pair_togo ++;
 			}
 		}
 	}
-	(*t) = new nn_input(num_pair_togo,2,the_inputs,x->index_forms,x->index_pos,h);
+	(*t) = new nn_input(num_pair_togo,2,the_inputs,the_goals,x->index_forms,x->index_pos,h);
 	double* tmp_scores = m->forward(*t,testing);
 	return tmp_scores;
 }
@@ -37,19 +63,42 @@ double* Process::forward_scores_o2sib(DependencyInstance* x,Csnn* m,nn_input** t
 	//o2sib
 	int odim = m->get_odim();	//1 or 2 for no-labeled, otherwise...
 	int length = x->length();
+	//- for output goals
+	bool is_labeled = m->get_output_prob();
+	int nope_goal = m->get_classdim();	//for no-rel
 	//prepare scores
 	int num_togo = 0;
 	vector<int>* the_inputs = new vector<int>();
+	vector<int>* the_goals = new vector<int>();
 	bool* score_o1 = cut_o1;
 	//loop --- (h,m,s)
 	for(int m=1;m<length;m++){
+		//put the real one first if training
+		// --- maybe doubled, but maybe does not matter (when testing: same value, when training: double positive)
+		int real_center=IMPOSSIBLE_INDEX;
+		int real_head=IMPOSSIBLE_INDEX;
+		if(!testing){	//when training, prepare the goals
+			real_center = x->siblings->at(m);
+			real_head = x->heads->at(m);
+			//must get the real one
+			TMP_push234(the_inputs,real_head,m,real_center);
+			the_goals->push_back(is_labeled?(x->index_deprels->at(m)):0);
+			num_togo += 1;
+		}
+		//others
 		for(int h=0;h<length;h++){
 			if(h==m)
 				continue;
 			bool norpob_hm = score_o1[get_index2(length,h,m)];
 			//h,m,-1
 			if(!norpob_hm){
-				the_inputs->push_back(h);the_inputs->push_back(m);the_inputs->push_back(-1);
+				TMP_push234(the_inputs,h,m,-1);
+				if(!testing){
+					if(TMP_check234(x->heads->at(m),h))
+						the_goals->push_back(is_labeled?(x->index_deprels->at(m)):0);
+					else
+						the_goals->push_back(nope_goal);
+				}
 				num_togo += 1;
 			}
 			//h,m,c
@@ -58,14 +107,15 @@ double* Process::forward_scores_o2sib(DependencyInstance* x,Csnn* m,nn_input** t
 			if(!norpob_hm){
 				for(int c=small+1;c<large;c++){
 					if(!score_o1[get_index2(length,h,c)]){
-						the_inputs->push_back(h);the_inputs->push_back(m);the_inputs->push_back(c);
+						TMP_push234(the_inputs,h,m,c);
+						if(!testing){the_goals->push_back(nope_goal);}
 						num_togo += 1;
 					}
 				}
 			}
 		}
 	}
-	(*t) = new nn_input(num_togo,3,the_inputs,x->index_forms,x->index_pos,h);
+	(*t) = new nn_input(num_togo,3,the_goals,the_inputs,x->index_forms,x->index_pos,h);
 	double* tmp_scores = m->forward(*t,testing);
 	return tmp_scores;
 }
@@ -74,53 +124,77 @@ double* Process::forward_scores_o3g(DependencyInstance* x,Csnn* m,nn_input** t,n
 	//o3g
 	int odim = m->get_odim();	//1 or 2 for no-labeled, otherwise...
 	int length = x->length();
+	//- for output goals
+	bool is_labeled = m->get_output_prob();
+	int nope_goal = m->get_classdim();	//for no-rel
 	//prepare scores
 	int num_togo = 0;
 	vector<int>* the_inputs = new vector<int>();
+	vector<int>* the_goals = new vector<int>();
 	bool* score_o1 = cut_o1;
 	//loop --- (h,m,s,g)
-	//1. 0,0,c,m
 	for(int m=1;m<length;m++){
-		//0,0,0,m
-		if(!score_o1[get_index2(length,0,m)]){
-			{the_inputs->push_back(0);the_inputs->push_back(m);the_inputs->push_back(-1);the_inputs->push_back(-1);}
-			//0,0,c,m
-			for(int c=m-1;c>0;c--){
-				if(!score_o1[get_index2(length,0,c)])
-					{the_inputs->push_back(0);the_inputs->push_back(m);the_inputs->push_back(c);the_inputs->push_back(-1);}
+		//put the real one first if training
+		int real_center=IMPOSSIBLE_INDEX;
+		int real_head=IMPOSSIBLE_INDEX;
+		int real_grand=IMPOSSIBLE_INDEX;
+		if(!testing){	//when training, prepare the goals
+			real_center = x->siblings->at(m);
+			real_head = x->heads->at(m);
+			real_grand = x->heads->at(real_head);
+			//must get the real one
+			TMP_push234(the_inputs,real_head,m,real_center,real_grand);
+			the_goals->push_back(is_labeled?(x->index_deprels->at(m)):0);
+			num_togo += 1;
+		}
+		//--others
+		//1.when h==0
+		{
+			int h=0;
+			bool norpob_hm = score_o1[get_index2(length,h,m)];
+			if(!norpob_hm){
+				//0,0,0,m as g,h,c,m
+				TMP_push234(the_inputs,h,m,-1,-1);
+				if(!testing){the_goals->push_back(nope_goal);}
+				num_togo += 1;
+				//0,0,c,m
+				for(int c=1;c<m;c++){
+					TMP_push234(the_inputs,h,m,c,-1);
+					if(!testing){the_goals->push_back(nope_goal);}
+					num_togo += 1;
+				}
 			}
 		}
-	}
-	//2. g,h,c,m
-	for(int h=1;h<length;h++){
-		for(int m=1;m<length;m++){
+		//2.others h>0
+		for(int h=1;h<length;h++){
 			if(h==m)
 				continue;
-			if(!score_o1[get_index2(length,h,m)]){
-				int small = GET_MIN_ONE(h,m);
-				int large = GET_MAX_ONE(h,m);
-				for(int g=0;g<small;g++){
-					if(!score_o1[get_index2(length,g,h)]){
-						{the_inputs->push_back(h);the_inputs->push_back(m);the_inputs->push_back(-1);the_inputs->push_back(g);}
-						for(int c=small+1;c<large;c++){
-							if(!score_o1[get_index2(length,h,c)])
-							{the_inputs->push_back(h);the_inputs->push_back(m);the_inputs->push_back(c);the_inputs->push_back(g);}
-						}
-					}
-				}
-				for(int g=large+1;g<length;g++){
-					if(!score_o1[get_index2(length,g,h)]){
-						{the_inputs->push_back(h);the_inputs->push_back(m);the_inputs->push_back(-1);the_inputs->push_back(g);}
-						for(int c=small+1;c<large;c++){
-							if(!score_o1[get_index2(length,h,c)])
-							{the_inputs->push_back(h);the_inputs->push_back(m);the_inputs->push_back(c);the_inputs->push_back(g);}
+			bool norpob_hm = score_o1[get_index2(length,h,m)];
+			int small = GET_MIN_ONE(h,m);
+			int large = GET_MAX_ONE(h,m);
+			if(!norpob_hm){
+				for(int g=0;g<length;g++){
+					bool norpob_gh = score_o1[get_index2(length,g,h)];
+					if(g>=small && g<=large && !norpob_gh)	//non-proj not allowed
+						continue;
+					//for those c
+					//g,h,-1,m
+					TMP_push234(the_inputs,h,m,-1,-1);
+					if(!testing){the_goals->push_back(nope_goal);}
+					num_togo += 1;
+					//g,h,c,m
+					for(int c=small+1;c<large;c++){
+						if(!score_o1[get_index2(length,h,c)]){
+							TMP_push234(the_inputs,h,m,c,g);
+							if(!testing){the_goals->push_back(nope_goal);}
+							num_togo += 1;
 						}
 					}
 				}
 			}
 		}
 	}
-	(*t) = new nn_input(num_togo,4,the_inputs,x->index_forms,x->index_pos,h);
+	(*t) = new nn_input(num_togo,4,the_inputs,the_goals,x->index_forms,x->index_pos,h);
 	double* tmp_scores = m->forward(*t,testing);
 	return tmp_scores;
 }

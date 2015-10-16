@@ -37,8 +37,7 @@ static bool* TMP_get_cut_o1(int len,double* scores,double cut)
 
 bool* Process::get_cut_o1(DependencyInstance* x,CsnnO1* o1_filter,Dictionary *dict,double cut)
 {
-	if(o1_filter->get_odim() != 2)
-		cerr << "Bad mach as filter" << endl;
+	CHECK_EQUAL(o1_filter->get_odim(),2,"Bad mach as filter");
 	nn_input* o1f_the_input;
 	double* scores = get_scores_o1(x,o1_filter,dict,0);	//no trans
 	bool* o1f_cut = TMP_get_cut_o1(x->length(),scores,cut);
@@ -53,8 +52,8 @@ double* Process::get_scores_o1(DependencyInstance* x,Csnn* m,Dictionary* dict,bo
 {
 	//1.get the numbers and informations
 	int dictionary_labelnum = dict->getnum_deprel();
-	int mach_outputnum = m->get_odim();
-	bool is_prob = ((mach_outputnum==2) || (mach_outputnum > dictionary_labelnum));
+	CHECK_EQUAL(dictionary_labelnum,m->get_classdim(),"Dictionary and Mach no match in class");
+	bool is_prob = m->get_output_prob();
 	bool is_trans = trans;
 	//2.getting the scores
 	nn_input* the_input;
@@ -70,8 +69,8 @@ double* Process::get_scores_o2sib(DependencyInstance* x,Csnn* m,Dictionary* dict
 {
 	//1.get the numbers and informations
 	int dictionary_labelnum = dict->getnum_deprel();
-	int mach_outputnum = m->get_odim();
-	bool is_prob = ((mach_outputnum==2) || (mach_outputnum > dictionary_labelnum));
+	CHECK_EQUAL(dictionary_labelnum,m->get_classdim(),"Dictionary and Mach no match in class");
+	bool is_prob = m->get_output_prob();
 	bool is_trans = trans;
 	//2.getting the scores
 	nn_input* the_input;
@@ -87,8 +86,8 @@ double* Process::get_scores_o3g(DependencyInstance* x,Csnn* m,Dictionary* dict,b
 {
 	//1.get the numbers and informations
 	int dictionary_labelnum = dict->getnum_deprel();
-	int mach_outputnum = m->get_odim();
-	bool is_prob = ((mach_outputnum==2) || (mach_outputnum > dictionary_labelnum));
+	CHECK_EQUAL(dictionary_labelnum,m->get_classdim(),"Dictionary and Mach no match in class");
+	bool is_prob = m->get_output_prob();
 	bool is_trans = trans;
 	//2.getting the scores
 	nn_input* the_input;

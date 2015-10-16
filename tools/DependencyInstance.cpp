@@ -7,6 +7,7 @@ void DependencyInstance::init(){
 	postags=0;
 	heads=0;
 	deprels=0;
+	siblings=0;
 	index_forms=0;
 	index_pos=0;
 	index_deprels=0;
@@ -21,6 +22,18 @@ DependencyInstance::DependencyInstance(std::vector<string*> *forms,
 	this->heads = heads;
 	this->postags = postags;
 	this->deprels = deprels;
+	//calculate siblings
+	siblings = new vector<int>(length());
+	for(int m=1;m<length();m++){
+		int h = this->heads->at(m);
+		int step = (h>m)?1:-1;	//m->h
+		int sib;
+		for(sib=m+step;sib!=h;sib+=step){
+			if(this->heads->at(sib)==h)
+				break;
+		}
+		siblings->at(m) = (sib==h)?-1:sib;
+	}
 }
 int DependencyInstance::length(){
 	return (int)(forms->size());

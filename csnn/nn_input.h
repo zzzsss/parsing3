@@ -24,13 +24,14 @@ public:
 	nn_input_helper* helper;
 	//these three vectors all allocated outside
 	//!! must -- size(inputs) == num_inst*num_width
-	vector<int>* inputs;
+	vector<int>* inputs;	//num_inst*num_width
+	vector<int>* goals;		//num_inst*1
 	vector<int>* wordl;
 	vector<int>* posl;
 
-	nn_input(int i,int w,vector<int>* il,vector<int>* wl,vector<int>* pl,nn_input_helper* h):
-		num_inst(i),num_width(w),inputs(il),wordl(wl),posl(pl),helper(h){}
-	~nn_input(){delete inputs;}	//only delete this part
+	nn_input(int i,int w,vector<int>* il,vector<int>* gl,vector<int>* wl,vector<int>* pl,nn_input_helper* h):
+		num_inst(i),num_width(w),inputs(il),goals(gl),wordl(wl),posl(pl),helper(h){}
+	~nn_input(){delete inputs;delete goals;}	//only delete this part
 	int get_numi(){return num_inst;}
 	int get_numw(){return num_width;}
 };

@@ -20,11 +20,17 @@
 using namespace std;
 
 #define DOUBLE_LARGENEG -10000000.0		//maybe it is enough
+#define IMPOSSIBLE_INDEX -1000
 #define GET_MAX_ONE(a,b) (((a)>(b))?(a):(b))
 #define GET_MIN_ONE(a,b) (((a)>(b))?(b):(a))
 
 class Process{
 protected:
+	template<class T>
+	static void CHECK_EQUAL(T a,T b,const char* x){
+		if(a != b)
+			cerr << "!! warning of " << x << ":" << a << " != " << b << endl;
+	}
 	//data
 	HypherParameters* hp;
 	Dictionary* dict;

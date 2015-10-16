@@ -18,6 +18,9 @@ public:
 	vector<int>* heads;
 	vector<string*>* deprels;
 
+	//calculated from init (-1 as nope)
+	vector<int>* siblings;
+
 	//used when decoding --- set up after construction of dictionary
 	vector<int>* index_forms;
 	vector<int>* index_pos;

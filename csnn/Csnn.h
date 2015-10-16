@@ -149,8 +149,19 @@ public:
 		p_pos->set_updating(false);
 		p_distance->set_updating(false);
 	}
+
+	//the important info --- from the machine
 	int get_odim(){	//!!!! careful
 		return p_out->geto();
+	}
+	int get_classdim(){	//the real class (exclude no-prob one)
+		int n = get_odim();
+		if(get_output_prob())
+			n--;
+		return n;
+	}
+	int get_output_prob(){	//!!! careful
+		return the_option->NN_out_prob;
 	}
 };
 

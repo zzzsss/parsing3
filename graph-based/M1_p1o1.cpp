@@ -33,11 +33,26 @@ void M1_p1o1::each_train_one_iter()
 	//per-sentence approach
 	int mini_batch = hp->CONF_minibatch;
 	int num_sentences = training_corpus->size();
+	//statistics
+	int skip_sent_num = 0;
+	int all_forward_instance = 0;
+	//training
 	for(int i=0;i<num_sentences;){
 		mach->prepare_batch();
+		//if nesterov update before each batch (pre-update)
+		if(hp->CONF_NESTEROV_MOMENTUM)
+			mach->nesterov_update(hp->CONF_UPDATE_WAY,hp->CONF_MOMENTUM_ALPHA);
+		//main batch
 		for(int t=0;t<mini_batch && i<num_sentences;t++,i++){
+			//random skip (instead of shuffling every time)
+			if(drand48() > hp->CONF_NN_resample){
+				skip_sent_num ++;
+				continue;
+			}
+			//forward
 
 		}
+		//real update
 		mach->update();
 	}
 }
