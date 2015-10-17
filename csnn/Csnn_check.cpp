@@ -7,8 +7,9 @@
 
 #include "Csnn.h"
 
-void Csnn::check_gradients(nn_input* in, vector<REAL>* goals)
+void Csnn::check_gradients(nn_input* in)
 {
+	vector<int>* goals = in->goals;
 	//assuming softmax output
 	//adjust some conf --- no check in real situations
 	REAL tmp_drop = the_option->NN_dropout;

@@ -88,6 +88,7 @@ public:
 		NN_init_wbrange = 0.1;
 		NN_init_wvrange = 0.1;
 	}
+	//TODO
 	void read(std::ifstream fin){}
 	void write(std::ofstream fout){}
 };

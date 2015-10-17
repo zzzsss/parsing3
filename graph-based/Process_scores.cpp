@@ -94,7 +94,7 @@ double* Process::forward_scores_o2sib(DependencyInstance* x,Csnn* m,nn_input** t
 			if(!norpob_hm){
 				TMP_push234(the_inputs,h,m,-1);
 				if(!testing){
-					if(TMP_check234(x->heads->at(m),h))
+					if(TMP_check234(real_head,h,real_center,-1))
 						the_goals->push_back(is_labeled?(x->index_deprels->at(m)):0);
 					else
 						the_goals->push_back(nope_goal);
@@ -108,7 +108,12 @@ double* Process::forward_scores_o2sib(DependencyInstance* x,Csnn* m,nn_input** t
 				for(int c=small+1;c<large;c++){
 					if(!score_o1[get_index2(length,h,c)]){
 						TMP_push234(the_inputs,h,m,c);
-						if(!testing){the_goals->push_back(nope_goal);}
+						if(!testing){
+							if(TMP_check234(real_head,h,real_center,c))
+								the_goals->push_back(is_labeled?(x->index_deprels->at(m)):0);
+							else
+								the_goals->push_back(nope_goal);
+						}
 						num_togo += 1;
 					}
 				}
@@ -155,12 +160,22 @@ double* Process::forward_scores_o3g(DependencyInstance* x,Csnn* m,nn_input** t,n
 			if(!norpob_hm){
 				//0,0,0,m as g,h,c,m
 				TMP_push234(the_inputs,h,m,-1,-1);
-				if(!testing){the_goals->push_back(nope_goal);}
+				if(!testing){
+					if(TMP_check234(real_head,h,real_center,-1,real_grand,-1))
+						the_goals->push_back(is_labeled?(x->index_deprels->at(m)):0);
+					else
+						the_goals->push_back(nope_goal);
+				}
 				num_togo += 1;
 				//0,0,c,m
 				for(int c=1;c<m;c++){
 					TMP_push234(the_inputs,h,m,c,-1);
-					if(!testing){the_goals->push_back(nope_goal);}
+					if(!testing){
+						if(TMP_check234(real_head,h,real_center,c,real_grand,-1))
+							the_goals->push_back(is_labeled?(x->index_deprels->at(m)):0);
+						else
+							the_goals->push_back(nope_goal);
+					}
 					num_togo += 1;
 				}
 			}
@@ -180,13 +195,23 @@ double* Process::forward_scores_o3g(DependencyInstance* x,Csnn* m,nn_input** t,n
 					//for those c
 					//g,h,-1,m
 					TMP_push234(the_inputs,h,m,-1,-1);
-					if(!testing){the_goals->push_back(nope_goal);}
+					if(!testing){
+						if(TMP_check234(real_head,h,real_center,-1,real_grand,g))
+							the_goals->push_back(is_labeled?(x->index_deprels->at(m)):0);
+						else
+							the_goals->push_back(nope_goal);
+					}
 					num_togo += 1;
 					//g,h,c,m
 					for(int c=small+1;c<large;c++){
 						if(!score_o1[get_index2(length,h,c)]){
 							TMP_push234(the_inputs,h,m,c,g);
-							if(!testing){the_goals->push_back(nope_goal);}
+							if(!testing){
+								if(TMP_check234(real_head,h,real_center,c,real_grand,g))
+									the_goals->push_back(is_labeled?(x->index_deprels->at(m)):0);
+								else
+									the_goals->push_back(nope_goal);
+							}
 							num_togo += 1;
 						}
 					}

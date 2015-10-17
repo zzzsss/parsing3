@@ -36,7 +36,14 @@ void M1_p1o1::each_train_one_iter()
 	//statistics
 	int skip_sent_num = 0;
 	int all_forward_instance = 0;
+	//some useful info
+	int odim = mach->get_odim();
 	//training
+	time_t now;
+	time(&now); //ctime is not rentrant ! use ctime_r() instead if needed
+	cout << "##*** Start the training for iter " << cur_iter << " at " << ctime(&now)
+			<< "with lrate " << cur_lrate << endl;
+	cout << "#Sentences is " << num_sentences << " and resample (about)" << num_sentences*hp->CONF_NN_resample << endl;
 	for(int i=0;i<num_sentences;){
 		mach->prepare_batch();
 		//if nesterov update before each batch (pre-update)
@@ -49,10 +56,32 @@ void M1_p1o1::each_train_one_iter()
 				skip_sent_num ++;
 				continue;
 			}
-			//forward
 
+			//forward
+			DependencyInstance* x = training_corpus->at(i);
+			nn_input* the_inputs;
+			REAL *fscores = forward_scores_o1(x,mach,&the_inputs,dict->get_helper(),0);
+			all_forward_instance += the_inputs->get_numi();
+
+			//prepare gradients --- softmax -> fscores as gradient
+			double *to_change = fscores;
+			for(int i=0;i<the_inputs->get_numi();i++){
+				int tmp_goal = the_inputs->goals->at(i);
+				to_change[tmp_goal] -= 1;	//-1 for the right one
+				to_change += odim;
+			}
+
+			//backward
+			mach->backward(fscores);
+
+			//
+			mach->check_gradients(the_inputs);
+
+			delete the_inputs;
+			delete []fscores;
 		}
 		//real update
-		mach->update();
+		mach->update(hp->CONF_UPDATE_WAY,cur_lrate,hp->CONF_NN_WD,hp->CONF_MOMENTUM_ALPHA,hp->CONF_RMS_SMOOTH);
 	}
+	cout << "Iter done, skip " << skip_sent_num << " sentences and f&b " << all_forward_instance << endl;
 }

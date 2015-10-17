@@ -141,7 +141,7 @@ public:
 	void nesterov_update(int way,REAL m_alpha);
 
 	//check gradients
-	void check_gradients(nn_input* in, vector<REAL>* goals);
+	void check_gradients(nn_input* in);
 
 	//no-more updating of TAB
 	void noupdate_tab(){
