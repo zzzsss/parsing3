@@ -52,7 +52,7 @@ void Csnn::f_inputs(){
 				int single_index;
 				if(w<0)
 					single_index = this_input->helper->start_word;
-				else if(w>=this_input->wordl->size())
+				else if(w>=(int)this_input->wordl->size())
 					single_index = this_input->helper->end_word;
 				else
 					single_index = this_input->wordl->at(w);
@@ -64,7 +64,7 @@ void Csnn::f_inputs(){
 				int single_index;
 				if(w<0)
 					single_index = this_input->helper->start_pos;
-				else if(w>=this_input->posl->size())
+				else if(w>=(int)this_input->posl->size())
 					single_index = this_input->helper->end_pos;
 				else
 					single_index = this_input->posl->at(w);
@@ -145,7 +145,7 @@ void Csnn::b_inputs(){
 					int single_index;
 					if(w<0)
 						single_index = this_input->helper->start_word;
-					else if(w>=this_input->wordl->size())
+					else if(w>=(int)this_input->wordl->size())
 						single_index = this_input->helper->end_word;
 					else
 						single_index = this_input->wordl->at(w);
@@ -157,7 +157,7 @@ void Csnn::b_inputs(){
 					int single_index;
 					if(w<0)
 						single_index = this_input->helper->start_pos;
-					else if(w>=this_input->posl->size())
+					else if(w>=(int)this_input->posl->size())
 						single_index = this_input->helper->end_pos;
 					else
 						single_index = this_input->posl->at(w);

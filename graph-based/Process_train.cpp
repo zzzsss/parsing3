@@ -80,7 +80,7 @@ double Process::nn_dev_test(string to_test,string output,string gold)
 	int miss_count = 0;
 	time(&now);
 	cout << "#--Test at " << ctime(&now) << std::flush;
-	for(int i=0;i<dev_test_corpus->size();i++){
+	for(unsigned int i=0;i<dev_test_corpus->size();i++){
 		DependencyInstance* t = dev_test_corpus->at(i);
 		int length = t->forms->size();
 		token_num += length - 1;
@@ -101,7 +101,7 @@ double Process::nn_dev_test(string to_test,string output,string gold)
 	DependencyEvaluator::evaluate(gold,output,ttt,false);
 
 	//clear
-	for(int i=0;i<dev_test_corpus->size();i++){
+	for(unsigned int i=0;i<dev_test_corpus->size();i++){
 		delete dev_test_corpus->at(i);
 	}
 	delete dev_test_corpus;

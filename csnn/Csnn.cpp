@@ -74,7 +74,7 @@ void Csnn::clear_params(){
 	//clear gradients --- for all params
 	p_out->clear_grad();
 	p_h->clear_grad();
-	for(int i=0;i<p_untied->size();i++)
+	for(unsigned int i=0;i<p_untied->size();i++)
 		if(p_untied->at(i) != 0)
 			p_untied->at(i)->clear_grad();
 	p_word->clear_grad();
@@ -303,7 +303,7 @@ void Csnn::update(int way,REAL lrate,REAL wdecay,REAL m_alpha,REAL rms_smooth)
 		p_out->update(way,lrate,wdecay,m_alpha,rms_smooth,this_mbsize);
 	if(p_h->need_updating())
 		p_h->update(way,lrate,wdecay,m_alpha,rms_smooth,this_mbsize);
-	for(int i=0;i<p_untied->size();i++){
+	for(unsigned int i=0;i<p_untied->size();i++){
 		nn_wb* ttt = p_untied->at(i);
 		if(ttt != 0 && ttt->need_updating() && p_untied_touched->at(i))
 			ttt->update(way,lrate,wdecay,m_alpha,rms_smooth,this_mbsize);
@@ -329,7 +329,7 @@ void Csnn::nesterov_update(int way,REAL m_alpha)
 		p_out->nesterov_update(way,m_alpha);
 	if(p_h->need_updating())
 		p_h->nesterov_update(way,m_alpha);
-	for(int i=0;i<p_untied->size();i++){
+	for(unsigned int i=0;i<p_untied->size();i++){
 		nn_wb* ttt = p_untied->at(i);
 		if(ttt != 0 && ttt->need_updating())
 			ttt->nesterov_update(way,m_alpha);

@@ -39,10 +39,8 @@ static bool* TMP_get_cut_o1(int len,double* scores,double cut)
 bool* Process::get_cut_o1(DependencyInstance* x,CsnnO1* o1_filter,Dictionary *dict,double cut)
 {
 	CHECK_EQUAL(o1_filter->get_odim(),2,"Bad mach as filter");
-	nn_input* o1f_the_input;
 	double* scores = get_scores_o1(x,o1_filter,dict,0);	//no trans
 	bool* o1f_cut = TMP_get_cut_o1(x->length(),scores,cut);
-	delete o1f_the_input;
 	delete []scores;
 	return o1f_cut;
 }
