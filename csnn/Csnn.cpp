@@ -7,6 +7,39 @@
 
 #include "Csnn.h"
 
+const int Csnn::HAS_HEAD[3][4] = {
+		{-1,0,-1,-1},	//h,m
+		{-1,0,0,-1},	//h,m,s
+		{3,0,0,-1}		//h,m,s,g
+};
+Csnn* Csnn::read(string fname){
+	std::ifstream fin;
+	fin.open(fname.c_str(),ifstream::binary);
+	int order;
+	fin.read((char*)&order,sizeof(order));
+	fin.close();
+	Csnn* ret = 0;
+	switch(order){
+		case 1:	ret = new CsnnO1(); break;
+		case 2:	ret = new CsnnO2(); break;
+		case 3:	ret = new CsnnO3(); break;
+		default: cerr << "!!! Unknown csnn order..." << endl; break;
+	}
+	ret->read_init(fname);	//construct
+	return ret;
+}
+Csnn* Csnn::create(int order,nn_options * o){
+	Csnn* ret = 0;
+	switch(order){
+		case 1:	ret = new CsnnO1(); break;
+		case 2:	ret = new CsnnO2(); break;
+		case 3:	ret = new CsnnO3(); break;
+	default: cerr << "!!! Unknown csnn order..." << endl; break;
+	}
+	ret->create_init(o);
+	return ret;
+}
+
 //--prepares--
 void Csnn::construct_caches(){
 	//this is done when init and read
@@ -57,7 +90,7 @@ void Csnn::construct_params(){
 	p_h->get_init(the_option->NN_init_wbrange);
 	//special untied param
 	int all = the_option->NN_pnum*the_option->NN_pnum+1;
-	p_untied = new vector<nn_wb*>(all,0);
+	p_untied = new vector<nn_wb*>(all,(nn_wb*)0);
 	p_untied->at(0) = new nn_wb(the_option->get_NN_wv_wrsize(get_order()),the_option->NN_wrsize);
 	(p_untied->at(0))->get_init(the_option->NN_init_wbrange);
 	p_untied_touched = new vector<int>(p_untied->size(),0);
@@ -70,14 +103,14 @@ void Csnn::construct_params(){
 	p_distance->get_init(the_option->NN_init_wvrange);
 }
 
-void Csnn::read_params(std::ifstream fin){
+void Csnn::read_params(std::ifstream &fin){
 	p_out = new nn_wb(fin);
 	p_h = new nn_wb(fin);
 	//special untied param
 	int un_num = 0;
 	fin.read((char*)&un_num,sizeof(int));
 	int all = the_option->NN_pnum*the_option->NN_pnum+1;
-	p_untied = new vector<nn_wb*>(all,0);
+	p_untied = new vector<nn_wb*>(all,(nn_wb*)0);
 	p_untied_touched = new vector<int>(p_untied->size(),0);
 	for(int i=0;i<un_num;i++){
 		int tmp_index = 0;
@@ -90,7 +123,7 @@ void Csnn::read_params(std::ifstream fin){
 	p_distance = new nn_wv(fin);
 }
 
-void Csnn::write_params(std::ofstream fout){
+void Csnn::write_params(std::ofstream &fout){
 	p_out->write_params(fout);
 	p_h->write_params(fout);
 	//special untied param
@@ -143,13 +176,16 @@ REAL* Csnn::forward(nn_input* in,int testing)
 	int output_size = p_untied->at(0)->geto();
 	switch(the_option->NN_untied_dim){
 		case 0:
+		{
 		//no untied --- matrix * matrix
 		nn_wb* tmp = p_untied->at(0);
 		tmp->forward(c_wv->get_values(),c_wrepr->get_values(),this_bsize);
 		p_untied_touched->at(0) = 1;
 		break;
+		}
 
 		case 1: case 2:
+		{
 		//untied --- one by one
 		REAL* ptr_in = c_wv->get_values();
 		REAL* ptr_out = c_wrepr->get_values();
@@ -174,10 +210,13 @@ REAL* Csnn::forward(nn_input* in,int testing)
 			ptr_out += output_size;
 		}
 		break;
+		}
 
 		default:
+		{
 		cerr << "!!! Unknown untied-dim" << endl;
 		break;
+		}
 	}
 	//2.1.x: active and drop-out
 	c_wrepr->activate(the_option->NN_act,this_bsize,the_option->NN_dropout,testing);

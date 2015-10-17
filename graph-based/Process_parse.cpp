@@ -11,7 +11,7 @@
 #include "../algorithms/EisnerO3g.h"
 
 //get max label
-static void TMP_get_maxlabel(int all,int ln,const double* s,double** ascores_p,int** max_deperl_p)
+static void TMP_get_maxlabel(int all,int ln,double* s,double** ascores_p,int** max_deperl_p)
 {
 	double* ascores = new double[all];
 	int* max_deprel = new int[all];

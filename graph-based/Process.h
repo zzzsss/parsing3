@@ -62,12 +62,12 @@ protected:
 	double nn_dev_test(string to_test,string output,string gold);
 
 	//3.1:forward scores and rearrange scores
-	static double* forward_scores_o1(DependencyInstance* x,Csnn* m,nn_input** t,nn_input_helper* h,int testing);
-	static double* forward_scores_o2sib(DependencyInstance* x,Csnn* m,nn_input** t,nn_input_helper* h,int testing,bool* cut_o1);
-	static double* forward_scores_o3g(DependencyInstance* x,Csnn* m,nn_input** t,nn_input_helper* h,int testing,bool* cut_o1);
-	static double* rearrange_scores_o1(DependencyInstance* x,Csnn* m,nn_input* t,double* fscores,bool prob_ouput,bool prob_trans);
-	static double* rearrange_scores_o2sib(DependencyInstance* x,Csnn* m,nn_input* t,double* fscores,bool prob_ouput,bool prob_trans,double* rscores_o1);
-	static double* rearrange_scores_o3g(DependencyInstance* x,Csnn* m,nn_input* t,double* fscores,bool prob_ouput,bool prob_trans,double* rscores_o1,double* rscores_o2sib);
+	static REAL* forward_scores_o1(DependencyInstance* x,Csnn* m,nn_input** t,nn_input_helper* h,int testing);
+	static REAL* forward_scores_o2sib(DependencyInstance* x,Csnn* m,nn_input** t,nn_input_helper* h,int testing,bool* cut_o1);
+	static REAL* forward_scores_o3g(DependencyInstance* x,Csnn* m,nn_input** t,nn_input_helper* h,int testing,bool* cut_o1);
+	static double* rearrange_scores_o1(DependencyInstance* x,Csnn* m,nn_input* t,REAL* fscores,bool prob_ouput,bool prob_trans);
+	static double* rearrange_scores_o2sib(DependencyInstance* x,Csnn* m,nn_input* t,REAL* fscores,bool prob_ouput,bool prob_trans,double* rscores_o1);
+	static double* rearrange_scores_o3g(DependencyInstance* x,Csnn* m,nn_input* t,REAL* fscores,bool prob_ouput,bool prob_trans,double* rscores_o1,double* rscores_o2sib);
 	//3.1-c: get scores (combine forward and rearrange) --- only testing or training-parsing
 	static bool* get_cut_o1(DependencyInstance* x,CsnnO1* m,Dictionary *dict,double cut);
 	static double* get_scores_o1(DependencyInstance* x,Csnn* m,Dictionary* dict,bool trans);

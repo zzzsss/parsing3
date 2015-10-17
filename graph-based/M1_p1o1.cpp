@@ -64,7 +64,7 @@ void M1_p1o1::each_train_one_iter()
 			all_forward_instance += the_inputs->get_numi();
 
 			//prepare gradients --- softmax -> fscores as gradient
-			double *to_change = fscores;
+			REAL *to_change = fscores;
 			for(int i=0;i<the_inputs->get_numi();i++){
 				int tmp_goal = the_inputs->goals->at(i);
 				to_change[tmp_goal] -= 1;	//-1 for the right one

@@ -6,6 +6,9 @@
  */
 
 #include "Process.h"
+#include "../algorithms/Eisner.h"
+#include "../algorithms/EisnerO2sib.h"
+#include "../algorithms/EisnerO3g.h"
 
 //be careful about the magic numbers
 static inline void TMP_push234(vector<int>* l,int h,int m,int c=-100,int g=-100)
@@ -27,14 +30,14 @@ static inline bool TMP_check234(int h1,int h2,int c1=-100,int c2=-100,int g1=-10
 // -- m means the current machine(might not be the same as options)
 // -- t for assigning inputs, need outside to delete it
 // -- testing for the forward of nn
-double* Process::forward_scores_o1(DependencyInstance* x,Csnn* m,nn_input** t,nn_input_helper* h,int testing)
+REAL* Process::forward_scores_o1(DependencyInstance* x,Csnn* mac,nn_input** t,nn_input_helper* h,int testing)
 {
 	//default order1 parsing
-	int odim = m->get_odim();	//1 or 2 for no-labeled, otherwise...
+	int odim = mac->get_odim();	//1 or 2 for no-labeled, otherwise...
 	int length = x->length();
 	//- for output goals
-	bool is_labeled = m->get_output_prob();
-	int nope_goal = m->get_classdim();	//for no-rel
+	bool is_labeled = mac->get_output_prob();
+	int nope_goal = mac->get_classdim();	//for no-rel
 	//prepare scores
 	int num_pair_togo = 0;
 	vector<int>* the_inputs = new vector<int>();
@@ -55,17 +58,17 @@ double* Process::forward_scores_o1(DependencyInstance* x,Csnn* m,nn_input** t,nn
 		}
 	}
 	(*t) = new nn_input(num_pair_togo,2,the_inputs,the_goals,x->index_forms,x->index_pos,h);
-	double* tmp_scores = m->forward(*t,testing);
+	REAL* tmp_scores = mac->forward(*t,testing);
 	return tmp_scores;
 }
-double* Process::forward_scores_o2sib(DependencyInstance* x,Csnn* m,nn_input** t,nn_input_helper* h,int testing,bool* cut_o1)
+REAL* Process::forward_scores_o2sib(DependencyInstance* x,Csnn* mac,nn_input** t,nn_input_helper* h,int testing,bool* cut_o1)
 {
 	//o2sib
-	int odim = m->get_odim();	//1 or 2 for no-labeled, otherwise...
+	int odim = mac->get_odim();	//1 or 2 for no-labeled, otherwise...
 	int length = x->length();
 	//- for output goals
-	bool is_labeled = m->get_output_prob();
-	int nope_goal = m->get_classdim();	//for no-rel
+	bool is_labeled = mac->get_output_prob();
+	int nope_goal = mac->get_classdim();	//for no-rel
 	//prepare scores
 	int num_togo = 0;
 	vector<int>* the_inputs = new vector<int>();
@@ -121,17 +124,17 @@ double* Process::forward_scores_o2sib(DependencyInstance* x,Csnn* m,nn_input** t
 		}
 	}
 	(*t) = new nn_input(num_togo,3,the_goals,the_inputs,x->index_forms,x->index_pos,h);
-	double* tmp_scores = m->forward(*t,testing);
+	REAL* tmp_scores = mac->forward(*t,testing);
 	return tmp_scores;
 }
-double* Process::forward_scores_o3g(DependencyInstance* x,Csnn* m,nn_input** t,nn_input_helper* h,int testing,bool* cut_o1)
+REAL* Process::forward_scores_o3g(DependencyInstance* x,Csnn* mac,nn_input** t,nn_input_helper* h,int testing,bool* cut_o1)
 {
 	//o3g
-	int odim = m->get_odim();	//1 or 2 for no-labeled, otherwise...
+	int odim = mac->get_odim();	//1 or 2 for no-labeled, otherwise...
 	int length = x->length();
 	//- for output goals
-	bool is_labeled = m->get_output_prob();
-	int nope_goal = m->get_classdim();	//for no-rel
+	bool is_labeled = mac->get_output_prob();
+	int nope_goal = mac->get_classdim();	//for no-rel
 	//prepare scores
 	int num_togo = 0;
 	vector<int>* the_inputs = new vector<int>();
@@ -220,7 +223,7 @@ double* Process::forward_scores_o3g(DependencyInstance* x,Csnn* m,nn_input** t,n
 		}
 	}
 	(*t) = new nn_input(num_togo,4,the_inputs,the_goals,x->index_forms,x->index_pos,h);
-	double* tmp_scores = m->forward(*t,testing);
+	REAL* tmp_scores = mac->forward(*t,testing);
 	return tmp_scores;
 }
 
@@ -228,7 +231,7 @@ double* Process::forward_scores_o3g(DependencyInstance* x,Csnn* m,nn_input** t,n
 #include "Process_trans.cpp"	//special
 // x for length, m for odim, t for outputs, fscores for forward-scores(no arrange)
 // prob_output for output is label+1; prob_trans to trans prob only when prob_output
-double* Process::rearrange_scores_o1(DependencyInstance* x,Csnn* m,nn_input* the_inputs,double* fscores,
+double* Process::rearrange_scores_o1(DependencyInstance* x,Csnn* m,nn_input* the_inputs,REAL* fscores,
 		bool prob_output,bool prob_trans)
 {
 	const int THE_DIM = 2;
@@ -248,11 +251,12 @@ double* Process::rearrange_scores_o1(DependencyInstance* x,Csnn* m,nn_input* the
 	}
 	//get scores
 	vector<int>* inputs_list = the_inputs->inputs;
-	double *to_assign = fscores;
+	REAL *to_assign = fscores;
 	for(int i=0;i<the_inputs->num_inst;i+=THE_DIM){
 		int tmph = inputs_list->at(i);
 		int tmpm = inputs_list->at(i+1);
-		memcpy(&rscores[get_index2(length,tmph,tmpm,0,num_label)],to_assign,sizeof(double)*num_label);
+		for(int curi=0;curi<num_label;curi++)
+			rscores[get_index2(length,tmph,tmpm,curi,num_label)] = to_assign[curi];
 		//(if prob, the no-rel must be at the end, which is different from before)
 		to_assign += fs_dim;
 	}
@@ -262,7 +266,7 @@ double* Process::rearrange_scores_o1(DependencyInstance* x,Csnn* m,nn_input* the
 		double* nope_probs = new double[length*length];
 		for(int i=0;i<length*length;i++)
 			nope_probs[i] = 1;		//set to one firstly
-		double *to_assign = fscores;
+		REAL *to_assign = fscores;
 		for(int i=0;i<the_inputs->num_inst;i+=THE_DIM){
 			int tmph = inputs_list->at(i);
 			int tmpm = inputs_list->at(i+1);
@@ -275,7 +279,7 @@ double* Process::rearrange_scores_o1(DependencyInstance* x,Csnn* m,nn_input* the
 	return rscores;
 }
 
-double* Process::rearrange_scores_o2sib(DependencyInstance* x,Csnn* m,nn_input* the_inputs,double* fscores,
+double* Process::rearrange_scores_o2sib(DependencyInstance* x,Csnn* m,nn_input* the_inputs,REAL* fscores,
 		bool prob_output,bool prob_trans,double* rscores_o1)
 {
 	const int THE_DIM = 3;
@@ -295,14 +299,15 @@ double* Process::rearrange_scores_o2sib(DependencyInstance* x,Csnn* m,nn_input* 
 	}
 	//get scores
 	vector<int>* inputs_list = the_inputs->inputs;
-	double *to_assign = fscores;
+	REAL *to_assign = fscores;
 	for(int i=0;i<the_inputs->num_inst;i+=THE_DIM){
 		int tmph = inputs_list->at(i);
 		int tmpm = inputs_list->at(i+1);
 		int tmps = inputs_list->at(i+2);
 		if(tmps<0)
 			tmps = tmph;
-		memcpy(&rscores[get_index2_o2sib(length,tmph,tmps,tmpm,0,num_label)],to_assign,sizeof(double)*num_label);
+		for(int curi=0;curi<num_label;curi++)
+			rscores[get_index2_o2sib(length,tmph,tmps,tmpm,curi,num_label)] = to_assign[curi];
 		//(if prob, the no-rel must be at the end, which is different from before)
 		to_assign += fs_dim;
 	}
@@ -312,7 +317,7 @@ double* Process::rearrange_scores_o2sib(DependencyInstance* x,Csnn* m,nn_input* 
 		double* nope_probs = new double[length*length*length];
 		for(int i=0;i<length*length*length;i++)
 			nope_probs[i] = 1;		//set to one firstly
-		double *to_assign = fscores;
+		REAL *to_assign = fscores;
 		for(int i=0;i<the_inputs->num_inst;i+=THE_DIM){
 			int tmph = inputs_list->at(i);
 			int tmpm = inputs_list->at(i+1);
@@ -346,7 +351,7 @@ double* Process::rearrange_scores_o2sib(DependencyInstance* x,Csnn* m,nn_input* 
 	return rscores;
 }
 
-double* rearrange_scores_o3g(DependencyInstance* x,Csnn* m,nn_input* the_inputs,double* fscores,
+double* Process::rearrange_scores_o3g(DependencyInstance* x,Csnn* m,nn_input* the_inputs,REAL* fscores,
 		bool prob_output,bool prob_trans,double* rscores_o1,double* rscores_o2sib)
 {
 	const int THE_DIM = 3;
@@ -366,7 +371,7 @@ double* rearrange_scores_o3g(DependencyInstance* x,Csnn* m,nn_input* the_inputs,
 	}
 	//get scores
 	vector<int>* inputs_list = the_inputs->inputs;
-	double *to_assign = fscores;
+	REAL *to_assign = fscores;
 	for(int i=0;i<the_inputs->num_inst;i+=THE_DIM){
 		int tmph = inputs_list->at(i);
 		int tmpm = inputs_list->at(i+1);
@@ -376,7 +381,8 @@ double* rearrange_scores_o3g(DependencyInstance* x,Csnn* m,nn_input* the_inputs,
 			tmps = tmph;
 		if(tmpg<0)
 			tmpg = 0;
-		memcpy(&rscores[get_index2_o3g(length,tmpg,tmph,tmps,tmpm,0,num_label)],to_assign,sizeof(double)*num_label);
+		for(int curi=0;curi<num_label;curi++)
+			rscores[get_index2_o3g(length,tmpg,tmph,tmps,tmpm,curi,num_label)] = to_assign[curi];
 		//(if prob, the no-rel must be at the end, which is different from before)
 		to_assign += fs_dim;
 	}
@@ -386,7 +392,7 @@ double* rearrange_scores_o3g(DependencyInstance* x,Csnn* m,nn_input* the_inputs,
 		double* nope_probs = new double[length*length*length*length];
 		for(int i=0;i<length*length*length*length;i++)
 			nope_probs[i] = 1;		//set to one firstly
-		double *to_assign = fscores;
+		REAL *to_assign = fscores;
 		for(int i=0;i<the_inputs->num_inst;i+=THE_DIM){
 			int tmph = inputs_list->at(i);
 			int tmpm = inputs_list->at(i+1);

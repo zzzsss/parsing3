@@ -22,7 +22,7 @@
 #define _Blas_h
 
 #include <string.h>	// memcpy()
-#include "Csnn.h"	
+#include "nn_math.h"
 
 
 //-------------------------------------------

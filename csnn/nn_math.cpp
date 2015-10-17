@@ -15,7 +15,8 @@ namespace nn_math{
 	//1.basic options --- simply better names?
 	//y *= a
 	void op_y_mult_a(const int n,REAL* y,const REAL a){
-		SCAL(&n,&a,y,&inc1);
+		REAL ww=a;
+		SCAL(&n,&ww,y,&inc1);
 	}
 	//y += a*x
 	void op_y_plus_ax(const int n,REAL* y,const REAL* x,const REAL a){
@@ -68,6 +69,7 @@ namespace nn_math{
 			op_y_plus_ax(n,w,momentum,1);
 			break;
 		case OPT_ADAGRAD:		//lrate,w,grad,square
+		{
 			REAL* tmp = new REAL[n];
 			memcpy(tmp,grad,sizeof(REAL)*n);
 			op_y_2(n,tmp);					//g^2
@@ -78,7 +80,9 @@ namespace nn_math{
 			op_y_plus_ax(n,w,tmp,1);
 			delete []tmp;
 			break;
+		}
 		case OPT_RMSPROP:		//lrate,w,grad,square
+		{
 			REAL* tmp = new REAL[n];
 			memcpy(tmp,grad,sizeof(REAL)*n);
 			op_y_2(n,tmp);					//g^2
@@ -90,7 +94,9 @@ namespace nn_math{
 			op_y_plus_ax(n,w,tmp,1);
 			delete []tmp;
 			break;
+		}
 		case OPT_ADAM:			//lrate,w,grad,square,momentum
+		{
 			REAL* tmp = new REAL[n];
 			memcpy(tmp,grad,sizeof(REAL)*n);
 			op_y_2(n,tmp);					//g^2
@@ -105,6 +111,7 @@ namespace nn_math{
 			op_y_plus_ax(n,w,momentum,1);
 			delete []tmp;
 			break;
+		}
 		default:
 			std::cerr << "Unknown opt method." << std::endl;
 			exit(1);

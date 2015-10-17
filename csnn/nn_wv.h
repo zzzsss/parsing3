@@ -81,7 +81,7 @@ public:
 	void update(int way,REAL lrate,REAL wdecay,REAL m_alpha,REAL rms_smooth,int mbsize);
 
 	//binary r/w
-	nn_wv(std::ifstream fin):updating(true){
+	nn_wv(std::ifstream &fin):updating(true){
 		fin.read((char*)&num,sizeof(int));
 		fin.read((char*)&dim,sizeof(int));
 		int all = num*dim;	//int is enough
@@ -93,7 +93,7 @@ public:
 		fin.read((char*)&w,sizeof(REAL)*all);
 		init_clear();
 	}
-	void write_params(std::ofstream fout){
+	void write_params(std::ofstream &fout){
 		fout.write((char*)&num,sizeof(int));
 		fout.write((char*)&dim,sizeof(int));
 		fout.write((char*)&w,sizeof(REAL)*num*dim);

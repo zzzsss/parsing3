@@ -12,6 +12,7 @@ enum{
 	OPT_ADAGRAD,OPT_RMSPROP,OPT_ADAM
 };
 
+void op_y_mult_a(const int n,REAL* y,const REAL a);
 void op_y_plus_ax(const int n,REAL* y,const REAL* x,const REAL a);
 void op_A_mult_B(REAL *C,const REAL *A,const REAL *B,const int m,const int n,const int dimk,
 			const bool transA,const bool transB,const REAL a,const REAL b);
@@ -29,6 +30,6 @@ void act_f(int which,REAL* x,int n,REAL* xb);
 void act_b(int which,const REAL* x,REAL* g,int n,REAL* xb);
 
 
-}
+};
 
 #endif

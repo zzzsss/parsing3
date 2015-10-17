@@ -8,10 +8,12 @@
 #ifndef PARTS_HYPHERPARAMETERS_H_
 #define PARTS_HYPHERPARAMETERS_H_
 
-#include "../csnn/options.h"
 #include <string>
 #include <fstream>
 #include <cstdlib>
+#include <iostream>
+
+#include "../csnn/nn_options.h"
 using namespace std;
 
 class HypherParameters{

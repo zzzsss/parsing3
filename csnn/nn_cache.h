@@ -47,7 +47,7 @@ public:
 	REAL* get_values_before(){return values_before;}
 	REAL* get_values(){return values;}
 	REAL* get_gradients(){return gradients;}
-	bool* get_dropout(){return dropout;}
+	REAL* get_dropout(){return dropout;}
 	void gen_dropout(REAL rate){
 		for(long i=0;i<length;i++)
 			dropout[i] = (drand48()<rate) ? 0 : 1;	//0 means to perform dropout
@@ -82,7 +82,7 @@ public:
 	//combine and dispatch
 	void combine_cache_value(vector<nn_cache*> list,int this_bsize){
 		int offset = 0;
-		for(int i=0;i<list.size();i++){
+		for(unsigned int i=0;i<list.size();i++){
 			nn_cache* tmp = list[i];
 			for(int t=0;t<this_bsize;t++)
 				memcpy(values+length*t+offset,tmp->values+tmp->length*t,tmp->length*sizeof(REAL));
@@ -91,10 +91,10 @@ public:
 	}
 	void dispatch_cache_grad(vector<nn_cache*> list,int this_bsize){
 		int offset = 0;
-		for(int i=0;i<list.size();i++){
+		for(unsigned int i=0;i<list.size();i++){
 			nn_cache* tmp = list[i];
 			for(int t=0;t<this_bsize;t++)
-				memcpy(tmp->gradients+tmp->length*t,values+gradients*t+offset,tmp->length*sizeof(REAL));
+				memcpy(tmp->gradients+tmp->length*t,gradients+length*t+offset,tmp->length*sizeof(REAL));
 			offset += tmp->length;
 		}
 	}

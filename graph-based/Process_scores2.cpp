@@ -5,6 +5,7 @@
  *      Author: zzs
  */
 #include "Process.h"
+#include "../algorithms/Eisner.h"
 //1.for getting cut
 
 //prepare bool for high-order filtering
@@ -57,7 +58,7 @@ double* Process::get_scores_o1(DependencyInstance* x,Csnn* m,Dictionary* dict,bo
 	bool is_trans = trans;
 	//2.getting the scores
 	nn_input* the_input;
-	double* fscores = forward_scores_o1(x,m,&the_input,dict->get_helper(),1);	//testing-mode, forward scores
+	REAL* fscores = forward_scores_o1(x,m,&the_input,dict->get_helper(),1);	//testing-mode, forward scores
 	double* rscores = rearrange_scores_o1(x,m,the_input,fscores,is_prob,is_trans);
 	delete the_input;
 	delete []fscores;
@@ -74,7 +75,7 @@ double* Process::get_scores_o2sib(DependencyInstance* x,Csnn* m,Dictionary* dict
 	bool is_trans = trans;
 	//2.getting the scores
 	nn_input* the_input;
-	double* fscores = forward_scores_o2sib(x,m,&the_input,dict->get_helper(),1,cut_o1);	//testing-mode, forward scores
+	REAL* fscores = forward_scores_o2sib(x,m,&the_input,dict->get_helper(),1,cut_o1);	//testing-mode, forward scores
 	double* rscores = rearrange_scores_o2sib(x,m,the_input,fscores,is_prob,is_trans,rscores_o1);
 	delete the_input;
 	delete []fscores;
@@ -91,7 +92,7 @@ double* Process::get_scores_o3g(DependencyInstance* x,Csnn* m,Dictionary* dict,b
 	bool is_trans = trans;
 	//2.getting the scores
 	nn_input* the_input;
-	double* fscores = forward_scores_o3g(x,m,&the_input,dict->get_helper(),1,cut_o1);	//testing-mode, forward scores
+	REAL* fscores = forward_scores_o3g(x,m,&the_input,dict->get_helper(),1,cut_o1);	//testing-mode, forward scores
 	double* rscores = rearrange_scores_o3g(x,m,the_input,fscores,is_prob,is_trans,rscores_o1,rscores_o2sib);
 	delete the_input;
 	delete []fscores;

@@ -18,7 +18,7 @@ string Dictionary::WORD_UNK = "<w-unk>";
 nn_input_helper* Dictionary::common_helper = 0;
 nn_input_helper* Dictionary::get_helper(){
 	if(common_helper == 0){
-		common_helper = new common_helper();
+		common_helper = new nn_input_helper();
 		common_helper->start_word = get_index_word(&WORD_START);
 		common_helper->end_word = get_index_word(&WORD_END);
 		common_helper->start_pos = get_index_pos(&POS_START);
@@ -194,7 +194,7 @@ void Dictionary::prepare_deprel_str(vector<DependencyInstance*>* corpus)
 		int len = inst->length();
 		inst->predict_deprels_str = new vector<string*>();
 		for(int t=0;t<len;t++){
-			inst->predict_deprels_str = get_str_deprel(inst->predict_deprels->at(t));
+			inst->predict_deprels_str->at(t) = get_str_deprel(inst->predict_deprels->at(t));
 		}
 	}
 }

@@ -13,10 +13,11 @@
 #include "nn_math.h"
 #include "nn_wb.h"
 #include "nn_wv.h"
-#include "options.h"
 #include <vector>
 #include <string>
 #include <fstream>
+
+#include "nn_options.h"
 using namespace std;
 
 //----------------------CSNN-----------------------
@@ -29,11 +30,7 @@ protected:
 	virtual int get_order()=0;
 	virtual void f_inputs()=0;
 	virtual void b_inputs()=0;
-	static const int HAS_HEAD[3][4] = {
-			{-1,0,-1,-1},	//h,m
-			{-1,0,0,-1},	//h,m,s
-			{3,0,0,-1}		//h,m,s,g
-	};
+	static const int HAS_HEAD[3][4];
 	//options
 	nn_options *the_option;
 	//the caches
@@ -68,8 +65,8 @@ protected:
 
 	// -- the init and io process
 	//binary mode r/w
-	void read_params(std::ifstream fin);	//read	--- !!AFTER the options are ready
-	void write_params(std::ofstream fout);	//write
+	void read_params(std::ifstream &fin);	//read	--- !!AFTER the options are ready
+	void write_params(std::ofstream &fout);	//write
 	//from scratch
 	void create_init(nn_options * o){
 		the_option = o;
@@ -101,33 +98,8 @@ public:
 		write_params(fout);
 		fout.close();
 	}
-	static Csnn* read(string fname){
-		std::ifstream fin;
-		fin.open(fname.c_str(),ifstream::binary);
-		int order;
-		fin.read((char*)&order,sizeof(order));
-		fin.close();
-		Csnn* ret = 0;
-		switch(order){
-		case 1:	ret = new CsnnO1(); break;
-		case 2:	ret = new CsnnO2(); break;
-		case 3:	ret = new CsnnO3(); break;
-		default: cerr << "!!! Unknown csnn order..." << endl; break;
-		}
-		ret->read_init(fname);	//construct
-		return ret;
-	}
-	static Csnn* create(int order,nn_options * o){
-		Csnn* ret = 0;
-		switch(order){
-		case 1:	ret = new CsnnO1(); break;
-		case 2:	ret = new CsnnO2(); break;
-		case 3:	ret = new CsnnO3(); break;
-		default: cerr << "!!! Unknown csnn order..." << endl; break;
-		}
-		ret->create_init(o);
-		return ret;
-	}
+	static Csnn* read(string fname);
+	static Csnn* create(int order,nn_options * o);
 
 	//main methods
 	//-- SHOULD BE: while(MiniBatch){prepare_batch;while(sent){f;b;}update;}

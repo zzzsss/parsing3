@@ -91,7 +91,7 @@ public:
 	void nesterov_update(int way,REAL m_alpha);
 
 	//binary r/w
-	nn_wb(std::ifstream fin):updating(true){
+	nn_wb(std::ifstream &fin):updating(true){
 		fin.read((char*)&idim,sizeof(int));
 		fin.read((char*)&odim,sizeof(int));
 		int all = idim*odim;	//int is enough
@@ -107,7 +107,7 @@ public:
 		fin.read((char*)&b,sizeof(REAL)*odim);
 		init_clear();
 	}
-	void write_params(std::ofstream fout){
+	void write_params(std::ofstream &fout){
 		fout.write((char*)&idim,sizeof(int));
 		fout.write((char*)&odim,sizeof(int));
 		fout.write((char*)&w,sizeof(REAL)*idim*odim);

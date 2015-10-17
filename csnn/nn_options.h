@@ -5,10 +5,11 @@
  *      Author: zzs
  */
 
-#ifndef CSNN_OPTIONS_H_
-#define CSNN_OPTIONS_H_
+#ifndef CSNN_NN_OPTIONS_H_
+#define CSNN_NN_OPTIONS_H_
 
 #include <fstream>
+#include "nn_math.h"
 //options related to nn
 class nn_options{
 public:
@@ -59,7 +60,7 @@ public:
 
 	//init and r/w
 	nn_options(){default_init();}
-	nn_options(std::ifstream fin){read(fin);}
+	nn_options(std::ifstream &fin){read(fin);}
 
 	void default_init(){
 		//!! need setting !!
@@ -89,8 +90,8 @@ public:
 		NN_init_wvrange = 0.1;
 	}
 	//TODO
-	void read(std::ifstream fin){}
-	void write(std::ofstream fout){}
+	void read(std::ifstream &fin){}
+	void write(std::ofstream &fout){}
 };
 
-#endif /* CSNN_OPTIONS_H_ */
+#endif /* CSNN_NN_OPTIONS_H_ */

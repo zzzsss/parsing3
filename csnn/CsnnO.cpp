@@ -12,7 +12,7 @@ void Csnn::f_inputs(){
 	//common
 
 	//1.wrepr
-	REAL* to_assign = c_wv->values;
+	REAL* to_assign = c_wv->get_values();
 	int order = get_order();
 	const int* this_hasedge = HAS_HEAD[order];
 	//------fill the inputs-------------
@@ -125,7 +125,7 @@ void Csnn::f_inputs(){
 void Csnn::b_inputs(){
 	//common
 	//1.wrepr
-	REAL* to_grad = c_wv->gradients;
+	REAL* to_grad = c_wv->get_gradients();
 	int order = get_order();
 	const int* this_hasedge = HAS_HEAD[order];
 	for(int i=0;i<this_bsize;i++){	//this_bsize instances
