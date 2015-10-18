@@ -31,3 +31,4 @@
 *.sublime*
 *~
 /Debug/
+/data/

@@ -54,7 +54,7 @@ void Dictionary::construct_dictionary(vector<DependencyInstance*>* corpus,void* 
 		DependencyInstance* one = corpus->at(i);
 		vector<string*>* one_rel = one->deprels;
 		int sen_length = one_rel->size();
-		for(int j=0;j<sen_length;j++){
+		for(int j=1;j<sen_length;j++){	//!!here no root
 			string* to_find = one_rel->at(j);
 			HashMap::iterator iter = map_deprel->find(to_find);
 			if(iter == map_deprel->end()){
@@ -76,7 +76,7 @@ void Dictionary::construct_dictionary(vector<DependencyInstance*>* corpus,void* 
 			if(iter == word_freq.end())
 				word_freq.insert(pair<string*, int>(to_find,1));
 			else
-				word_freq.emplace(to_find,iter->second+1);
+				word_freq.at(to_find) ++;
 		}
 	}
 	//3.2:construct
@@ -162,7 +162,7 @@ int Dictionary::get_index_pos(string* s){
 		return iter->second;
 }
 int Dictionary::get_index_deprel(string* s){
-	HashMap::iterator iter = map_pos->find(s);	//must be there
+	HashMap::iterator iter = map_deprel->find(s);	//must be there
 	return iter->second;
 }
 string* Dictionary::get_str_deprel(int index){
@@ -182,7 +182,8 @@ void Dictionary::prepare_corpus(vector<DependencyInstance*>* corpus)
 		for(int t=0;t<len;t++){
 			inst->index_forms->at(t) = get_index_word(inst->forms->at(t));
 			inst->index_forms->at(t) = get_index_pos(inst->postags->at(t));
-			inst->index_deprels->at(t) = get_index_deprel(inst->deprels->at(t));
+			if(t!=0)
+				inst->index_deprels->at(t) = get_index_deprel(inst->deprels->at(t));
 		}
 	}
 }
@@ -193,7 +194,7 @@ void Dictionary::prepare_deprel_str(vector<DependencyInstance*>* corpus)
 		DependencyInstance* inst = *i;
 		int len = inst->length();
 		inst->predict_deprels_str = new vector<string*>();
-		for(int t=0;t<len;t++){
+		for(int t=1;t<len;t++){	//!!here no root
 			inst->predict_deprels_str->at(t) = get_str_deprel(inst->predict_deprels->at(t));
 		}
 	}

@@ -49,7 +49,7 @@ public:
 			return 0;
 	}
 	int get_NN_rsize(){					//the size of representation layer = wr+sr
-		return NN_wrsize+NN_srsize;
+		return NN_wrsize+get_NN_srsize();
 	}
 	int get_NN_wv_wrsize(int order){	//the word vectors' size before rsize
 		int basis = (NN_wsize+NN_psize)*NN_win+NN_dsize*(order-1);
@@ -83,7 +83,7 @@ public:
 		NN_act = 0;		//ACT_TANH
 		NN_hidden_size = 100;
 		NN_wrsize = 200;
-		//NN_srsize = 100;
+		NN_srsize = 0;
 
 		NN_dropout = 0;
 		NN_init_wbrange = 0.1;
