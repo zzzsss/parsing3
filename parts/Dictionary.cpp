@@ -90,6 +90,7 @@ void Dictionary::construct_dictionary(vector<DependencyInstance*>* corpus,void* 
 			map_word->insert(pair<string*, int>(iter->first,count++));
 	}
 
+	printf("---Cut words from %d to %d.\n",word_freq.size(),getnum_word());
 	printf("--Final finish dictionary building, words %d,pos %d,deprel %d.\n",
 			getnum_word(),getnum_pos(),getnum_deprel());
 }

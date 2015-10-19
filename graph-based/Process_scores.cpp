@@ -36,7 +36,7 @@ REAL* Process::forward_scores_o1(DependencyInstance* x,Csnn* mac,nn_input** t,nn
 	int odim = mac->get_odim();	//1 or 2 for no-labeled, otherwise...
 	int length = x->length();
 	//- for output goals
-	bool is_labeled = mac->get_output_prob();
+	bool is_labeled = (mac->get_classdim()>1);
 	int nope_goal = mac->get_classdim();	//for no-rel
 	//prepare scores
 	int num_pair_togo = 0;
@@ -67,7 +67,7 @@ REAL* Process::forward_scores_o2sib(DependencyInstance* x,Csnn* mac,nn_input** t
 	int odim = mac->get_odim();	//1 or 2 for no-labeled, otherwise...
 	int length = x->length();
 	//- for output goals
-	bool is_labeled = mac->get_output_prob();
+	bool is_labeled = (mac->get_classdim()>1);
 	int nope_goal = mac->get_classdim();	//for no-rel
 	//prepare scores
 	int num_togo = 0;
@@ -133,7 +133,7 @@ REAL* Process::forward_scores_o3g(DependencyInstance* x,Csnn* mac,nn_input** t,n
 	int odim = mac->get_odim();	//1 or 2 for no-labeled, otherwise...
 	int length = x->length();
 	//- for output goals
-	bool is_labeled = mac->get_output_prob();
+	bool is_labeled = (mac->get_classdim()>1);
 	int nope_goal = mac->get_classdim();	//for no-rel
 	//prepare scores
 	int num_togo = 0;

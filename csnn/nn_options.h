@@ -52,7 +52,7 @@ public:
 		return NN_wrsize+get_NN_srsize();
 	}
 	int get_NN_wv_wrsize(int order){	//the word vectors' size before rsize
-		int basis = (NN_wsize+NN_psize)*NN_win+NN_dsize*(order-1);
+		int basis = (NN_wsize+NN_psize)*NN_win+NN_dsize*(order);
 		if(NN_add_average)
 			basis += order*(NN_wsize+NN_psize);
 		return basis;

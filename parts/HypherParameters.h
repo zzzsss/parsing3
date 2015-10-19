@@ -79,6 +79,7 @@ HypherParameters(string conf):hp_nn()
 	CONF_mach_name="nn.mach";
 	CONF_mach_cur_suffix=".curr";
 	CONF_mach_best_suffix=".best";
+	CONF_NN_LRATE=0.1;
 	CONF_NN_ITER=10;
 	CONF_NN_ITER_decrease=1;
 	CONF_NN_ITER_force_half=100;

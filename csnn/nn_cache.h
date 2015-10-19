@@ -73,9 +73,11 @@ public:
 			delete []values;
 			delete []gradients;
 			delete []dropout;
+			delete []values_before;
 			values = new REAL[all];
 			gradients = new REAL[all];
-			dropout = new REAL[all];
+			dropout = new REAL[length];
+			values_before = new REAL[all];
 		}
 	}
 

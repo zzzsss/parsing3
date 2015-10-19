@@ -14,13 +14,14 @@ void Csnn::f_inputs(){
 	//1.wrepr
 	REAL* to_assign = c_wv->get_values();
 	int order = get_order();
+	//CHECK_EQUAL(order,this_input->get_numw(),"!!Mach and Input order NO match");
 	const int* this_hasedge = HAS_HEAD[order];
 	//------fill the inputs-------------
 	for(int i=0;i<this_bsize;i++){	//this_bsize instances
 		for(int t=0;t<=order;t++){	//order+1 nodes
 			//1.prepare the two nodes
-			int cur_mod = this_input->inputs->at((order+1)*i+t);
-			int cur_head = this_hasedge[i];
+			int cur_mod = this_input->inputs->at((order+1)*i+t);	//cur_mod means cur-node, not necessarily m-node
+			int cur_head = this_hasedge[t];
 			if(cur_head >= 0)
 				cur_head = this_input->inputs->at((order+1)*i+cur_head);
 			//2.prepares
@@ -132,7 +133,7 @@ void Csnn::b_inputs(){
 		for(int t=0;t<=order;t++){	//order+1 nodes
 			//1.prepare the two nodes
 			int cur_mod = this_input->inputs->at((order+1)*i+t);
-			int cur_head = this_hasedge[i];
+			int cur_head = this_hasedge[t];
 			if(cur_head >= 0)
 				cur_head = this_input->inputs->at((order+1)*i+cur_head);
 			//2.prepares

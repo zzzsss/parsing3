@@ -65,7 +65,7 @@ void Csnn::prepare_dropout(){
 	//set possible dropout
 	//this is done before each MiniBatch
 	for(vector<nn_cache*>::iterator i=c_allcaches->begin();i!=c_allcaches->end();i++){
-		if(the_option->NN_dropout > 0)
+		if(the_option->NN_dropout > 0 && (*i)!=c_out)
 			(*i)->gen_dropout(the_option->NN_dropout);
 	}
 }
@@ -154,7 +154,7 @@ void Csnn::prepare_batch()
 	this_mbsize=0;
 
 	//inactive
-	delete []p_untied_touched;
+	delete p_untied_touched;
 	p_untied_touched = new vector<int>(p_untied->size(),0);
 	//set dropout if ...
 	prepare_dropout();

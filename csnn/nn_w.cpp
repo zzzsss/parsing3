@@ -65,7 +65,8 @@ void nn_wv::forward(int index,REAL* out,int adding)
 	if(!adding){
 		if(index<0)
 			memset(out,0,sizeof(REAL)*dim);
-		memcpy(out,w+index*dim,sizeof(REAL)*dim);
+		else
+			memcpy(out,w+index*dim,sizeof(REAL)*dim);
 	}
 	else if(index>=0){
 		nn_math::op_y_plus_ax(dim,out,w+index*dim,1);
