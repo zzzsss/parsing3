@@ -70,12 +70,12 @@ void Process::train()
 	cout << endl;
 }
 
-double Process::nn_dev_test(string to_test,string output,string gold)
+double Process::nn_dev_test(string to_test,string output,string gold,int testing)
 {
 	time_t now;
 	//also assuming test-file itself is gold file(this must be true with dev file)
 	dev_test_corpus = read_corpus(to_test);
-	dict->prepare_corpus(dev_test_corpus);	//get those indexes
+	dict->prepare_corpus(dev_test_corpus,testing);	//get those indexes
 	int token_num = 0;	//token number
 	int miss_count = 0;
 	time(&now);

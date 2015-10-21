@@ -51,7 +51,7 @@ double* Process::get_scores_o1(DependencyInstance* x,Csnn* m,Dictionary* dict,bo
 {
 	//1.get the numbers and informations
 	int dictionary_labelnum = dict->getnum_deprel();
-	CHECK_EQUAL(dictionary_labelnum,m->get_classdim(),"Dictionary and Mach no match in class");
+	//CHECK_EQUAL(dictionary_labelnum,m->get_classdim(),"Dictionary and Mach no match in class");
 	bool is_prob = m->get_output_prob();
 	bool is_trans = trans;
 	//2.getting the scores
@@ -68,7 +68,7 @@ double* Process::get_scores_o2sib(DependencyInstance* x,Csnn* m,Dictionary* dict
 {
 	//1.get the numbers and informations
 	int dictionary_labelnum = dict->getnum_deprel();
-	CHECK_EQUAL(dictionary_labelnum,m->get_classdim(),"Dictionary and Mach no match in class");
+	//CHECK_EQUAL(dictionary_labelnum,m->get_classdim(),"Dictionary and Mach no match in class");
 	bool is_prob = m->get_output_prob();
 	bool is_trans = trans;
 	//2.getting the scores
@@ -85,7 +85,7 @@ double* Process::get_scores_o3g(DependencyInstance* x,Csnn* m,Dictionary* dict,b
 {
 	//1.get the numbers and informations
 	int dictionary_labelnum = dict->getnum_deprel();
-	CHECK_EQUAL(dictionary_labelnum,m->get_classdim(),"Dictionary and Mach no match in class");
+	//CHECK_EQUAL(dictionary_labelnum,m->get_classdim(),"Dictionary and Mach no match in class");
 	bool is_prob = m->get_output_prob();
 	bool is_trans = trans;
 	//2.getting the scores

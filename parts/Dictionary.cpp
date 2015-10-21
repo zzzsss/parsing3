@@ -172,7 +172,7 @@ string* Dictionary::get_str_deprel(int index){
 
 //deal with corpus
 //use the hash maps to get the three indexes
-void Dictionary::prepare_corpus(vector<DependencyInstance*>* corpus)
+void Dictionary::prepare_corpus(vector<DependencyInstance*>* corpus,int testing)
 {
 	for(vector<DependencyInstance*>::iterator i=corpus->begin();i!=corpus->end();i++){
 		DependencyInstance* inst = *i;
@@ -183,7 +183,7 @@ void Dictionary::prepare_corpus(vector<DependencyInstance*>* corpus)
 		for(int t=0;t<len;t++){
 			inst->index_forms->at(t) = get_index_word(inst->forms->at(t));
 			inst->index_forms->at(t) = get_index_pos(inst->postags->at(t));
-			if(t!=0)
+			if(t!=0 && !testing)
 				inst->index_deprels->at(t) = get_index_deprel(inst->deprels->at(t));
 		}
 	}
@@ -194,7 +194,7 @@ void Dictionary::prepare_deprel_str(vector<DependencyInstance*>* corpus)
 	for(vector<DependencyInstance*>::iterator i=corpus->begin();i!=corpus->end();i++){
 		DependencyInstance* inst = *i;
 		int len = inst->length();
-		inst->predict_deprels_str = new vector<string*>();
+		inst->predict_deprels_str = new vector<string*>(len);
 		for(int t=1;t<len;t++){	//!!here no root
 			inst->predict_deprels_str->at(t) = get_str_deprel(inst->predict_deprels->at(t));
 		}
