@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include "graph-based/Process.h"
 #include "graph-based/M1_p1o1.h"
+#include "graph-based/M0_debug.h"
 
 /* <Version 1.6>
  * 		-- usage:	(mode 3 and 4 are for debugging)
@@ -26,6 +27,9 @@ int main(int argc,char **argv)
 	srand(par.CONF_random_seed);
 	Process *x;
 	switch(par.CONF_method){
+	case 0:
+		x = new M0_debug(conf);
+		break;
 	case 1:
 		x = new M1_p1o1(conf);
 		break;

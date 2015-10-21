@@ -74,8 +74,7 @@ void M1_p1o1::each_train_one_iter()
 			//backward
 			mach->backward(fscores);
 
-			//
-			mach->check_gradients(the_inputs);
+			//mach->check_gradients(the_inputs);
 
 			delete the_inputs;
 			delete []fscores;

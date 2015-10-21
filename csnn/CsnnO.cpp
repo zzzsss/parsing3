@@ -15,7 +15,7 @@ void Csnn::f_inputs(){
 	REAL* to_assign = c_wv->get_values();
 	int order = get_order();
 	//CHECK_EQUAL(order,this_input->get_numw(),"!!Mach and Input order NO match");
-	const int* this_hasedge = HAS_HEAD[order];
+	const int* this_hasedge = HAS_HEAD[order-1];	//!!DEBUG:order-1
 	//------fill the inputs-------------
 	for(int i=0;i<this_bsize;i++){	//this_bsize instances
 		for(int t=0;t<=order;t++){	//order+1 nodes
@@ -128,7 +128,7 @@ void Csnn::b_inputs(){
 	//1.wrepr
 	REAL* to_grad = c_wv->get_gradients();
 	int order = get_order();
-	const int* this_hasedge = HAS_HEAD[order];
+	const int* this_hasedge = HAS_HEAD[order-1];	//!!DEBUG:order-1
 	for(int i=0;i<this_bsize;i++){	//this_bsize instances
 		for(int t=0;t<=order;t++){	//order+1 nodes
 			//1.prepare the two nodes

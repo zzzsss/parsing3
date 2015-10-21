@@ -62,9 +62,13 @@ void Csnn::check_gradients(nn_input* in)
 			appr_loss -= log(tmp);	//cross-entropy loss
 		}
 		REAL appr_grad = (appr_loss-origin_loss) / step;
-		if(abs(choose_grad-appr_grad) > threshold){
-			cerr << "GRADIENT ERROR: calculated " << choose_grad << " vs. approximate " << appr_grad
-					<< " at " << p << endl;
+		if(abs(choose_grad-appr_grad)/this_bsize > threshold){
+			cerr << "GRADIENT ERROR: calculated (/bs) " << choose_grad/this_bsize << " vs. approximate "
+					<< appr_grad/this_bsize << " at " << p << endl;
+		}
+		else{
+			cerr << "GRADIENT OK: calculated (/bs) " << choose_grad/this_bsize << " vs. approximate "
+					<< appr_grad/this_bsize << " at " << p << endl;
 		}
 		delete []target;
 	}
