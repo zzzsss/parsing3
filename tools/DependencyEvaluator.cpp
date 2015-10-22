@@ -59,8 +59,8 @@ double DependencyEvaluator::evaluate(std::string &act_file, std::string &pred_fi
 
 		vector<int>* goldHeads = goldInstance->heads;
 		vector<string*>* goldLabels = goldInstance->deprels;
-		vector<int>* predHeads = predInstance->predict_heads;
-		vector<string*>* predLabels = predInstance->predict_deprels_str;
+		vector<int>* predHeads = predInstance->heads;		//because after reading, the predict ones goes there
+		vector<string*>* predLabels = predInstance->deprels;
 
 		vector<string*>* pos = goldInstance->postags;
 

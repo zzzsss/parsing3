@@ -183,7 +183,7 @@ void Dictionary::prepare_corpus(vector<DependencyInstance*>* corpus,int testing)
 		for(int t=0;t<len;t++){
 			inst->index_forms->at(t) = get_index_word(inst->forms->at(t));
 			inst->index_forms->at(t) = get_index_pos(inst->postags->at(t));
-			if(t!=0 && !testing)
+			if(t!=0 && !testing)	//no need when testing
 				inst->index_deprels->at(t) = get_index_deprel(inst->deprels->at(t));
 		}
 	}

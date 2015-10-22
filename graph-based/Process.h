@@ -59,7 +59,7 @@ protected:
 	void nn_train_prepare();
 
 	//2.test and dev
-	double nn_dev_test(string to_test,string output,string gold,int testing=0);
+	double nn_dev_test(string to_test,string output,string gold,int testing=1);
 
 	//3.1:forward scores and rearrange scores
 	static REAL* forward_scores_o1(DependencyInstance* x,Csnn* m,nn_input** t,nn_input_helper* h,int testing);

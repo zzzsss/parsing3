@@ -76,22 +76,82 @@ public:
 		NN_dsize = 20;
 		//nn
 		NN_win = 5;
+
 		NN_add_average = 1;
 		NN_add_sent = 0;
+
 		NN_untied_dim = 0;
 		NN_untied_2brate = 0.2;
+
 		NN_act = 0;		//ACT_TANH
 		NN_hidden_size = 100;
 		NN_wrsize = 200;
 		NN_srsize = 0;
 
 		NN_dropout = 0;
+
 		NN_init_wbrange = 0.1;
 		NN_init_wvrange = 0.1;
 	}
-	//TODO
-	void read(std::ifstream &fin){}
-	void write(std::ofstream &fout){}
+	//
+	void read(std::ifstream &fin){
+		fin.read((char*)&NN_wnum,sizeof(int));
+		fin.read((char*)&NN_pnum,sizeof(int));
+		fin.read((char*)&NN_dnum,sizeof(int));
+		fin.read((char*)&NN_out_prob,sizeof(int));
+		fin.read((char*)&NN_out_size,sizeof(int));
+
+		fin.read((char*)&NN_wsize,sizeof(int));
+		fin.read((char*)&NN_psize,sizeof(int));
+		fin.read((char*)&NN_dsize,sizeof(int));
+
+		fin.read((char*)&NN_win,sizeof(int));
+
+		fin.read((char*)&NN_add_average,sizeof(int));
+		fin.read((char*)&NN_add_sent,sizeof(int));
+
+		fin.read((char*)&NN_untied_dim,sizeof(int));
+		fin.read((char*)&NN_untied_2brate,sizeof(REAL));
+
+		fin.read((char*)&NN_act,sizeof(int));
+		fin.read((char*)&NN_hidden_size,sizeof(int));
+		fin.read((char*)&NN_wrsize,sizeof(int));
+		fin.read((char*)&NN_srsize,sizeof(int));
+
+		fin.read((char*)&NN_dropout,sizeof(REAL));
+
+		fin.read((char*)&NN_init_wbrange,sizeof(REAL));
+		fin.read((char*)&NN_init_wvrange,sizeof(REAL));
+	}
+	void write(std::ofstream &fout){
+		fout.write((char*)&NN_wnum,sizeof(int));
+		fout.write((char*)&NN_pnum,sizeof(int));
+		fout.write((char*)&NN_dnum,sizeof(int));
+		fout.write((char*)&NN_out_prob,sizeof(int));
+		fout.write((char*)&NN_out_size,sizeof(int));
+
+		fout.write((char*)&NN_wsize,sizeof(int));
+		fout.write((char*)&NN_psize,sizeof(int));
+		fout.write((char*)&NN_dsize,sizeof(int));
+
+		fout.write((char*)&NN_win,sizeof(int));
+
+		fout.write((char*)&NN_add_average,sizeof(int));
+		fout.write((char*)&NN_add_sent,sizeof(int));
+
+		fout.write((char*)&NN_untied_dim,sizeof(int));
+		fout.write((char*)&NN_untied_2brate,sizeof(REAL));
+
+		fout.write((char*)&NN_act,sizeof(int));
+		fout.write((char*)&NN_hidden_size,sizeof(int));
+		fout.write((char*)&NN_wrsize,sizeof(int));
+		fout.write((char*)&NN_srsize,sizeof(int));
+
+		fout.write((char*)&NN_dropout,sizeof(REAL));
+
+		fout.write((char*)&NN_init_wbrange,sizeof(REAL));
+		fout.write((char*)&NN_init_wvrange,sizeof(REAL));
+	}
 };
 
 #endif /* CSNN_NN_OPTIONS_H_ */
