@@ -62,6 +62,9 @@ void nn_wb::nesterov_update(int way,REAL m_alpha)
 //for nn_wv
 void nn_wv::forward(int index,REAL* out,int adding)
 {
+	if(index>=num){
+		nn_math::CHECK_EQUAL(index,num-1,"should be less than.");
+	}
 	if(!adding){
 		if(index<0)
 			memset(out,0,sizeof(REAL)*dim);

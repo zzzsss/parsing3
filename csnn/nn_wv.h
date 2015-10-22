@@ -90,13 +90,13 @@ public:
 		w_grad = new REAL[all];
 		w_moment = new REAL[all];
 		w_square = new REAL[all];
-		fin.read((char*)&w,sizeof(REAL)*all);
+		fin.read((char*)w,sizeof(REAL)*all);
 		init_clear();
 	}
 	void write_params(std::ofstream &fout){
 		fout.write((char*)&num,sizeof(int));
 		fout.write((char*)&dim,sizeof(int));
-		fout.write((char*)&w,sizeof(REAL)*num*dim);
+		fout.write((char*)w,sizeof(REAL)*num*dim);	//!!DEBUG, don't need &
 	}
 };
 

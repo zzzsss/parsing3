@@ -120,7 +120,7 @@ Dictionary::Dictionary(string file)
 	map_word = new HashMap(CONS_size_word);
 	map_pos = new HashMap(CONS_size_pos);
 	map_deprel = new HashMap(CONS_size_rel);
-	list_deprel = new vector<string*>();
+	list_deprel = new vector<string*>(CONS_size_rel,(string*)0);
 	printf("-Reading dict from %s.\n",file.c_str());
 	ifstream fin;
 	fin.open(file.c_str(),ifstream::in);
@@ -141,6 +141,10 @@ Dictionary::Dictionary(string file)
 		if(the_map->size() != the_size){
 			cerr << "!!! Error with the dictionary file." << endl;
 		}
+	}
+	//build list_deprel
+	for(HashMap::iterator i = map_deprel->begin();i!=map_deprel->end();i++){
+		list_deprel->at(i->second) = i->first;
 	}
 	fin.close();
 	printf("--Final reading dictionary, words %d,pos %d,deprel %d.\n",
@@ -182,7 +186,7 @@ void Dictionary::prepare_corpus(vector<DependencyInstance*>* corpus,int testing)
 		inst->index_deprels = new vector<int>(len);
 		for(int t=0;t<len;t++){
 			inst->index_forms->at(t) = get_index_word(inst->forms->at(t));
-			inst->index_forms->at(t) = get_index_pos(inst->postags->at(t));
+			inst->index_pos->at(t) = get_index_pos(inst->postags->at(t));	//!!DEBUG should be index_pos
 			if(t!=0 && !testing)	//no need when testing
 				inst->index_deprels->at(t) = get_index_deprel(inst->deprels->at(t));
 		}

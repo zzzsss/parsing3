@@ -4,8 +4,15 @@
 typedef float REAL;
 #include "Blas.h"
 #include <cmath>
+#include <iostream>
 
 namespace nn_math{
+
+template<class T>
+static void CHECK_EQUAL(T a,T b,const char* x){
+	if(a != b)
+		std::cerr << "!! warning of " << x << ":" << a << " != " << b << std::endl;
+}
 
 enum{
 	OPT_SGD,OPT_SGD_MOMENTUM,

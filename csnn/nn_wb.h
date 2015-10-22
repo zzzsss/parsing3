@@ -103,15 +103,15 @@ public:
 		b_moment = new REAL[odim];
 		w_square = new REAL[all];
 		b_square = new REAL[odim];
-		fin.read((char*)&w,sizeof(REAL)*all);
-		fin.read((char*)&b,sizeof(REAL)*odim);
+		fin.read((char*)w,sizeof(REAL)*all);	//!!DEBUG, don't need &
+		fin.read((char*)b,sizeof(REAL)*odim);
 		init_clear();
 	}
 	void write_params(std::ofstream &fout){
 		fout.write((char*)&idim,sizeof(int));
 		fout.write((char*)&odim,sizeof(int));
-		fout.write((char*)&w,sizeof(REAL)*idim*odim);
-		fout.write((char*)&b,sizeof(REAL)*odim);
+		fout.write((char*)w,sizeof(REAL)*idim*odim);	//!!DEBUG, don't need &
+		fout.write((char*)b,sizeof(REAL)*odim);
 	}
 
 	//only for gradient check
