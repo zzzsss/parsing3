@@ -43,6 +43,39 @@ REAL* Process::forward_scores_o1(DependencyInstance* x,Csnn* mac,nn_input** t,nn
 	vector<int>* the_inputs = new vector<int>();
 	vector<int>* the_goals = new vector<int>();
 	//loop --- (h,m)
+	if(testing){
+		for(int m=1;m<length;m++){
+			for(int h=0;h<length;h++){
+				if(m != h){
+					TMP_push234(the_inputs,h,m);
+					if(!testing){	//when training, prepare the goals
+						if(TMP_check234(x->heads->at(m),h))
+							the_goals->push_back(is_labeled?(x->index_deprels->at(m)):0);
+						else
+							the_goals->push_back(nope_goal);
+					}
+					num_pair_togo ++;
+				}
+			}
+		}
+	}
+	else{
+//#define TRYING_TMP_O1_RANDOM 0
+#if TRYING_TMP_O1_RANDOM
+	for(int m=1;m<length;m++){
+		//right-one
+		TMP_push234(the_inputs,x->heads->at(m),m);
+		the_goals->push_back(is_labeled?(x->index_deprels->at(m)):0);
+		//random nope-one
+		int rh;
+		do{
+			rh=(length*drand48());
+		}while(rh==x->heads->at(m) || (length>2  && rh==m));
+		TMP_push234(the_inputs,rh,m);
+		the_goals->push_back(nope_goal);
+		num_pair_togo += 2;
+	}
+#else
 	for(int m=1;m<length;m++){
 		for(int h=0;h<length;h++){
 			if(m != h){
@@ -56,6 +89,8 @@ REAL* Process::forward_scores_o1(DependencyInstance* x,Csnn* mac,nn_input** t,nn
 				num_pair_togo ++;
 			}
 		}
+	}
+#endif
 	}
 	(*t) = new nn_input(num_pair_togo,2,the_inputs,the_goals,x->index_forms,x->index_pos,h);
 	REAL* tmp_scores = mac->forward(*t,testing);

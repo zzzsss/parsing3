@@ -98,6 +98,10 @@ public:
 		fout.write((char*)&dim,sizeof(int));
 		fout.write((char*)w,sizeof(REAL)*num*dim);	//!!DEBUG, don't need &
 	}
+
+	//only for gradient check
+	REAL* get_w(int index){return &w[index];}
+	REAL get_g(int index){return w_grad[index];}
 };
 
 

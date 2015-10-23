@@ -73,6 +73,43 @@ void Csnn::check_gradients(nn_input* in)
 		delete []target;
 	}
 	}
+	//the nn_wv
+	vector<nn_wv*> to_changes2;
+	to_changes2.push_back(p_word);
+	to_changes2.push_back(p_pos);
+	to_changes2.push_back(p_distance);
+	//const int TMP_each_times = 10;
+	for(int p=0;p<to_changes.size();p++){
+	for(int i=0;i<TMP_each_times;i++){
+		const REAL step = 1e-2;
+		const REAL threshold = 1e-5;
+		nn_wv* to_change = to_changes2[p];
+		//choose one
+		int choose = int(10*to_change->getd()*drand48());	//within 10
+		REAL* choose_w = to_change->get_w(choose);
+		REAL choose_grad = to_change->get_g(choose);
+		//forward
+		*choose_w += step;
+		REAL *target = forward(in,0);
+		*choose_w -= step;
+		//check
+		REAL appr_loss = 0;
+		for(int i=0;i<this_bsize;i++){
+			REAL tmp = target[i*the_option->NN_out_size+goals->at(i)];
+			appr_loss -= log(tmp);	//cross-entropy loss
+		}
+		REAL appr_grad = (appr_loss-origin_loss) / step;
+		if(abs(choose_grad-appr_grad)/this_bsize > threshold){
+			cerr << "GRADIENT ERROR: calculated (/bs) " << choose_grad/this_bsize << " vs. approximate "
+					<< appr_grad/this_bsize << " at nn_wv " << p << endl;
+		}
+		else{
+			cerr << "GRADIENT OK: calculated (/bs) " << choose_grad/this_bsize << " vs. approximate "
+					<< appr_grad/this_bsize << " at nn_wv " << p << endl;
+		}
+		delete []target;
+	}
+	}
 
 	clear_params();
 	the_option->NN_dropout = tmp_drop;
