@@ -39,7 +39,8 @@ public:
 
 	REAL NN_dropout;		//dropout rate
 
-	REAL NN_init_wbrange;
+	REAL NN_init_wb_faniorange;	//fanio for w range
+	REAL NN_init_wb_brange;		//random init for b range
 	REAL NN_init_wvrange;
 
 	int get_NN_srsize(){
@@ -90,7 +91,8 @@ public:
 
 		NN_dropout = 0;
 
-		NN_init_wbrange = 0.1;
+		NN_init_wb_faniorange = 1;
+		NN_init_wb_brange = 0.1;
 		NN_init_wvrange = 0.1;
 	}
 	//
@@ -120,7 +122,8 @@ public:
 
 		fin.read((char*)&NN_dropout,sizeof(REAL));
 
-		fin.read((char*)&NN_init_wbrange,sizeof(REAL));
+		fin.read((char*)&NN_init_wb_faniorange,sizeof(REAL));
+		fin.read((char*)&NN_init_wb_brange,sizeof(REAL));
 		fin.read((char*)&NN_init_wvrange,sizeof(REAL));
 	}
 	void write(std::ofstream &fout){
@@ -149,7 +152,8 @@ public:
 
 		fout.write((char*)&NN_dropout,sizeof(REAL));
 
-		fout.write((char*)&NN_init_wbrange,sizeof(REAL));
+		fout.write((char*)&NN_init_wb_faniorange,sizeof(REAL));
+		fout.write((char*)&NN_init_wb_brange,sizeof(REAL));
 		fout.write((char*)&NN_init_wvrange,sizeof(REAL));
 	}
 };

@@ -54,9 +54,9 @@ public:
 		w_square = new REAL[all];
 		b_square = new REAL[o];
 	}
-	void get_init(const REAL range){
+	void get_init(const REAL frange,const REAL range){
 		//fanio for weight and random for bias
-		REAL c=2.0*range/sqrt((REAL) (idim+odim));
+		REAL c=2.0*frange/sqrt((REAL) (idim+odim));
 		for (int i=0; i<idim*odim; i++)
 			w[i]=c*(drand48()-0.5);
 		c=range*2.0;

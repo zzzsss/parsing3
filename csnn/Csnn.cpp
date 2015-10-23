@@ -85,14 +85,14 @@ void Csnn::clear_params(){
 void Csnn::construct_params(){
 	//init all the params
 	p_out = new nn_wb(the_option->NN_hidden_size,the_option->NN_out_size);
-	p_out->get_init(the_option->NN_init_wbrange);
+	p_out->get_init(the_option->NN_init_wb_faniorange,the_option->NN_init_wb_brange);
 	p_h = new nn_wb(the_option->get_NN_rsize(),the_option->NN_hidden_size);
-	p_h->get_init(the_option->NN_init_wbrange);
+	p_h->get_init(the_option->NN_init_wb_faniorange,the_option->NN_init_wb_brange);
 	//special untied param
 	int all = the_option->NN_pnum*the_option->NN_pnum+1;
 	p_untied = new vector<nn_wb*>(all,(nn_wb*)0);
 	p_untied->at(0) = new nn_wb(the_option->get_NN_wv_wrsize(get_order()),the_option->NN_wrsize);
-	(p_untied->at(0))->get_init(the_option->NN_init_wbrange);
+	(p_untied->at(0))->get_init(the_option->NN_init_wb_faniorange,the_option->NN_init_wb_brange);
 	p_untied_touched = new vector<int>(p_untied->size(),0);
 	//the embeddings
 	p_word = new nn_wv(the_option->NN_wnum,the_option->NN_wsize);
@@ -201,7 +201,7 @@ REAL* Csnn::forward(nn_input* in,int testing)
 				//create new one
 				p_untied->at(this_untied_index[i]) = new nn_wb(the_option->get_NN_wv_wrsize(get_order()),the_option->NN_wrsize);
 				tmp = p_untied->at(this_untied_index[i]);
-				tmp->get_init(the_option->NN_init_wbrange);
+				tmp->get_init(the_option->NN_init_wb_faniorange,the_option->NN_init_wb_brange);
 			}
 			tmp->forward(ptr_in,ptr_out,1);
 			p_untied_touched->at(this_untied_index[i]) = 1;
