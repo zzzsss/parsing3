@@ -244,15 +244,12 @@ double* Process::rearrange_scores_o1(DependencyInstance* x,Csnn* m,nn_input* the
 	double* rscores = new double[length*length*num_label];
 	for(int i=0;i<length*length*num_label;i++)
 		rscores[i] = DOUBLE_LARGENEG;
-	//make sure the width is THE_DIM
-	if(the_inputs->get_numw() != THE_DIM){
-		cerr << "!!!Wrong nn_input" << endl;
-		return 0;
-	}
+	//make sure the width is THE_DIM}
+	CHECK_EQUAL(the_inputs->get_numw(),THE_DIM,"!!!Wrong nn_input");
 	//get scores
 	vector<int>* inputs_list = the_inputs->inputs;
 	REAL *to_assign = fscores;
-	for(int i=0;i<the_inputs->num_inst;i+=THE_DIM){
+	for(int i=0;i<the_inputs->num_inst*THE_DIM;i+=THE_DIM){	//!!DEBUG: *THE_DIM
 		int tmph = inputs_list->at(i);
 		int tmpm = inputs_list->at(i+1);
 		for(int curi=0;curi<num_label;curi++)
@@ -267,7 +264,7 @@ double* Process::rearrange_scores_o1(DependencyInstance* x,Csnn* m,nn_input* the
 		for(int i=0;i<length*length;i++)
 			nope_probs[i] = 1;		//set to one firstly
 		REAL *to_assign = fscores;
-		for(int i=0;i<the_inputs->num_inst;i+=THE_DIM){
+		for(int i=0;i<the_inputs->num_inst*THE_DIM;i+=THE_DIM){ //!!DEBUG: *THE_DIM
 			int tmph = inputs_list->at(i);
 			int tmpm = inputs_list->at(i+1);
 			nope_probs[get_index2(length,tmph,tmpm)] = to_assign[fs_dim-1];	//the last one
@@ -293,14 +290,11 @@ double* Process::rearrange_scores_o2sib(DependencyInstance* x,Csnn* m,nn_input* 
 	for(int i=0;i<length*length*length*num_label;i++)
 		rscores[i] = DOUBLE_LARGENEG;
 	//make sure the width is THE_DIM
-	if(the_inputs->get_numw() != THE_DIM){
-		cerr << "!!!Wrong nn_input" << endl;
-		return 0;
-	}
+	CHECK_EQUAL(the_inputs->get_numw(),THE_DIM,"!!!Wrong nn_input");
 	//get scores
 	vector<int>* inputs_list = the_inputs->inputs;
 	REAL *to_assign = fscores;
-	for(int i=0;i<the_inputs->num_inst;i+=THE_DIM){
+	for(int i=0;i<the_inputs->num_inst*THE_DIM;i+=THE_DIM){
 		int tmph = inputs_list->at(i);
 		int tmpm = inputs_list->at(i+1);
 		int tmps = inputs_list->at(i+2);
@@ -318,7 +312,7 @@ double* Process::rearrange_scores_o2sib(DependencyInstance* x,Csnn* m,nn_input* 
 		for(int i=0;i<length*length*length;i++)
 			nope_probs[i] = 1;		//set to one firstly
 		REAL *to_assign = fscores;
-		for(int i=0;i<the_inputs->num_inst;i+=THE_DIM){
+		for(int i=0;i<the_inputs->num_inst*THE_DIM;i+=THE_DIM){
 			int tmph = inputs_list->at(i);
 			int tmpm = inputs_list->at(i+1);
 			int tmps = inputs_list->at(i+2);
@@ -365,14 +359,11 @@ double* Process::rearrange_scores_o3g(DependencyInstance* x,Csnn* m,nn_input* th
 	for(int i=0;i<length*length*length*length*num_label;i++)
 		rscores[i] = DOUBLE_LARGENEG;
 	//make sure the width is THE_DIM
-	if(the_inputs->get_numw() != THE_DIM){
-		cerr << "!!!Wrong nn_input" << endl;
-		return 0;
-	}
+	CHECK_EQUAL(the_inputs->get_numw(),THE_DIM,"!!!Wrong nn_input");
 	//get scores
 	vector<int>* inputs_list = the_inputs->inputs;
 	REAL *to_assign = fscores;
-	for(int i=0;i<the_inputs->num_inst;i+=THE_DIM){
+	for(int i=0;i<the_inputs->num_inst*THE_DIM;i+=THE_DIM){
 		int tmph = inputs_list->at(i);
 		int tmpm = inputs_list->at(i+1);
 		int tmps = inputs_list->at(i+2);
@@ -393,7 +384,7 @@ double* Process::rearrange_scores_o3g(DependencyInstance* x,Csnn* m,nn_input* th
 		for(int i=0;i<length*length*length*length;i++)
 			nope_probs[i] = 1;		//set to one firstly
 		REAL *to_assign = fscores;
-		for(int i=0;i<the_inputs->num_inst;i+=THE_DIM){
+		for(int i=0;i<the_inputs->num_inst*THE_DIM;i+=THE_DIM){
 			int tmph = inputs_list->at(i);
 			int tmpm = inputs_list->at(i+1);
 			int tmps = inputs_list->at(i+2);
