@@ -44,7 +44,7 @@ void Csnn::check_gradients(nn_input* in)
 	const int TMP_each_times = 10;
 	for(int p=0;p<to_changes.size();p++){
 	for(int i=0;i<TMP_each_times;i++){
-		const REAL step = 1e-2;
+		const REAL step = 1e-4;
 		const REAL threshold = 1e-5;
 		nn_wb* to_change = to_changes[p];
 		//choose one
@@ -63,12 +63,12 @@ void Csnn::check_gradients(nn_input* in)
 		}
 		REAL appr_grad = (appr_loss-origin_loss) / step;
 		if(abs(choose_grad-appr_grad)/this_bsize > threshold){
-			cerr << "GRADIENT ERROR: calculated (/bs) " << choose_grad/this_bsize << " vs. approximate "
-					<< appr_grad/this_bsize << " at " << p << endl;
+			cerr << "GRADIENT ERROR: calculated (/bs) " << choose_grad/sqrt(this_bsize) << " vs. approximate "
+					<< appr_grad/sqrt(this_bsize) << " at " << p << endl;
 		}
 		else{
-			cerr << "GRADIENT OK: calculated (/bs) " << choose_grad/this_bsize << " vs. approximate "
-					<< appr_grad/this_bsize << " at " << p << endl;
+			cerr << "GRADIENT OK: calculated (/bs) " << choose_grad/sqrt(this_bsize) << " vs. approximate "
+					<< appr_grad/sqrt(this_bsize) << " at " << p << endl;
 		}
 		delete []target;
 	}
