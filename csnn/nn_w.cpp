@@ -34,7 +34,7 @@ void nn_wb::backward(/*const*/REAL* ograd,REAL* igrad,/*const*/REAL* in,int bsiz
 		//gradient of b
 		REAL *gptr = ograd;
 		for (int e=0; e<bsize; e++, gptr+=odim)
-			nn_math::op_y_plus_ax(odim,b_grad,ograd,1);
+			nn_math::op_y_plus_ax(odim,b_grad,gptr,1);	//!!DEBUG: not ograd but gptr
 		//gradient of w
 		//gw += ograd * in'
 		//o*i	o*b		b*i
