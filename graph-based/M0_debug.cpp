@@ -19,16 +19,16 @@ void M0_debug::each_create_machine()
 		hp->hp_nn.NN_out_size = dict->getnum_deprel()+1;
 	else
 		hp->hp_nn.NN_out_size = 2;
-	/*
+
 	//for debugging --- small one
 	hp->hp_nn.NN_wsize = 5;
 	hp->hp_nn.NN_psize = 5;
 	hp->hp_nn.NN_dsize = 5;
-	hp->hp_nn.NN_win = 1;
-	hp->hp_nn.NN_add_average = 0;
+	hp->hp_nn.NN_win = 3;
+	hp->hp_nn.NN_add_average = 1;
 	hp->hp_nn.NN_hidden_size = 5;
 	hp->hp_nn.NN_wrsize = 10;
-	*/
+
 	//create the new mach
 	mach = Csnn::create(1,&hp->hp_nn);
 }
@@ -47,7 +47,7 @@ void M0_debug::each_train_one_iter()
 		nn_input* the_inputs;
 		REAL *fscores = forward_scores_o1(x,mach,&the_inputs,dict->get_helper(),0);
 
-		//the_inputs->num_inst = 1;
+		the_inputs->num_inst = 4;	//enough maybe
 
 		mach->check_gradients(the_inputs);
 		delete []fscores;

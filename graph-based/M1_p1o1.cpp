@@ -45,28 +45,35 @@ void M1_p1o1::each_train_one_iter()
 			<< "with lrate " << cur_lrate << endl;
 	cout << "#Sentences is " << num_sentences << " and resample (about)" << num_sentences*hp->CONF_NN_resample << endl;
 	for(int i=0;i<num_sentences;){
+		//random skip (instead of shuffling every time)
+		if(drand48() > hp->CONF_NN_resample){
+			skip_sent_num ++;
+			i ++;
+			continue;
+		}
+
 		mach->prepare_batch();
 		//if nesterov update before each batch (pre-update)
 		if(hp->CONF_NESTEROV_MOMENTUM)
 			mach->nesterov_update(hp->CONF_UPDATE_WAY,hp->CONF_MOMENTUM_ALPHA);
 		//main batch
-		for(int t=0;t<mini_batch && i<num_sentences;t++,i++){
-			//random skip (instead of shuffling every time)
-			if(drand48() > hp->CONF_NN_resample){
-				skip_sent_num ++;
-				continue;
-			}
-
+		int this_sentence = 0;
+		int this_instance = 0;
+		for(;;){
 			//forward
 			DependencyInstance* x = training_corpus->at(i);
 			nn_input* the_inputs;
-			REAL *fscores = forward_scores_o1(x,mach,&the_inputs,dict->get_helper(),0);
+			REAL *fscores = forward_scores_o1(x,mach,&the_inputs,dict->get_helper(),0,hp->CONF_p1o1_training_random);
+
+			this_instance += the_inputs->get_numi();
 			all_forward_instance += the_inputs->get_numi();
+			this_sentence ++;
+			i++;
 
 			//prepare gradients --- softmax -> fscores as gradient
 			REAL *to_change = fscores;
-			for(int i=0;i<the_inputs->get_numi();i++){
-				int tmp_goal = the_inputs->goals->at(i);
+			for(int ii=0;ii<the_inputs->get_numi();ii++){
+				int tmp_goal = the_inputs->goals->at(ii);
 				to_change[tmp_goal] -= 1;	//-1 for the right one
 				to_change += odim;
 			}
@@ -78,6 +85,18 @@ void M1_p1o1::each_train_one_iter()
 
 			delete the_inputs;
 			delete []fscores;
+
+			//out of the mini-batch
+			if(i>=num_sentences)
+				break;
+			if(hp->CONF_minibatch > 0){
+				if(this_sentence >= hp->CONF_minibatch)
+					break;
+			}
+			else{
+				if(this_instance >= -1*hp->CONF_minibatch)
+					break;
+			}
 		}
 		//real update
 		mach->update(hp->CONF_UPDATE_WAY,cur_lrate,hp->CONF_NN_WD,hp->CONF_MOMENTUM_ALPHA,hp->CONF_RMS_SMOOTH);

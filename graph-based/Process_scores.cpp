@@ -30,7 +30,7 @@ static inline bool TMP_check234(int h1,int h2,int c1=-100,int c2=-100,int g1=-10
 // -- m means the current machine(might not be the same as options)
 // -- t for assigning inputs, need outside to delete it
 // -- testing for the forward of nn
-REAL* Process::forward_scores_o1(DependencyInstance* x,Csnn* mac,nn_input** t,nn_input_helper* h,int testing)
+REAL* Process::forward_scores_o1(DependencyInstance* x,Csnn* mac,nn_input** t,nn_input_helper* h,int testing,int random_training)
 {
 	//default order1 parsing
 	int odim = mac->get_odim();	//1 or 2 for no-labeled, otherwise...
@@ -61,7 +61,8 @@ REAL* Process::forward_scores_o1(DependencyInstance* x,Csnn* mac,nn_input** t,nn
 	}
 	else{
 //#define TRYING_TMP_O1_RANDOM 0
-#if TRYING_TMP_O1_RANDOM
+//#if TRYING_TMP_O1_RANDOM
+		if(random_training){
 	for(int m=1;m<length;m++){
 		//right-one
 		TMP_push234(the_inputs,x->heads->at(m),m);
@@ -75,7 +76,8 @@ REAL* Process::forward_scores_o1(DependencyInstance* x,Csnn* mac,nn_input** t,nn
 		the_goals->push_back(nope_goal);
 		num_pair_togo += 2;
 	}
-#else
+		}else{
+//#else
 	for(int m=1;m<length;m++){
 		for(int h=0;h<length;h++){
 			if(m != h){
@@ -90,7 +92,8 @@ REAL* Process::forward_scores_o1(DependencyInstance* x,Csnn* mac,nn_input** t,nn
 			}
 		}
 	}
-#endif
+		}
+//#endif
 	}
 	(*t) = new nn_input(num_pair_togo,2,the_inputs,the_goals,x->index_forms,x->index_pos,h);
 	REAL* tmp_scores = mac->forward(*t,testing);

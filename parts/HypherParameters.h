@@ -54,7 +54,7 @@ double CONF_RMS_SMOOTH;
 
 double CONF_NN_resample;				//re-sample rate
 int CONF_NN_FIXVEC;						//no update on embeddings any longer
-int CONF_minibatch;		//how many sentences for a batch(this is not bsize of nn)
+int CONF_minibatch;		//(this is not bsize of nn) -- if>0, num of sent; if<0, at least this-num-of-inst
 
 //1.4-others
 int CONF_dict_remove;	//remove words appears only less than this times
@@ -69,6 +69,9 @@ int CONF_score_combine_o2sib;
 string CONF_score_mach_fo1;		//o1-filter mach
 string CONF_score_mach_so1;		//o1-scorer mach
 string CONF_score_mach_so2sib;	//o2sib-scorer mach
+
+//1.6-others
+int CONF_p1o1_training_random;	//special random one for M1_p1o1
 
 //init
 HypherParameters(string conf):hp_nn()
@@ -99,6 +102,8 @@ HypherParameters(string conf):hp_nn()
 	CONF_score_o1filter_cut=1e-6;
 	CONF_score_combine_o1=1;
 	CONF_score_combine_o2sib=1;
+
+	CONF_p1o1_training_random=0;
 
 	//read in conf-file
 #define DATA_LINE_LEN 10000
@@ -153,8 +158,26 @@ HypherParameters(string conf):hp_nn()
 		else if(buf=="s_mach_fo1")	fin >> CONF_score_mach_fo1;
 		else if(buf=="s_mach_so1")	fin >> CONF_score_mach_so1;
 		else if(buf=="s_mach_so2sib")	fin >> CONF_score_mach_so2sib;
-		//TODO 1.x -special : for nn_option
+		//1.x -special : for nn_option
+		else if(buf=="n_wsize")		fin >> hp_nn.NN_wsize;
+		else if(buf=="n_psize")		fin >> hp_nn.NN_psize;
+		else if(buf=="n_dsize")		fin >> hp_nn.NN_dsize;
+		else if(buf=="n_win")		fin >> hp_nn.NN_win;
+		else if(buf=="n_adda")		fin >> hp_nn.NN_add_average;
+		else if(buf=="n_adds")		fin >> hp_nn.NN_add_sent;
+		else if(buf=="n_untied")	fin >> hp_nn.NN_untied_dim;
+		else if(buf=="n_untied_2r")	fin >> hp_nn.NN_untied_2brate;
+		else if(buf=="n_act")		fin >> hp_nn.NN_act;
+		else if(buf=="n_hidden")	fin >> hp_nn.NN_hidden_size;
+		else if(buf=="n_wr")		fin >> hp_nn.NN_wrsize;
+		else if(buf=="n_sr")		fin >> hp_nn.NN_srsize;
+		else if(buf=="n_drop")		fin >> hp_nn.NN_dropout;
+		else if(buf=="n_init_wfio")	fin >> hp_nn.NN_init_wb_faniorange;	//if <= 0, no-fanio,just brange
+		else if(buf=="n_init_wb")	fin >> hp_nn.NN_init_wb_brange;
+		else if(buf=="n_init_wv")	fin >> hp_nn.NN_init_wvrange;
 
+		//1.6-others
+		else if(buf=="M1_train_random")		fin >> CONF_p1o1_training_random;
 	}
 }
 
