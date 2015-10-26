@@ -178,6 +178,8 @@ HypherParameters(string conf):hp_nn()
 
 		//1.6-others
 		else if(buf=="M1_train_random")		fin >> CONF_p1o1_training_random;
+		else
+			cerr << "Unknown option " << buf << endl;
 	}
 }
 

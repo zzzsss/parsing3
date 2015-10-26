@@ -73,12 +73,12 @@ public:
 
 		//embedding size
 		NN_wsize = 50;
-		NN_psize = 30;
-		NN_dsize = 20;
+		NN_psize = 50;
+		NN_dsize = 50;
 		//nn
-		NN_win = 5;
+		NN_win = 7;
 
-		NN_add_average = 1;
+		NN_add_average = 0;
 		NN_add_sent = 0;
 
 		NN_untied_dim = 0;
