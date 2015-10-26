@@ -33,13 +33,18 @@ private:
 	REAL* w_square;
 	REAL* b_square;
 
+	//init for starting or reading
 	void init_clear(){
 		memset(w_grad,0,sizeof(REAL)*idim*odim);
 		memset(w_moment,0,sizeof(REAL)*idim*odim);
-		memset(w_square,0,sizeof(REAL)*idim*odim);
+		//memset(w_square,0,sizeof(REAL)*idim*odim);
+		for(int i=0;i<idim*odim;i++)	//set square-sum to 1 at start
+			w_square[i] = 1;
 		memset(b_grad,0,sizeof(REAL)*odim);
 		memset(b_moment,0,sizeof(REAL)*odim);
-		memset(b_square,0,sizeof(REAL)*odim);
+		//memset(b_square,0,sizeof(REAL)*odim);
+		for(int i=0;i<odim;i++)
+			b_square[i] = 1;
 	}
 
 public:
@@ -119,8 +124,8 @@ public:
 	}
 
 	//only for gradient check
-	REAL* get_w(int index){return &w[index];}
-	REAL get_g(int index){return w_grad[index];}
+	REAL* get_wb(int index,bool isw){return isw ? &w[index] : &b[index];}
+	REAL get_g(int index,bool isw){return isw ? w_grad[index] : b_grad[index];}
 };
 
 

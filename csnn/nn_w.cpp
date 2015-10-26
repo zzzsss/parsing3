@@ -46,7 +46,7 @@ void nn_wb::update(int way,REAL lrate,REAL wdecay,REAL m_alpha,REAL rms_smooth,i
 {
 	//update
 	nn_math::opt_update(way,idim*odim,lrate,wdecay,m_alpha,rms_smooth,w,w_grad,w_moment,w_square,mbsize);
-	nn_math::opt_update(way,odim,lrate,wdecay,m_alpha,rms_smooth,b,b_grad,b_moment,b_square,mbsize);
+	nn_math::opt_update(way,odim,lrate,0,m_alpha,rms_smooth,b,b_grad,b_moment,b_square,mbsize);	//no wd for b
 	//clear the gradient
 	clear_grad();
 }
@@ -91,8 +91,8 @@ void nn_wv::update(int way,REAL lrate,REAL wdecay,REAL m_alpha,REAL rms_smooth,i
 		int index = *i;
 		if(index<0)
 			continue;
-		nn_math::opt_update(way,dim,lrate,wdecay,m_alpha,rms_smooth,
-				w+index*dim,w_grad+index*dim,w_moment+index*dim,w_square+index*dim,mbsize);
+		nn_math::opt_update(way,dim,lrate,0,m_alpha,rms_smooth,
+				w+index*dim,w_grad+index*dim,w_moment+index*dim,w_square+index*dim,mbsize);	//no wd for wv
 	}
 	//clear the gradient
 	clear_grad();

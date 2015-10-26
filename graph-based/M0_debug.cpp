@@ -26,8 +26,8 @@ void M0_debug::each_create_machine()
 	hp->hp_nn.NN_dsize = 5;
 	hp->hp_nn.NN_win = 3;
 	hp->hp_nn.NN_add_average = 1;
-	hp->hp_nn.NN_hidden_size = 5;
-	hp->hp_nn.NN_wrsize = 10;
+	hp->hp_nn.NN_hidden_size = 3;
+	hp->hp_nn.NN_wrsize = 5;
 
 	//create the new mach
 	mach = Csnn::create(1,&hp->hp_nn);

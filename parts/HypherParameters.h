@@ -85,7 +85,7 @@ HypherParameters(string conf):hp_nn()
 	CONF_NN_LRATE=0.1;
 	CONF_NN_ITER=10;
 	CONF_NN_ITER_decrease=1;
-	CONF_NN_ITER_force_half=100;
+	CONF_NN_ITER_force_half=4;	//4
 	CONF_NN_LMULT=-0.5;
 	CONF_NN_WD=1e-4;
 	CONF_UPDATE_WAY=0;	//opt_sgd
