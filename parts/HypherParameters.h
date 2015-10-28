@@ -82,10 +82,10 @@ HypherParameters(string conf):hp_nn()
 	CONF_mach_name="nn.mach";
 	CONF_mach_cur_suffix=".curr";
 	CONF_mach_best_suffix=".best";
-	CONF_NN_LRATE=0.1;
+	CONF_NN_LRATE=0.05;
 	CONF_NN_ITER=10;
 	CONF_NN_ITER_decrease=1;
-	CONF_NN_ITER_force_half=4;	//4
+	CONF_NN_ITER_force_half=10;	//4
 	CONF_NN_LMULT=-0.5;
 	CONF_NN_WD=1e-4;
 	CONF_UPDATE_WAY=0;	//opt_sgd
@@ -94,7 +94,7 @@ HypherParameters(string conf):hp_nn()
 	CONF_RMS_SMOOTH=0.8;		//??
 	CONF_NN_resample=0.95;
 	CONF_NN_FIXVEC=100;			//100 iters later??
-	CONF_minibatch=10;
+	CONF_minibatch=-256;		//-256: at least 256 instances
 	CONF_dict_remove=3;
 	CONF_random_seed=12345;
 	CONF_labeled=0;

@@ -65,9 +65,9 @@ public:
 
 	void default_init(){
 		//!! need setting !!
-		NN_wnum = 50000;
-		NN_pnum = 50;
-		NN_dnum = 20;
+		//NN_wnum = 50000;
+		//NN_pnum = 50;
+		//NN_dnum = 20;
 		//NN_out_prob = ?;		//whether add softmax
 		//NN_out_size = ?;		//output size
 
@@ -78,7 +78,7 @@ public:
 		//nn
 		NN_win = 7;
 
-		NN_add_average = 0;
+		NN_add_average = 1;
 		NN_add_sent = 0;
 
 		NN_untied_dim = 0;
