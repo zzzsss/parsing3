@@ -46,6 +46,7 @@ int Process::set_lrate_one_iter()	//currently: return has no meaning
 
 int Process::whether_keep_trainning()
 {
-	return (hp->CONF_NN_LMULT<0) && ((lrate_cut_times+lrate_force_cut_times) < hp->CONF_NN_ITER_decrease);
+	return !nn_math::opt_changelrate[hp->CONF_UPDATE_WAY] && (hp->CONF_NN_LMULT<0)
+			   && ((lrate_cut_times+lrate_force_cut_times) < hp->CONF_NN_ITER_decrease);
 }
 

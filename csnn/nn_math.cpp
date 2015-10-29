@@ -97,7 +97,7 @@ namespace nn_math{
 			delete []tmp;
 			break;
 		}
-		case OPT_ADAM:			//lrate,w,grad,square,momentum
+		case OPT_RMSPROP_MOMENTUM:			//lrate,w,grad,square,momentum
 		{
 			REAL* tmp = new REAL[n];
 			memcpy(tmp,grad,sizeof(REAL)*n);

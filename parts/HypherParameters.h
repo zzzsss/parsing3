@@ -90,8 +90,8 @@ HypherParameters(string conf):hp_nn()
 	CONF_NN_WD=1e-4;
 	CONF_UPDATE_WAY=0;	//opt_sgd
 	CONF_NESTEROV_MOMENTUM=0;
-	CONF_MOMENTUM_ALPHA=0.8;	//??
-	CONF_RMS_SMOOTH=0.8;		//??
+	CONF_MOMENTUM_ALPHA=0.9;	//??
+	CONF_RMS_SMOOTH=0.9;		//??
 	CONF_NN_resample=0.95;
 	CONF_NN_FIXVEC=100;			//100 iters later??
 	CONF_minibatch=-256;		//-256: at least 256 instances

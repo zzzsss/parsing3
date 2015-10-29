@@ -31,10 +31,11 @@ private:
 public:
 	nn_cache(long b,long l):bsize(b),length(l),values(0),gradients(0),dropout(0),values_before(0){
 		long all = bsize*length;
+		if(length>0)
+			dropout = new REAL[length];	//dropout
 		if(all > 0){
 			values = new REAL[all];
 			gradients = new REAL[all];
-			dropout = new REAL[length];	//dropout
 			values_before = new REAL[all];
 		}
 	}

@@ -16,7 +16,7 @@ static void CHECK_EQUAL(T a,T b,const char* x){
 
 enum{
 	OPT_SGD,OPT_SGD_MOMENTUM,
-	OPT_ADAGRAD,OPT_RMSPROP,OPT_ADAM
+	OPT_ADAGRAD,OPT_RMSPROP,OPT_RMSPROP_MOMENTUM
 };
 
 void op_y_mult_a(const int n,REAL* y,const REAL a);
