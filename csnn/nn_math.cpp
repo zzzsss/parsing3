@@ -83,6 +83,8 @@ namespace nn_math{
 			delete []tmp;
 			break;
 		}
+		//this two methods do not perform well, ????,wrong implementation??
+		//-------------------------------------------------------------------
 		case OPT_RMSPROP:		//lrate,w,grad,square
 		{
 			REAL* tmp = new REAL[n];
@@ -114,6 +116,7 @@ namespace nn_math{
 			delete []tmp;
 			break;
 		}
+		//-------------------------------------------------------------------
 		default:
 			std::cerr << "Unknown opt method." << std::endl;
 			exit(1);
