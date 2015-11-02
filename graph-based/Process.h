@@ -31,6 +31,10 @@ protected:
 		if(a != b)
 			cerr << "!! warning of " << x << ":" << a << " != " << b << endl;
 	}
+	static void FatalError(const char* x){
+		cerr << "Fatal error " << x << endl;
+		exit(1);
+	}
 	//data
 	HypherParameters* hp;
 	Dictionary* dict;
@@ -57,6 +61,8 @@ protected:
 	virtual int whether_keep_trainning();
 	//1.2:helper-for training
 	void nn_train_prepare();
+	//1.3:init word-vector
+	void init_embed();
 
 	//2.test and dev
 	double nn_dev_test(string to_test,string output,string gold,int testing=1);

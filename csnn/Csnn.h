@@ -121,6 +121,10 @@ public:
 		p_pos->set_updating(false);
 		p_distance->set_updating(false);
 	}
+	//init TAB
+	void init_word_tab(int index,REAL* value){
+		p_word->get_init_one(index,value);
+	}
 
 	//the important info --- from the machine
 	int get_odim(){	//!!!! careful

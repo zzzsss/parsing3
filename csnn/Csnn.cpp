@@ -175,7 +175,7 @@ REAL* Csnn::forward(nn_input* in,int testing)
 	int input_size = p_untied->at(0)->geti();
 	int output_size = p_untied->at(0)->geto();
 	switch(the_option->NN_untied_dim){
-		case 0:
+		case nn_options::NN_UNTIED_NOPE:
 		{
 		//no untied --- matrix * matrix
 		nn_wb* tmp = p_untied->at(0);
@@ -184,7 +184,9 @@ REAL* Csnn::forward(nn_input* in,int testing)
 		break;
 		}
 
-		case 1: case 2:
+		case nn_options::NN_UNTIED_H:
+		case nn_options::NN_UNTIED_M:
+		case nn_options::NN_UNTIED_HM:
 		{
 		//untied --- one by one
 		REAL* ptr_in = c_wv->get_values();
@@ -192,7 +194,8 @@ REAL* Csnn::forward(nn_input* in,int testing)
 		for(int i=0;i<this_bsize;i++){
 			nn_wb* tmp = p_untied->at(this_untied_index[i]);
 			if((testing && tmp == 0) ||
-					(!testing && the_option->NN_untied_dim==2 && drand48()<the_option->NN_untied_2brate)){
+					(!testing && the_option->NN_untied_dim==nn_options::NN_UNTIED_HM
+							&& drand48()<the_option->NN_untied_2brate)){
 				//back to 0
 				tmp = p_untied->at(0);
 				this_untied_index[i] = 0;
@@ -273,7 +276,7 @@ void Csnn::backward(REAL* gradients)
 	c_wrepr->backgrad(the_option->NN_act,this_bsize,the_option->NN_dropout);
 
 	//4.1:wrepr->input --- the untied
-	if(the_option->NN_untied_dim==0){
+	if(the_option->NN_untied_dim==nn_options::NN_UNTIED_NOPE){
 		//no untied, matrix * matrix
 		p_untied->at(0)->backward(c_wrepr->get_gradients(),c_wv->get_gradients(),c_wv->get_values(),this_bsize);
 	}

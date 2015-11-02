@@ -29,7 +29,10 @@ public:
 	int NN_add_average;		//whether add average feature
 	int NN_add_sent;		//whether add sentence features
 
-	int NN_untied_dim;		//0,1,2: 0 means no untied, 1 means based on m, 2 means h-m
+	enum{
+		NN_UNTIED_NOPE,NN_UNTIED_M,NN_UNTIED_H,NN_UNTIED_HM
+	};
+	int NN_untied_dim;		//0,1,2,3: 0 means no untied, 1 means based on m, 2 means on h, 3 h-m
 	REAL NN_untied_2brate;	//when dim==2, maybe need some back-off with random when training
 
 	int NN_act;				//the activation function

@@ -72,6 +72,9 @@ string CONF_score_mach_so2sib;	//o2sib-scorer mach
 
 //1.6-others
 int CONF_p1o1_training_random;	//special random one for M1_p1o1
+string CONF_embed_WL;	//word-list for embedding
+string CONF_embed_EM;	//embeddings
+double CONF_embed_ISCALE;
 
 //init
 HypherParameters(string conf):hp_nn()
@@ -104,6 +107,9 @@ HypherParameters(string conf):hp_nn()
 	CONF_score_combine_o2sib=1;
 
 	CONF_p1o1_training_random=0;
+	CONF_embed_WL="";
+	CONF_embed_EM="";
+	CONF_embed_ISCALE=1;
 
 	//read in conf-file
 #define DATA_LINE_LEN 10000
@@ -178,6 +184,9 @@ HypherParameters(string conf):hp_nn()
 
 		//1.6-others
 		else if(buf=="M1_train_random")		fin >> CONF_p1o1_training_random;
+		else if(buf=="embed_wl")	fin >> CONF_embed_WL;
+		else if(buf=="embed_em")	fin >> CONF_embed_EM;
+		else if(buf=="embed_scale")	fin >> CONF_embed_ISCALE;
 		else
 			cerr << "Unknown option " << buf << endl;
 	}

@@ -23,6 +23,7 @@ void Process::nn_train_prepare()
 	//4.create machine
 	cout << "4.get mach from scratch:" << endl;
 	each_create_machine();		/*************VIRTUAL************/
+	init_embed();	//possible init
 	cout << "- Prepare over..." << endl;
 }
 

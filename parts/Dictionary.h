@@ -44,6 +44,7 @@ public:
 	int getnum_word(){return map_word->size();}
 	int getnum_pos(){return map_pos->size();}
 	int getnum_deprel(){return map_deprel->size();}
+	HashMap *get_wordmap(){return map_word;}
 
 	int get_index_word(string*);
 	int get_index_pos(string*);

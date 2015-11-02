@@ -104,14 +104,20 @@ void Csnn::f_inputs(){
 	}
 	//-----------fill the index for untied-------------
 	switch(the_option->NN_untied_dim){
-	case 0: break;
-	case 1:
+	case nn_options::NN_UNTIED_NOPE: break;
+	case nn_options::NN_UNTIED_M:
 		for(int i=0;i<this_bsize;i++){	//this_bsize instances
 			int m = this_input->inputs->at((order+1)*i+1);
 			this_untied_index.push_back(1+this_input->posl->at(m));
 		}
-	break;
-	case 2:
+		break;
+	case nn_options::NN_UNTIED_H:
+		for(int i=0;i<this_bsize;i++){	//this_bsize instances
+			int h = this_input->inputs->at((order+1)*i+0);
+			this_untied_index.push_back(1+this_input->posl->at(h));
+		}
+		break;
+	case nn_options::NN_UNTIED_HM:
 		for(int i=0;i<this_bsize;i++){	//this_bsize instances
 			int h = this_input->inputs->at((order+1)*i);
 			int m = this_input->inputs->at((order+1)*i+1);
