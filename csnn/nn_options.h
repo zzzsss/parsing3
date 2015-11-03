@@ -33,7 +33,7 @@ public:
 		NN_UNTIED_NOPE,NN_UNTIED_M,NN_UNTIED_H,NN_UNTIED_HM
 	};
 	int NN_untied_dim;		//0,1,2,3: 0 means no untied, 1 means based on m, 2 means on h, 3 h-m
-	REAL NN_untied_2brate;	//when dim==2, maybe need some back-off with random when training
+	// [NOPE] REAL NN_untied_2brate;	//when dim==2, maybe need some back-off with random when training
 
 	int NN_act;				//the activation function
 	int NN_hidden_size;		//hidden size(near output)
@@ -45,6 +45,10 @@ public:
 	REAL NN_init_wb_faniorange;	//fanio for w range
 	REAL NN_init_wb_brange;		//random init for b range
 	REAL NN_init_wvrange;
+
+	//special dropout and activation for the first layer
+	REAL NN_dropout_wrepr;
+	int NN_act_wrepr;
 
 	int get_NN_srsize(){
 		if(NN_add_sent)
@@ -85,7 +89,7 @@ public:
 		NN_add_sent = 0;
 
 		NN_untied_dim = 0;
-		NN_untied_2brate = 0.2;
+		//[nope]NN_untied_2brate = 0.2;
 
 		NN_act = 0;		//ACT_TANH
 		NN_hidden_size = 100;
@@ -97,6 +101,9 @@ public:
 		NN_init_wb_faniorange = 1;
 		NN_init_wb_brange = 0.1;
 		NN_init_wvrange = 0.1;
+
+		NN_dropout_wrepr=0;
+		NN_act_wrepr=0;
 	}
 	//
 	void read(std::ifstream &fin){
@@ -116,7 +123,7 @@ public:
 		fin.read((char*)&NN_add_sent,sizeof(int));
 
 		fin.read((char*)&NN_untied_dim,sizeof(int));
-		fin.read((char*)&NN_untied_2brate,sizeof(REAL));
+		//[nope]fin.read((char*)&NN_untied_2brate,sizeof(REAL));
 
 		fin.read((char*)&NN_act,sizeof(int));
 		fin.read((char*)&NN_hidden_size,sizeof(int));
@@ -128,6 +135,9 @@ public:
 		fin.read((char*)&NN_init_wb_faniorange,sizeof(REAL));
 		fin.read((char*)&NN_init_wb_brange,sizeof(REAL));
 		fin.read((char*)&NN_init_wvrange,sizeof(REAL));
+
+		fin.read((char*)&NN_dropout_wrepr,sizeof(REAL));
+		fin.read((char*)&NN_act_wrepr,sizeof(int));
 	}
 	void write(std::ofstream &fout){
 		fout.write((char*)&NN_wnum,sizeof(int));
@@ -146,7 +156,7 @@ public:
 		fout.write((char*)&NN_add_sent,sizeof(int));
 
 		fout.write((char*)&NN_untied_dim,sizeof(int));
-		fout.write((char*)&NN_untied_2brate,sizeof(REAL));
+		//[nope]fout.write((char*)&NN_untied_2brate,sizeof(REAL));
 
 		fout.write((char*)&NN_act,sizeof(int));
 		fout.write((char*)&NN_hidden_size,sizeof(int));
@@ -158,6 +168,9 @@ public:
 		fout.write((char*)&NN_init_wb_faniorange,sizeof(REAL));
 		fout.write((char*)&NN_init_wb_brange,sizeof(REAL));
 		fout.write((char*)&NN_init_wvrange,sizeof(REAL));
+
+		fout.write((char*)&NN_dropout_wrepr,sizeof(REAL));
+		fout.write((char*)&NN_act_wrepr,sizeof(int));
 	}
 };
 

@@ -125,6 +125,9 @@ public:
 	void init_word_tab(int index,REAL* value){
 		p_word->get_init_one(index,value);
 	}
+	void change_untiedway(int way){
+		the_option->NN_untied_dim = way;
+	}
 
 	//the important info --- from the machine
 	int get_odim(){	//!!!! careful

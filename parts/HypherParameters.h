@@ -75,6 +75,8 @@ int CONF_p1o1_training_random;	//special random one for M1_p1o1
 string CONF_embed_WL;	//word-list for embedding
 string CONF_embed_EM;	//embeddings
 double CONF_embed_ISCALE;
+int CONF_NN_untied_changeto;	//later change to untied ones
+int CONF_NN_untied_changetoiter;//when to change
 
 //init
 HypherParameters(string conf):hp_nn()
@@ -88,7 +90,7 @@ HypherParameters(string conf):hp_nn()
 	CONF_NN_LRATE=0.05;
 	CONF_NN_ITER=10;
 	CONF_NN_ITER_decrease=1;
-	CONF_NN_ITER_force_half=4;	//4
+	CONF_NN_ITER_force_half=3;	//usually cut three times
 	CONF_NN_LMULT=-0.5;
 	CONF_NN_WD=1e-4;
 	CONF_UPDATE_WAY=0;	//opt_sgd
@@ -110,6 +112,8 @@ HypherParameters(string conf):hp_nn()
 	CONF_embed_WL="";
 	CONF_embed_EM="";
 	CONF_embed_ISCALE=1;
+	CONF_NN_untied_changeto=0;
+	CONF_NN_untied_changetoiter=-1; //nope
 
 	//read in conf-file
 #define DATA_LINE_LEN 10000
@@ -172,7 +176,7 @@ HypherParameters(string conf):hp_nn()
 		else if(buf=="n_adda")		fin >> hp_nn.NN_add_average;
 		else if(buf=="n_adds")		fin >> hp_nn.NN_add_sent;
 		else if(buf=="n_untied")	fin >> hp_nn.NN_untied_dim;
-		else if(buf=="n_untied_2r")	fin >> hp_nn.NN_untied_2brate;
+		//[nope]else if(buf=="n_untied_2r")	fin >> hp_nn.NN_untied_2brate;
 		else if(buf=="n_act")		fin >> hp_nn.NN_act;
 		else if(buf=="n_hidden")	fin >> hp_nn.NN_hidden_size;
 		else if(buf=="n_wr")		fin >> hp_nn.NN_wrsize;
@@ -181,12 +185,16 @@ HypherParameters(string conf):hp_nn()
 		else if(buf=="n_init_wfio")	fin >> hp_nn.NN_init_wb_faniorange;	//if <= 0, no-fanio,just brange
 		else if(buf=="n_init_wb")	fin >> hp_nn.NN_init_wb_brange;
 		else if(buf=="n_init_wv")	fin >> hp_nn.NN_init_wvrange;
+		else if(buf=="n_drop_w")	fin >> hp_nn.NN_dropout_wrepr;
+		else if(buf=="n_act_w")		fin >> hp_nn.NN_act_wrepr;
 
 		//1.6-others
 		else if(buf=="M1_train_random")		fin >> CONF_p1o1_training_random;
 		else if(buf=="embed_wl")	fin >> CONF_embed_WL;
 		else if(buf=="embed_em")	fin >> CONF_embed_EM;
 		else if(buf=="embed_scale")	fin >> CONF_embed_ISCALE;
+		else if(buf=="untied_change_way")	fin >> CONF_NN_untied_changeto;
+		else if(buf=="untied_change_iter")	fin >> CONF_NN_untied_changetoiter;
 		else
 			cerr << "Unknown option " << buf << endl;
 	}

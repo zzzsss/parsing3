@@ -65,9 +65,11 @@ void Csnn::prepare_dropout(){
 	//set possible dropout
 	//this is done before each MiniBatch
 	for(vector<nn_cache*>::iterator i=c_allcaches->begin();i!=c_allcaches->end();i++){
-		if(the_option->NN_dropout > 0 && (*i)!=c_out)
+		if(the_option->NN_dropout > 0 && (*i)!=c_out && (*i)!=c_wrepr)
 			(*i)->gen_dropout(the_option->NN_dropout);
 	}
+	if(the_option->NN_dropout_wrepr)
+		c_wrepr->gen_dropout(the_option->NN_dropout_wrepr);
 }
 
 void Csnn::clear_params(){
@@ -193,18 +195,15 @@ REAL* Csnn::forward(nn_input* in,int testing)
 		REAL* ptr_out = c_wrepr->get_values();
 		for(int i=0;i<this_bsize;i++){
 			nn_wb* tmp = p_untied->at(this_untied_index[i]);
-			if((testing && tmp == 0) ||
-					(!testing && the_option->NN_untied_dim==nn_options::NN_UNTIED_HM
-							&& drand48()<the_option->NN_untied_2brate)){
+			if(testing && tmp == 0){
 				//back to 0
 				tmp = p_untied->at(0);
 				this_untied_index[i] = 0;
 			}
 			else if(tmp==0){
-				//create new one
-				p_untied->at(this_untied_index[i]) = new nn_wb(the_option->get_NN_wv_wrsize(get_order()),the_option->NN_wrsize);
+				//create new one by copying [0]
+				p_untied->at(this_untied_index[i]) = new nn_wb(*p_untied->at(0));
 				tmp = p_untied->at(this_untied_index[i]);
-				tmp->get_init(the_option->NN_init_wb_faniorange,the_option->NN_init_wb_brange);
 			}
 			tmp->forward(ptr_in,ptr_out,1);
 			p_untied_touched->at(this_untied_index[i]) = 1;
@@ -222,7 +221,7 @@ REAL* Csnn::forward(nn_input* in,int testing)
 		}
 	}
 	//2.1.x: active and drop-out
-	c_wrepr->activate(the_option->NN_act,this_bsize,the_option->NN_dropout,testing);
+	c_wrepr->activate(the_option->NN_act_wrepr,this_bsize,the_option->NN_dropout_wrepr,testing);	//!!special NN_act_wrepr
 
 	//2.x: combine and get c_repr, and then activate and drop-out
 	vector<nn_cache*> tmp_list;tmp_list.push_back(c_wrepr);tmp_list.push_back(c_srepr);
@@ -273,7 +272,7 @@ void Csnn::backward(REAL* gradients)
 	c_repr->dispatch_cache_grad(tmp_list,this_bsize);	//here gradient not adding, but really too lazy to change it
 
 	//4.0.x: wrepr backgrad
-	c_wrepr->backgrad(the_option->NN_act,this_bsize,the_option->NN_dropout);
+	c_wrepr->backgrad(the_option->NN_act_wrepr,this_bsize,the_option->NN_dropout_wrepr);	//!!NN_act_wrepr
 
 	//4.1:wrepr->input --- the untied
 	if(the_option->NN_untied_dim==nn_options::NN_UNTIED_NOPE){

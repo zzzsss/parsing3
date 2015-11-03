@@ -59,6 +59,23 @@ public:
 		w_square = new REAL[all];
 		b_square = new REAL[o];
 	}
+	nn_wb(nn_wb &x):updating(x.updating),idim(x.idim),odim(x.odim){
+		int i = x.idim;
+		int o = x.odim;
+		int all = i*o;	//int is enough
+		w = new REAL[all];
+		b = new REAL[o];
+		w_grad = new REAL[all];
+		b_grad = new REAL[o];
+		w_moment = new REAL[all];
+		b_moment = new REAL[o];
+		w_square = new REAL[all];
+		b_square = new REAL[o];
+		init_clear();
+		//only copy w and b, right ??
+		memcpy(w,x.w,sizeof(REAL)*all);
+		memcpy(b,x.b,sizeof(REAL)*o);
+	}
 	void get_init(const REAL frange,const REAL range){
 		//fanio for weight and random for bias
 		REAL c=0;

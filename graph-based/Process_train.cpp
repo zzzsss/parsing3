@@ -46,6 +46,10 @@ void Process::train()
 			cout << "!! starting to fix tabs from now." << endl;
 			mach->noupdate_tab();
 		}
+		if(cur_iter==hp->CONF_NN_untied_changetoiter){
+			cout << "!! change untied to " << hp->CONF_NN_untied_changeto << endl;
+			mach->change_untiedway(hp->CONF_NN_untied_changeto);
+		}
 		each_train_one_iter();
 		cout << "-- Iter done, waiting for test dev:" << endl;
 		double this_result = nn_dev_test(hp->CONF_dev_file,hp->CONF_output_file+".dev",hp->CONF_dev_file);
