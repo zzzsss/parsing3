@@ -18,7 +18,10 @@ void nn_wb::forward(/*const*/REAL* in,REAL* out,int bsize)
 	// o*bs		o*i		i*bs
 	for (int e=0; e<bsize; e++)
 		memcpy(out+e*odim,b,odim*sizeof(REAL));
-	nn_math::op_A_mult_B(out,w,in,odim,bsize,idim,false,false,1,1);
+	if(bsize > 1)
+		nn_math::op_A_mult_B(out,w,in,odim,bsize,idim,false,false,1,1);
+	else
+		nn_math::op_A_mult_x(out,w,in,odim,idim,false,1,1);
 }
 
 void nn_wb::backward(/*const*/REAL* ograd,REAL* igrad,/*const*/REAL* in,int bsize)
@@ -27,7 +30,10 @@ void nn_wb::backward(/*const*/REAL* ograd,REAL* igrad,/*const*/REAL* in,int bsiz
     // backprop gradient:   igrad   +=        w'        *   ograd
     //                    idim x bsize = (odim x idim)'  *  odim x bsize
 	// here += means accumulated gradient (the task of clear belongs to the outside)
-	nn_math::op_A_mult_B(igrad,w,ograd,idim,bsize,odim,true,false,1,1);
+	if(bsize > 1)
+		nn_math::op_A_mult_B(igrad,w,ograd,idim,bsize,odim,true,false,1,1);
+	else
+		nn_math::op_A_mult_x(igrad,w,ograd,odim,idim,true,1,1);
 
 	//accumulate gradients into tmp ones
 	if(updating){

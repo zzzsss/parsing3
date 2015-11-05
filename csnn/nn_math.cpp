@@ -42,6 +42,17 @@ namespace nn_math{
 		GEMM(&tA,&tB,&m,&n,&dimk,&a,A,&lda,B,&ldb,&b,C,&ldc);
 	}
 
+	//GEMV(trans,m,n,alpha,a,A,lda,x,incx,beta,y,incy)
+	//y = alpha*A*x + beta*y
+	//!! A always m*n
+	void op_A_mult_x(REAL* y,const REAL* A,const REAL* x,const int m,const int n,
+			const bool transA,const REAL a,const REAL b){
+		const char tA = transA ? 'T' : 'N';
+		int inc = 1;
+		int lda = m;
+		GEMV(&tA,&m,&n,&a,A,&lda,x,&inc,&b,y,&inc);
+	}
+
 	//2.opt updates --- min loss function
 	/* details:	(choose some from the DLBook)
 		1.SGD:					[1]g=sum(grad)/#inst; [2]w-=a1*g;

@@ -13,16 +13,16 @@
 #include <cmath>
 static inline void SET_LOG_HERE(double* tmp_yes,double* tmp_nope,int ln){
 	for(int i=0;i<ln;i++){
-		if(tmp_yes[i]<=0 && *tmp_nope==1){
+		if(tmp_yes[i]<=0)	//!!DEBUG, tmp_nope should be 1
 			//no scores here
 			tmp_yes[i] = DOUBLE_LARGENEG;
-			*tmp_nope = 0;
-		}
-		else{
+		else
 			tmp_yes[i] = log(tmp_yes[i]);
-			*tmp_nope = log(*tmp_nope);
-		}
 	}
+	if(*tmp_nope == 1)//!!DEBUG
+		*tmp_nope = 0;
+	else
+		*tmp_nope = log(*tmp_nope);
 }
 
 //score[h,m,l] = log(prob(h,m==l)*products(prob(h,m'==0)))

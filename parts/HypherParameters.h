@@ -88,7 +88,7 @@ HypherParameters(string conf):hp_nn()
 	CONF_mach_cur_suffix=".curr";
 	CONF_mach_best_suffix=".best";
 	CONF_NN_LRATE=0.05;
-	CONF_NN_ITER=10;
+	CONF_NN_ITER=12;	//maybe more iters
 	CONF_NN_ITER_decrease=1;
 	CONF_NN_ITER_force_half=3;	//usually cut three times
 	CONF_NN_LMULT=-0.5;

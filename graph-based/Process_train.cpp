@@ -103,7 +103,7 @@ double Process::nn_dev_test(string to_test,string output,string gold,int testing
 	double rate = (double)(token_num-miss_count) / token_num;
 	cout << "Evaluate:" << (token_num-miss_count) << "/" << token_num
 			<< "(" << rate << ")" << endl;
-	DependencyEvaluator::evaluate(gold,output,ttt,false);
+	DependencyEvaluator::evaluate(gold,output,ttt,hp->CONF_labeled);
 
 	//clear
 	for(unsigned int i=0;i<dev_test_corpus->size();i++){

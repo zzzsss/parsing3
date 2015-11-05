@@ -23,6 +23,8 @@ void op_y_mult_a(const int n,REAL* y,const REAL a);
 void op_y_plus_ax(const int n,REAL* y,const REAL* x,const REAL a);
 void op_A_mult_B(REAL *C,const REAL *A,const REAL *B,const int m,const int n,const int dimk,
 			const bool transA,const bool transB,const REAL a,const REAL b);
+void op_A_mult_x(REAL* y,const REAL* A,const REAL* x,const int m,const int n,
+			const bool transA,const REAL a,const REAL b);
 void opt_update(int way,int n,REAL lrate,REAL wdecay,REAL m_alpha,REAL rms_smooth,
 			REAL* w,REAL* grad,REAL* momentum,REAL* square,int mbsize);
 

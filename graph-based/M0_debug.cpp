@@ -47,7 +47,7 @@ void M0_debug::each_train_one_iter()
 		nn_input* the_inputs;
 		REAL *fscores = forward_scores_o1(x,mach,&the_inputs,dict->get_helper(),0);
 
-		the_inputs->num_inst = 4;	//enough maybe
+		the_inputs->num_inst = 1;	//enough maybe
 
 		mach->check_gradients(the_inputs);
 		delete []fscores;

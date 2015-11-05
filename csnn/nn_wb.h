@@ -75,6 +75,11 @@ public:
 		//only copy w and b, right ??
 		memcpy(w,x.w,sizeof(REAL)*all);
 		memcpy(b,x.b,sizeof(REAL)*o);
+		//and copy others
+		memcpy(w_moment,x.w_moment,sizeof(REAL)*all);
+		memcpy(b_moment,x.b_moment,sizeof(REAL)*o);
+		memcpy(w_square,x.w_square,sizeof(REAL)*all);
+		memcpy(b_square,x.b_square,sizeof(REAL)*o);
 	}
 	void get_init(const REAL frange,const REAL range){
 		//fanio for weight and random for bias
