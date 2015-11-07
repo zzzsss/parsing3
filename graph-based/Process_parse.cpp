@@ -81,7 +81,7 @@ void Process::parse_o2sib(DependencyInstance* x,CsnnO1* o1_filter,CsnnO1* o1_sco
 	bool* o1f_cut = get_cut_o1(x,o1_filter,dict,hp->CONF_score_o1filter_cut);
 	//1.6 the o1 scorer --- must be same labeled-conf
 	double* o1s_rscores = 0;
-	if(hp->CONF_score_combine_o1){
+	if(o1_scorer){
 		bool o1s_is_labeled = (o1_scorer->get_odim() >= dictionary_labelnum);
 		if(is_labeled != o1s_is_labeled)
 			cerr << "Label-conf no match for o1_scorer" << endl;
@@ -133,7 +133,7 @@ void Process::parse_o3g(DependencyInstance* x,CsnnO1* o1_filter,CsnnO1* o1_score
 	bool* o1f_cut = get_cut_o1(x,o1_filter,dict,hp->CONF_score_o1filter_cut);
 	//1.6 the o1 scorer --- must be same labeled-conf
 	double* o1s_rscores = 0;
-	if(hp->CONF_score_combine_o1){
+	if(o1_scorer){
 		bool o1s_is_labeled = (o1_scorer->get_odim() >= dictionary_labelnum);
 		if(is_labeled != o1s_is_labeled)
 			cerr << "Label-conf no match for o1_scorer" << endl;
@@ -141,7 +141,7 @@ void Process::parse_o3g(DependencyInstance* x,CsnnO1* o1_filter,CsnnO1* o1_score
 	}
 	//1.7. the o2 scorer --- ...
 	double* o2s_rscores = 0;
-	if(hp->CONF_score_combine_o2sib){
+	if(o2_scorer){
 		bool o2s_is_labeled = (o2_scorer->get_odim() >= dictionary_labelnum);
 		if(is_labeled != o2s_is_labeled)
 			cerr << "Label-conf no match for o2_scorer" << endl;

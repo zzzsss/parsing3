@@ -28,11 +28,11 @@ void Csnn::f_inputs(){
 			int the_win = the_option->NN_win;	//window size(should be odd)
 			//2.special: s or g is -1, fill 0
 			if(cur_mod < 0){
-				for(int w=0;w<=the_win;w++){
+				for(int w=0;w<the_win;w++){	//!!DEBUG not <= but <
 					p_word->forward(-1,to_assign);
 					to_assign += p_word->getd();
 				}
-				for(int w=0;w<=the_win;w++){
+				for(int w=0;w<the_win;w++){
 					p_pos->forward(-1,to_assign);
 					to_assign += p_pos->getd();
 				}

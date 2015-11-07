@@ -64,8 +64,6 @@ int CONF_labeled;		//labeled or not
 //1.5-scores
 int CONF_score_prob;	//whether give transform score, only for M1 (0,1)
 double CONF_score_o1filter_cut;
-int CONF_score_combine_o1;
-int CONF_score_combine_o2sib;
 string CONF_score_mach_fo1;		//o1-filter mach
 string CONF_score_mach_so1;		//o1-scorer mach
 string CONF_score_mach_so2sib;	//o2sib-scorer mach
@@ -105,8 +103,8 @@ HypherParameters(string conf):hp_nn()
 	CONF_labeled=0;
 	CONF_score_prob=1;
 	CONF_score_o1filter_cut=1e-6;
-	CONF_score_combine_o1=1;
-	CONF_score_combine_o2sib=1;
+	CONF_score_mach_so1="";
+	CONF_score_mach_so2sib="";
 
 	CONF_p1o1_training_random=0;
 	CONF_embed_WL="";
@@ -163,8 +161,8 @@ HypherParameters(string conf):hp_nn()
 		//1.5-scores
 		else if(buf=="s_prob") 		fin >> CONF_score_prob;
 		else if(buf=="s_fo1_cut") 	fin >> CONF_score_o1filter_cut;
-		else if(buf=="s_so1_combine")	fin >> CONF_score_combine_o1;
-		else if(buf=="s_so2sib_combine")	fin >> CONF_score_combine_o2sib;
+//		else if(buf=="s_so1_combine")	fin >> CONF_score_combine_o1;
+//		else if(buf=="s_so2sib_combine")	fin >> CONF_score_combine_o2sib;
 		else if(buf=="s_mach_fo1")	fin >> CONF_score_mach_fo1;
 		else if(buf=="s_mach_so1")	fin >> CONF_score_mach_so1;
 		else if(buf=="s_mach_so2sib")	fin >> CONF_score_mach_so2sib;

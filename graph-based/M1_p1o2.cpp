@@ -1,14 +1,14 @@
 /*
- * M1_p1o1.cpp
+ * M1_p1o2.cpp
  *
- *  Created on: Oct 14, 2015
+ *  Created on: Nov 7, 2015
  *      Author: zzs
  */
 
 #include "M1_p1.h"
 
 //only before training (and after building dictionary)
-void M1_p1o1::each_create_machine()
+void M1_p1o2::each_create_machine()
 {
 	//several need setting places
 	hp->hp_nn.NN_wnum = dict->getnum_word();
@@ -20,16 +20,27 @@ void M1_p1o1::each_create_machine()
 	else
 		hp->hp_nn.NN_out_size = 2;
 	//create the new mach
-	mach = Csnn::create(1,&hp->hp_nn);
+	mach = Csnn::create(2,&hp->hp_nn);	//order 2 mach
 }
 
-void M1_p1o1::each_test_one(DependencyInstance* x)
+void M1_p1o2::each_test_one(DependencyInstance* x)
 {
-	Process::parse_o1(x);
+	Process::parse_o2sib(x,mfo1,mso1);
 }
 
-void M1_p1o1::each_train_one_iter()
+void M1_p1o2::each_train_one_iter()
 {
+	static bool** STA_noprobs = 0;	//static ine, init only once
+	if(STA_noprobs==0){
+		//init only once
+		time_t now;
+		time(&now);
+		cout << "-Preparing no_probs at " << ctime(&now) << endl;
+		STA_noprobs = new bool*[training_corpus->size()];
+		for(int i=0;i<training_corpus->size();i++)
+			STA_noprobs[i] = get_cut_o1(training_corpus->at(i),mfo1,dict,hp->CONF_score_o1filter_cut);
+	}
+
 	//per-sentence approach
 	int mini_batch = hp->CONF_minibatch;
 	int num_sentences = training_corpus->size();
@@ -41,7 +52,7 @@ void M1_p1o1::each_train_one_iter()
 	//training
 	time_t now;
 	time(&now); //ctime is not rentrant ! use ctime_r() instead if needed
-	cout << "##*** Start the training for iter " << cur_iter << " at " << ctime(&now)
+	cout << "##*** Start the p1o2 training for iter " << cur_iter << " at " << ctime(&now)
 			<< "with lrate " << cur_lrate << endl;
 	cout << "#Sentences is " << num_sentences << " and resample (about)" << num_sentences*hp->CONF_NN_resample << endl;
 	for(int i=0;i<num_sentences;){
@@ -63,7 +74,7 @@ void M1_p1o1::each_train_one_iter()
 			//forward
 			DependencyInstance* x = training_corpus->at(i);
 			nn_input* the_inputs;
-			REAL *fscores = forward_scores_o1(x,mach,&the_inputs,dict->get_helper(),0,hp->CONF_p1o1_training_random);
+			REAL *fscores = forward_scores_o2sib(x,mach,&the_inputs,dict->get_helper(),0,STA_noprobs[i]);
 
 			this_instance += the_inputs->get_numi();
 			all_forward_instance += the_inputs->get_numi();
@@ -80,8 +91,6 @@ void M1_p1o1::each_train_one_iter()
 
 			//backward
 			mach->backward(fscores);
-
-			//mach->check_gradients(the_inputs);
 
 			delete the_inputs;
 			delete []fscores;
@@ -103,3 +112,4 @@ void M1_p1o1::each_train_one_iter()
 	}
 	cout << "Iter done, skip " << skip_sent_num << " sentences and f&b " << all_forward_instance << endl;
 }
+

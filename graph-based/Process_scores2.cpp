@@ -36,12 +36,31 @@ static bool* TMP_get_cut_o1(int len,double* scores,double cut)
 	return ret;
 }
 
+//special routine
 bool* Process::get_cut_o1(DependencyInstance* x,CsnnO1* o1_filter,Dictionary *dict,double cut)
 {
-	CHECK_EQUAL(o1_filter->get_odim(),2,"Bad mach as filter");
-	double* scores = get_scores_o1(x,o1_filter,dict,0);	//no trans
+	//CHECK_EQUAL(o1_filter->get_odim(),dict->getnum_deprel()+1,"Bad mach as filter");
+	int fs_dim = o1_filter->get_odim();
+	//1.get o1-fscores
+	nn_input* the_inputs;
+	REAL* fscores = forward_scores_o1(x,o1_filter,&the_inputs,dict->get_helper(),1);	//testing-mode, forward scores
+	//2.get binary scores
+	int length = x->length();
+	double* scores = new double[length*length];
+	for(int i=0;i<length*length;i++)
+		scores[i] = 0;		//set to 0
+	REAL *to_assign = fscores;
+	for(int i=0;i<the_inputs->num_inst*2;i+=2){ //must be 2
+		int tmph = the_inputs->inputs->at(i);
+		int tmpm = the_inputs->inputs->at(i+1);
+		scores[get_index2(length,tmph,tmpm)] = 1-to_assign[fs_dim-1];	//1 - the last one
+		to_assign += fs_dim;
+	}
+	//3.filter out
 	bool* o1f_cut = TMP_get_cut_o1(x->length(),scores,cut);
+	delete []fscores;
 	delete []scores;
+	delete the_inputs;
 	return o1f_cut;
 }
 

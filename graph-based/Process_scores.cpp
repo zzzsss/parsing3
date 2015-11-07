@@ -161,7 +161,7 @@ REAL* Process::forward_scores_o2sib(DependencyInstance* x,Csnn* mac,nn_input** t
 			}
 		}
 	}
-	(*t) = new nn_input(num_togo,3,the_goals,the_inputs,x->index_forms,x->index_pos,h);
+	(*t) = new nn_input(num_togo,3,the_inputs,the_goals,x->index_forms,x->index_pos,h);	//!!DEBUG, goals and inputs reversed
 	REAL* tmp_scores = mac->forward(*t,testing);
 	return tmp_scores;
 }
