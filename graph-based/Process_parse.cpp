@@ -20,7 +20,7 @@ static void TMP_get_maxlabel(int all,int ln,double* s,double** ascores_p,int** m
 	for(int tmp_ind=0;tmp_ind<all;tmp_ind++){
 		double tmp_max = to_scores[0];
 		int tmp_max_index = 0;
-		for(int tmp_index;tmp_index<ln;tmp_index++){
+		for(int tmp_index=0;tmp_index<ln;tmp_index++){	//!!DEBUG: missing init =0
 			double this_s = to_scores[tmp_index];
 			if(this_s > tmp_max){
 				tmp_max = this_s;
