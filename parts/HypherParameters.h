@@ -69,7 +69,7 @@ string CONF_score_mach_so1;		//o1-scorer mach
 string CONF_score_mach_so2sib;	//o2sib-scorer mach
 
 //1.6-others
-int CONF_p1o1_training_random;	//special random one for M1_p1o1
+//int CONF_p1o1_training_random;	//special random one for M1_p1o1
 string CONF_embed_WL;	//word-list for embedding
 string CONF_embed_EM;	//embeddings
 double CONF_embed_ISCALE;
@@ -106,7 +106,7 @@ HypherParameters(string conf):hp_nn()
 	CONF_score_mach_so1="";
 	CONF_score_mach_so2sib="";
 
-	CONF_p1o1_training_random=0;
+//	CONF_p1o1_training_random=0;
 	CONF_embed_WL="";
 	CONF_embed_EM="";
 	CONF_embed_ISCALE=1;
@@ -187,7 +187,7 @@ HypherParameters(string conf):hp_nn()
 		else if(buf=="n_act_w")		fin >> hp_nn.NN_act_wrepr;
 
 		//1.6-others
-		else if(buf=="M1_train_random")		fin >> CONF_p1o1_training_random;
+//		else if(buf=="M1_train_random")		fin >> CONF_p1o1_training_random;
 		else if(buf=="embed_wl")	fin >> CONF_embed_WL;
 		else if(buf=="embed_em")	fin >> CONF_embed_EM;
 		else if(buf=="embed_scale")	fin >> CONF_embed_ISCALE;

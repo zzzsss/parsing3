@@ -30,7 +30,7 @@ static inline bool TMP_check234(int h1,int h2,int c1=-100,int c2=-100,int g1=-10
 // -- m means the current machine(might not be the same as options)
 // -- t for assigning inputs, need outside to delete it
 // -- testing for the forward of nn
-REAL* Process::forward_scores_o1(DependencyInstance* x,Csnn* mac,nn_input** t,nn_input_helper* h,int testing,int random_training)
+REAL* Process::forward_scores_o1(DependencyInstance* x,Csnn* mac,nn_input** t,nn_input_helper* helper,int testing)
 {
 	//default order1 parsing
 	int odim = mac->get_odim();	//1 or 2 for no-labeled, otherwise...
@@ -40,62 +40,30 @@ REAL* Process::forward_scores_o1(DependencyInstance* x,Csnn* mac,nn_input** t,nn
 	int nope_goal = mac->get_classdim();	//for no-rel
 	//prepare scores
 	int num_pair_togo = 0;
+	int num_good=0,num_bad=0;
 	vector<int>* the_inputs = new vector<int>();
 	vector<int>* the_goals = new vector<int>();
 	//loop --- (h,m)
-	if(testing){
-		for(int m=1;m<length;m++){
-			for(int h=0;h<length;h++){
-				if(m != h){
-					TMP_push234(the_inputs,h,m);
-					if(!testing){	//when training, prepare the goals
-						if(TMP_check234(x->heads->at(m),h))
-							the_goals->push_back(is_labeled?(x->index_deprels->at(m)):0);
-						else
-							the_goals->push_back(nope_goal);
-					}
-					num_pair_togo ++;
-				}
-			}
-		}
-	}
-	else{
-//#define TRYING_TMP_O1_RANDOM 0
-//#if TRYING_TMP_O1_RANDOM
-		if(random_training){
-	for(int m=1;m<length;m++){
-		//right-one
-		TMP_push234(the_inputs,x->heads->at(m),m);
-		the_goals->push_back(is_labeled?(x->index_deprels->at(m)):0);
-		//random nope-one
-		int rh;
-		do{
-			rh=(length*drand48());
-		}while(rh==x->heads->at(m) || (length>2  && rh==m));
-		TMP_push234(the_inputs,rh,m);
-		the_goals->push_back(nope_goal);
-		num_pair_togo += 2;
-	}
-		}else{
-//#else
 	for(int m=1;m<length;m++){
 		for(int h=0;h<length;h++){
 			if(m != h){
 				TMP_push234(the_inputs,h,m);
 				if(!testing){	//when training, prepare the goals
-					if(TMP_check234(x->heads->at(m),h))
+					if(TMP_check234(x->heads->at(m),h)){
 						the_goals->push_back(is_labeled?(x->index_deprels->at(m)):0);
-					else
+						num_good++;
+					}
+					else{
 						the_goals->push_back(nope_goal);
+						num_bad++;
+					}
 				}
 				num_pair_togo ++;
 			}
 		}
 	}
-		}
-//#endif
-	}
-	(*t) = new nn_input(num_pair_togo,2,the_inputs,the_goals,x->index_forms,x->index_pos,h);
+	(*t) = new nn_input(num_pair_togo,2,the_inputs,the_goals,x->index_forms,x->index_pos,helper,
+			num_good,num_bad);
 	REAL* tmp_scores = mac->forward(*t,testing);
 	return tmp_scores;
 }
@@ -109,6 +77,7 @@ REAL* Process::forward_scores_o2sib(DependencyInstance* x,Csnn* mac,nn_input** t
 	int nope_goal = mac->get_classdim();	//for no-rel
 	//prepare scores
 	int num_togo = 0;
+	int num_good=0,num_bad=0;
 	vector<int>* the_inputs = new vector<int>();
 	vector<int>* the_goals = new vector<int>();
 	bool* score_o1 = cut_o1;
@@ -125,6 +94,7 @@ REAL* Process::forward_scores_o2sib(DependencyInstance* x,Csnn* mac,nn_input** t
 			TMP_push234(the_inputs,real_head,m,real_center);
 			the_goals->push_back(is_labeled?(x->index_deprels->at(m)):0);
 			num_togo += 1;
+			num_good++;
 		}
 		//others
 		for(int h=0;h<length;h++){
@@ -136,9 +106,9 @@ REAL* Process::forward_scores_o2sib(DependencyInstance* x,Csnn* mac,nn_input** t
 				TMP_push234(the_inputs,h,m,-1);
 				if(!testing){
 					if(TMP_check234(real_head,h,real_center,-1))
-						the_goals->push_back(is_labeled?(x->index_deprels->at(m)):0);
+						{the_goals->push_back(is_labeled?(x->index_deprels->at(m)):0);num_good++;}
 					else
-						the_goals->push_back(nope_goal);
+						{the_goals->push_back(nope_goal);num_bad++;}
 				}
 				num_togo += 1;
 			}
@@ -151,9 +121,9 @@ REAL* Process::forward_scores_o2sib(DependencyInstance* x,Csnn* mac,nn_input** t
 						TMP_push234(the_inputs,h,m,c);
 						if(!testing){
 							if(TMP_check234(real_head,h,real_center,c))
-								the_goals->push_back(is_labeled?(x->index_deprels->at(m)):0);
+								{the_goals->push_back(is_labeled?(x->index_deprels->at(m)):0);num_good++;}
 							else
-								the_goals->push_back(nope_goal);
+								{the_goals->push_back(nope_goal);num_bad++;}
 						}
 						num_togo += 1;
 					}
@@ -161,7 +131,8 @@ REAL* Process::forward_scores_o2sib(DependencyInstance* x,Csnn* mac,nn_input** t
 			}
 		}
 	}
-	(*t) = new nn_input(num_togo,3,the_inputs,the_goals,x->index_forms,x->index_pos,h);	//!!DEBUG, goals and inputs reversed
+	(*t) = new nn_input(num_togo,3,the_inputs,the_goals,x->index_forms,x->index_pos,h,
+			num_good,num_bad);	//!!DEBUG, goals and inputs reversed
 	REAL* tmp_scores = mac->forward(*t,testing);
 	return tmp_scores;
 }
@@ -175,6 +146,7 @@ REAL* Process::forward_scores_o3g(DependencyInstance* x,Csnn* mac,nn_input** t,n
 	int nope_goal = mac->get_classdim();	//for no-rel
 	//prepare scores
 	int num_togo = 0;
+	int num_good=0,num_bad=0;
 	vector<int>* the_inputs = new vector<int>();
 	vector<int>* the_goals = new vector<int>();
 	bool* score_o1 = cut_o1;
@@ -260,7 +232,7 @@ REAL* Process::forward_scores_o3g(DependencyInstance* x,Csnn* mac,nn_input** t,n
 			}
 		}
 	}
-	(*t) = new nn_input(num_togo,4,the_inputs,the_goals,x->index_forms,x->index_pos,h);
+	(*t) = new nn_input(num_togo,4,the_inputs,the_goals,x->index_forms,x->index_pos,h,num_good,num_bad);
 	REAL* tmp_scores = mac->forward(*t,testing);
 	return tmp_scores;
 }

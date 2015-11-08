@@ -72,6 +72,7 @@ protected:
 		the_option = o;
 		construct_caches();
 		construct_params();
+		print_info();
 	}
 	//read from file
 	void read_init(std::string fname){
@@ -83,6 +84,11 @@ protected:
 		read_params(fin);
 		fin.close();
 		construct_caches();
+		print_info();
+	}
+	void print_info(){
+		cout << "-Structure for mach:" << c_wv->get_len() << "->" << c_repr->get_len()
+				<< "->" << c_h->get_len() << "->" << c_out->get_len() << endl;
 	}
 
 public:

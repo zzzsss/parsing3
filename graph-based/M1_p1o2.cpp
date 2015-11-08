@@ -6,6 +6,7 @@
  */
 
 #include "M1_p1.h"
+#include "../algorithms/Eisner.h"
 
 //only before training (and after building dictionary)
 void M1_p1o2::each_create_machine()
@@ -33,12 +34,20 @@ void M1_p1o2::each_train_one_iter()
 	static bool** STA_noprobs = 0;	//static ine, init only once
 	if(STA_noprobs==0){
 		//init only once
+		int all_tokens_train=0,all_token_filter_wrong=0;
 		time_t now;
 		time(&now);
 		cout << "-Preparing no_probs at " << ctime(&now) << endl;
 		STA_noprobs = new bool*[training_corpus->size()];
-		for(int i=0;i<training_corpus->size();i++)
-			STA_noprobs[i] = get_cut_o1(training_corpus->at(i),mfo1,dict,hp->CONF_score_o1filter_cut);
+		for(int i=0;i<training_corpus->size();i++){
+			DependencyInstance* x = training_corpus->at(i);
+			STA_noprobs[i] = get_cut_o1(x,mfo1,dict,hp->CONF_score_o1filter_cut);
+			all_tokens_train += x->length()-1;
+			for(int m=1;m<x->length();m++)
+				if(STA_noprobs[i][get_index2(x->length(),x->heads->at(m),m)])
+					all_token_filter_wrong ++;
+		}
+		cout << "For o1 filter: all " << all_tokens_train << ";filter wrong " << all_token_filter_wrong << endl;
 	}
 
 	//per-sentence approach
@@ -47,6 +56,8 @@ void M1_p1o2::each_train_one_iter()
 	//statistics
 	int skip_sent_num = 0;
 	int all_forward_instance = 0;
+	int all_inst_right = 0;
+	int all_inst_wrong = 0;
 	//some useful info
 	int odim = mach->get_odim();
 	//training
@@ -78,6 +89,8 @@ void M1_p1o2::each_train_one_iter()
 
 			this_instance += the_inputs->get_numi();
 			all_forward_instance += the_inputs->get_numi();
+			all_inst_right += the_inputs->inst_good;
+			all_inst_wrong += the_inputs->inst_bad;
 			this_sentence ++;
 			i++;
 
@@ -110,6 +123,7 @@ void M1_p1o2::each_train_one_iter()
 		//real update
 		mach->update(hp->CONF_UPDATE_WAY,cur_lrate,hp->CONF_NN_WD,hp->CONF_MOMENTUM_ALPHA,hp->CONF_RMS_SMOOTH);
 	}
-	cout << "Iter done, skip " << skip_sent_num << " sentences and f&b " << all_forward_instance << endl;
+	cout << "Iter done, skip " << skip_sent_num << " sentences and f&b " << all_forward_instance
+			<< ";good/bad: " << all_inst_right << "/" << all_inst_wrong << endl;
 }
 

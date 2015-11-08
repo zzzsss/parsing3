@@ -36,6 +36,8 @@ void M1_p1o1::each_train_one_iter()
 	//statistics
 	int skip_sent_num = 0;
 	int all_forward_instance = 0;
+	int all_inst_right = 0;
+	int all_inst_wrong = 0;
 	//some useful info
 	int odim = mach->get_odim();
 	//training
@@ -63,10 +65,12 @@ void M1_p1o1::each_train_one_iter()
 			//forward
 			DependencyInstance* x = training_corpus->at(i);
 			nn_input* the_inputs;
-			REAL *fscores = forward_scores_o1(x,mach,&the_inputs,dict->get_helper(),0,hp->CONF_p1o1_training_random);
+			REAL *fscores = forward_scores_o1(x,mach,&the_inputs,dict->get_helper(),0);
 
 			this_instance += the_inputs->get_numi();
 			all_forward_instance += the_inputs->get_numi();
+			all_inst_right += the_inputs->inst_good;
+			all_inst_wrong += the_inputs->inst_bad;
 			this_sentence ++;
 			i++;
 
@@ -101,5 +105,6 @@ void M1_p1o1::each_train_one_iter()
 		//real update
 		mach->update(hp->CONF_UPDATE_WAY,cur_lrate,hp->CONF_NN_WD,hp->CONF_MOMENTUM_ALPHA,hp->CONF_RMS_SMOOTH);
 	}
-	cout << "Iter done, skip " << skip_sent_num << " sentences and f&b " << all_forward_instance << endl;
+	cout << "Iter done, skip " << skip_sent_num << " sentences and f&b " << all_forward_instance
+			<< ";good/bad: " << all_inst_right << "/" << all_inst_wrong << endl;
 }

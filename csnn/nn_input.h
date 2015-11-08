@@ -29,8 +29,15 @@ public:
 	vector<int>* wordl;
 	vector<int>* posl;
 
-	nn_input(int i,int w,vector<int>* il,vector<int>* gl,vector<int>* wl,vector<int>* pl,nn_input_helper* h):
-		num_inst(i),num_width(w),helper(h),inputs(il),goals(gl),wordl(wl),posl(pl){}
+	//statistics
+	int inst_good;
+	int inst_bad;
+
+	nn_input(int i,int w,vector<int>* il,vector<int>* gl,vector<int>* wl,vector<int>* pl,nn_input_helper* h,
+			int ngood,int nbad):num_inst(i),num_width(w),helper(h),inputs(il),goals(gl),wordl(wl),posl(pl){
+		inst_good = ngood;
+		inst_bad = nbad;
+	}
 	~nn_input(){delete inputs;delete goals;}	//only delete this part
 	int get_numi(){return num_inst;}
 	int get_numw(){return num_width;}

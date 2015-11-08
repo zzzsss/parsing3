@@ -45,6 +45,7 @@ public:
 		delete []dropout;
 		delete []values_before;
 	}
+	int get_len() {return length;}
 	REAL* get_values_before(){return values_before;}
 	REAL* get_values(){return values;}
 	REAL* get_gradients(){return gradients;}
