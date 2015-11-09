@@ -16,6 +16,7 @@
 #include <vector>
 using namespace std;
 #include "nn_input_helper.h"
+#include "nn_math.h"
 
 class nn_input{
 public:
@@ -35,6 +36,7 @@ public:
 
 	nn_input(int i,int w,vector<int>* il,vector<int>* gl,vector<int>* wl,vector<int>* pl,nn_input_helper* h,
 			int ngood,int nbad):num_inst(i),num_width(w),helper(h),inputs(il),goals(gl),wordl(wl),posl(pl){
+		nn_math::CHECK_EQUAL(i,(int)inputs->size()/w,"BAD nn_input.");
 		inst_good = ngood;
 		inst_bad = nbad;
 	}

@@ -11,19 +11,35 @@
 #include "../algorithms/EisnerO3g.h"
 
 //be careful about the magic numbers
-static inline void TMP_push234(vector<int>* l,int h,int m,int c=-100,int g=-100)
+static inline void TMP_push234(vector<int>* l,int h,int m,int c=IMPOSSIBLE_INDEX,int g=IMPOSSIBLE_INDEX)
 {
 	l->push_back(h);
 	l->push_back(m);
-	if(c >= -1){
+	if(c > IMPOSSIBLE_INDEX){
 		l->push_back(c);
-		if(g>=-1)
+		if(g > IMPOSSIBLE_INDEX)
 			l->push_back(g);
 	}
 }
-static inline bool TMP_check234(int h1,int h2,int c1=-100,int c2=-100,int g1=-100,int g2=-100)
+static inline void TMP_pop234(vector<int>* l,int h,int m,int c=IMPOSSIBLE_INDEX,int g=IMPOSSIBLE_INDEX)
+{
+	l->pop_back();
+	l->pop_back();
+	if(c > IMPOSSIBLE_INDEX){
+		l->pop_back();
+		if(g > IMPOSSIBLE_INDEX)
+			l->pop_back();
+	}
+}
+static inline bool TMP_check234(int h1,int h2,int c1=IMPOSSIBLE_INDEX,int c2=IMPOSSIBLE_INDEX,
+		int g1=IMPOSSIBLE_INDEX,int g2=IMPOSSIBLE_INDEX)
 {
 	return (h1==h2)&&(c1==c2)&&(g1==g2);
+}
+static inline bool TMP_higho_sample(HypherParameters* HP,int h=IMPOSSIBLE_INDEX,int m=IMPOSSIBLE_INDEX,
+		int s=IMPOSSIBLE_INDEX,int g=IMPOSSIBLE_INDEX)
+{
+	return drand48() < HP->CONF_higho_percent;
 }
 
 // the routine for getting scores
@@ -67,7 +83,8 @@ REAL* Process::forward_scores_o1(DependencyInstance* x,Csnn* mac,nn_input** t,nn
 	REAL* tmp_scores = mac->forward(*t,testing);
 	return tmp_scores;
 }
-REAL* Process::forward_scores_o2sib(DependencyInstance* x,Csnn* mac,nn_input** t,nn_input_helper* h,int testing,bool* cut_o1)
+REAL* Process::forward_scores_o2sib(DependencyInstance* x,Csnn* mac,nn_input** t,nn_input_helper* h,
+		int testing,bool* cut_o1,HypherParameters* hh)
 {
 	//o2sib
 	int odim = mac->get_odim();	//1 or 2 for no-labeled, otherwise...
@@ -107,8 +124,16 @@ REAL* Process::forward_scores_o2sib(DependencyInstance* x,Csnn* mac,nn_input** t
 				if(!testing){
 					if(TMP_check234(real_head,h,real_center,-1))
 						{the_goals->push_back(is_labeled?(x->index_deprels->at(m)):0);num_good++;}
-					else
-						{the_goals->push_back(nope_goal);num_bad++;}
+					else{
+						if(TMP_higho_sample(hh)){
+							the_goals->push_back(nope_goal);
+							num_bad++;
+						}
+						else{
+							TMP_pop234(the_inputs,h,m,-1);
+							num_togo -= 1;	//well, maybe the same
+						}
+					}
 				}
 				num_togo += 1;
 			}
@@ -122,8 +147,16 @@ REAL* Process::forward_scores_o2sib(DependencyInstance* x,Csnn* mac,nn_input** t
 						if(!testing){
 							if(TMP_check234(real_head,h,real_center,c))
 								{the_goals->push_back(is_labeled?(x->index_deprels->at(m)):0);num_good++;}
-							else
-								{the_goals->push_back(nope_goal);num_bad++;}
+							else{
+								if(TMP_higho_sample(hh)){
+									the_goals->push_back(nope_goal);
+									num_bad++;
+								}
+								else{
+									TMP_pop234(the_inputs,h,m,c);
+									num_togo -= 1;	//well, maybe the same
+								}
+							}
 						}
 						num_togo += 1;
 					}
