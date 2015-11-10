@@ -57,7 +57,7 @@ void Csnn::prepare_caches(int bsize){
 	//this is done before each f/b
 	for(vector<nn_cache*>::iterator i=c_allcaches->begin();i!=c_allcaches->end();i++){
 		(*i)->resize(bsize);
-		(*i)->clear_gradients();
+		(*i)->clear_gradients(bsize);
 	}
 }
 

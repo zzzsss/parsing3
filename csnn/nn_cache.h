@@ -54,17 +54,18 @@ public:
 		for(long i=0;i<length;i++)
 			dropout[i] = (drand48()<rate) ? 0 : 1;	//0 means to perform dropout
 	}
-	void clear_values(){
-		for(long i=0;i<bsize*length;i++)
+	//!!!!! here only clear the needed size because the bsize only increase!!!!!
+	void clear_values(int need_bs){
+		for(long i=0;i<need_bs*length;i++)
 			values[i] = 0;
 	}
-	void clear_gradients(){
-		for(long i=0;i<bsize*length;i++)
+	void clear_gradients(int need_bs){
+		for(long i=0;i<need_bs*length;i++)
 			gradients[i] = 0;
 	}
-	void clear_all(){
-		clear_values();
-		clear_gradients();
+	void clear_all(int need_bs){
+		clear_values(need_bs);
+		clear_gradients(need_bs);
 	}
 	//!! delete old data when expand
 	void resize(long b){
