@@ -68,7 +68,7 @@ protected:
 	double nn_dev_test(string to_test,string output,string gold,int testing=1);
 
 	//3.1:forward scores and rearrange scores
-	static REAL* forward_scores_o1(DependencyInstance* x,Csnn* m,nn_input** t,nn_input_helper* h,int testing);
+	static REAL* forward_scores_o1(DependencyInstance* x,Csnn* m,nn_input** t,nn_input_helper* h,int testing,HypherParameters*hh=0);
 	static REAL* forward_scores_o2sib(DependencyInstance* x,Csnn* m,nn_input** t,nn_input_helper* h,int testing,bool* cut_o1,HypherParameters*hh=0);
 	static REAL* forward_scores_o3g(DependencyInstance* x,Csnn* m,nn_input** t,nn_input_helper* h,int testing,bool* cut_o1);
 	static double* rearrange_scores_o1(DependencyInstance* x,Csnn* m,nn_input* t,REAL* fscores,bool prob_ouput,bool prob_trans);

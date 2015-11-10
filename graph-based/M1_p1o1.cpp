@@ -65,7 +65,7 @@ void M1_p1o1::each_train_one_iter()
 			//forward
 			DependencyInstance* x = training_corpus->at(i);
 			nn_input* the_inputs;
-			REAL *fscores = forward_scores_o1(x,mach,&the_inputs,dict->get_helper(),0);
+			REAL *fscores = forward_scores_o1(x,mach,&the_inputs,dict->get_helper(),0,hp);
 
 			this_instance += the_inputs->get_numi();
 			all_forward_instance += the_inputs->get_numi();

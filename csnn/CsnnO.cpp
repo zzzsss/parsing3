@@ -147,7 +147,19 @@ void Csnn::b_inputs(){
 			//2.prepares
 			int the_win = the_option->NN_win;	//window size(should be odd)
 			//2.special: s or g is -1, fill 0
-			if(cur_mod < 0){}	//no update
+			if(cur_mod < 0){		//no update //!!!!DEBUG:but need to add, right...
+				for(int w=0;w<the_win;w++)
+					to_grad += p_word->getd();
+				for(int w=0;w<the_win;w++)
+					to_grad += p_pos->getd();
+				if(cur_head >= 0){
+					to_grad += p_distance->getd();
+					if(the_option->NN_add_average){
+						to_grad += p_word->getd();
+						to_grad += p_pos->getd();
+					}
+				}
+			}
 			else{
 				//2.1:words
 				for(int w=cur_mod-the_win/2;w<=cur_mod+the_win/2;w++){

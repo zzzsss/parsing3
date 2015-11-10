@@ -46,7 +46,8 @@ static inline bool TMP_higho_sample(HypherParameters* HP,int h=IMPOSSIBLE_INDEX,
 // -- m means the current machine(might not be the same as options)
 // -- t for assigning inputs, need outside to delete it
 // -- testing for the forward of nn
-REAL* Process::forward_scores_o1(DependencyInstance* x,Csnn* mac,nn_input** t,nn_input_helper* helper,int testing)
+REAL* Process::forward_scores_o1(DependencyInstance* x,Csnn* mac,nn_input** t,nn_input_helper* helper,
+		int testing,HypherParameters*hh)
 {
 	//default order1 parsing
 	int odim = mac->get_odim();	//1 or 2 for no-labeled, otherwise...
@@ -70,8 +71,14 @@ REAL* Process::forward_scores_o1(DependencyInstance* x,Csnn* mac,nn_input** t,nn
 						num_good++;
 					}
 					else{
-						the_goals->push_back(nope_goal);
-						num_bad++;
+						if(TMP_higho_sample(hh)){
+							the_goals->push_back(nope_goal);
+							num_bad++;
+						}
+						else{
+							TMP_pop234(the_inputs,h,m);
+							num_pair_togo -= 1;	//well, maybe the same
+						}
 					}
 				}
 				num_pair_togo ++;
