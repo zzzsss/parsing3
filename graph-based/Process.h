@@ -89,6 +89,7 @@ public:
 	virtual ~Process(){}
 	virtual void train();
 	virtual void test(string);
+	void check_o1_filter(string mach,string cut);
 };
 
 

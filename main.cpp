@@ -15,6 +15,7 @@
  * 		-- usage:	(mode 3 and 4 are for debugging)
  * 	1.training: <exe-file> conf
  * 	2.testing: <exe-file> conf best-machine-name
+ * 	3.check-o1-filter: <exe-file> conf best-machine-name cut-point
  */
 
 int main(int argc,char **argv)
@@ -49,6 +50,10 @@ int main(int argc,char **argv)
 	else if(argc == 3){
 		//only testing
 		x->test(string(argv[2]));
+	}
+	else if(argc == 4){
+		//check o1-filter
+		x->check_o1_filter(string(argv[2]),string(argv[3]));
 	}
 	return 0;
 }

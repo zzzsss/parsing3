@@ -53,6 +53,8 @@ public:
 		init_clear();
 	}
 	void get_init_one(int index,REAL* value){	//init one
+		if(index < 0 || index >= num)
+			nn_math::CHECK_EQUAL(index,0,"Out of range init.");
 		memcpy(w+index*dim,value,sizeof(REAL)*dim);
 	}
 	void clear_grad(){

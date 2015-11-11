@@ -6,6 +6,7 @@
  */
 
 #include "Process.h"
+#include "../algorithms/Eisner.h"
 
 //---------------------------INIT-------------------------------//
 Process::Process(string conf)
@@ -123,3 +124,30 @@ void Process::init_embed()
 	cout << "-- Done, with " << n_all << "/" << n_check << "/" << n_icheck << '\n';
 }
 
+void Process::check_o1_filter(string m_name,string cutting)
+{
+	//MUST BE O1 MACH
+	cout << "----- Check o1 filter(must be o1-mach)-----" << endl;
+	hp->CONF_score_o1filter_cut = atof(cutting.c_str());
+	dict = new Dictionary(hp->CONF_dict_file);
+	mach = Csnn::read(m_name);
+	dev_test_corpus = read_corpus(hp->CONF_test_file);
+	dict->prepare_corpus(dev_test_corpus,1);
+
+	int token_num = 0;	//token number
+	int filter_wrong_count = 0;
+	for(int ii=0;ii<dev_test_corpus->size();ii++){
+		if(ii%100 == 0)
+			cout << filter_wrong_count << "/" << token_num << endl;
+		DependencyInstance* x = dev_test_corpus->at(ii);
+		int length = x->forms->size();
+		bool* tmp_cut = get_cut_o1(x,dynamic_cast<CsnnO1*>(mach),dict,hp->CONF_score_o1filter_cut);
+		for(int i=1;i<length;i++){
+			if(tmp_cut[get_index2(length,x->heads->at(i),i)])
+				filter_wrong_count++;
+			token_num++;
+		}
+		delete []tmp_cut;
+	}
+	cout << "FINAL:" << filter_wrong_count << "/" << token_num  << "=" << filter_wrong_count/(0.0+token_num) << endl;
+}
