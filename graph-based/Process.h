@@ -84,6 +84,10 @@ protected:
 	void parse_o2sib(DependencyInstance* x,CsnnO1* o1_filter,CsnnO1* o1_scorer);
 	void parse_o3g(DependencyInstance* x,CsnnO1* o1_filter,CsnnO1* o1_scorer,CsnnO2* o2_scorer);
 
+	//4.other helpers
+	bool filter_read(bool**&);	//read success if true
+	void filter_write(bool**);
+
 public:
 	Process(string);
 	virtual ~Process(){}

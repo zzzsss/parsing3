@@ -76,6 +76,7 @@ string CONF_embed_EM;	//embeddings
 double CONF_embed_ISCALE;
 int CONF_NN_untied_changeto;	//later change to untied ones
 int CONF_NN_untied_changetoiter;//when to change
+string CONF_o1filter_file;		//stored file for o1filter
 
 //init
 HypherParameters(string conf):hp_nn()
@@ -196,6 +197,7 @@ HypherParameters(string conf):hp_nn()
 		else if(buf=="embed_scale")	fin >> CONF_embed_ISCALE;
 		else if(buf=="untied_change_way")	fin >> CONF_NN_untied_changeto;
 		else if(buf=="untied_change_iter")	fin >> CONF_NN_untied_changetoiter;
+		else if(buf=="filter_file")	fin >> CONF_o1filter_file;
 		else
 			cerr << "Unknown option " << buf << endl;
 	}

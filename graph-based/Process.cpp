@@ -151,3 +151,44 @@ void Process::check_o1_filter(string m_name,string cutting)
 	}
 	cout << "FINAL:" << filter_wrong_count << "/" << token_num  << "=" << filter_wrong_count/(0.0+token_num) << endl;
 }
+
+bool Process::filter_read(bool** & noprobs)
+{
+	if(hp->CONF_o1filter_file.size() > 0){
+		ifstream fin(hp->CONF_o1filter_file.c_str(),ifstream::binary);
+		if(fin){
+			int all_tokens_train=0,all_token_filter_wrong=0;
+			int all = training_corpus->size();
+			noprobs = new bool*[all];
+			for(int i=0;i<all;i++){
+				DependencyInstance* x = training_corpus->at(i);
+				int len = x->length();
+				noprobs[i] = new bool[len*len];		//o1filter
+				fin.read((char*)(noprobs[i]),sizeof(bool)*len*len);
+				all_tokens_train += len-1;
+				for(int m=1;m<x->length();m++)
+					if(noprobs[i][get_index2(x->length(),x->heads->at(m),m)])
+						all_token_filter_wrong ++;
+			}
+			cout << "READING o1 filter: all " << all_tokens_train << ";filter wrong " << all_token_filter_wrong << endl;
+			fin.close();
+			return true;
+		}
+	}
+	return false;
+}
+
+void Process::filter_write(bool** noprobs)
+{
+	if(hp->CONF_o1filter_file.size() > 0){
+		ofstream fout(hp->CONF_o1filter_file.c_str(),ofstream::binary);
+		for(int i=0;i<training_corpus->size();i++){
+			DependencyInstance* x = training_corpus->at(i);
+			int len = x->length();
+			noprobs[i] = new bool[len*len];		//o1filter
+			fout.write((char*)(noprobs[i]),sizeof(bool)*len*len);
+		}
+		fout.close();
+		cout << "WRITING o1 filter to " << hp->CONF_o1filter_file << endl;
+	}
+}

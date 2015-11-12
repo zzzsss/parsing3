@@ -32,7 +32,7 @@ void M1_p1o2::each_test_one(DependencyInstance* x)
 void M1_p1o2::each_train_one_iter()
 {
 	static bool** STA_noprobs = 0;	//static ine, init only once
-	if(STA_noprobs==0){
+	if(STA_noprobs==0 && !filter_read(STA_noprobs)){
 		//init only once
 		int all_tokens_train=0,all_token_filter_wrong=0;
 		time_t now;
@@ -48,6 +48,7 @@ void M1_p1o2::each_train_one_iter()
 					all_token_filter_wrong ++;
 		}
 		cout << "For o1 filter: all " << all_tokens_train << ";filter wrong " << all_token_filter_wrong << endl;
+		filter_write(STA_noprobs);
 	}
 
 	//per-sentence approach
