@@ -432,7 +432,7 @@ double* Process::rearrange_scores_o2sib(DependencyInstance* x,Csnn* m,nn_input* 
 double* Process::rearrange_scores_o3g(DependencyInstance* x,Csnn* m,nn_input* the_inputs,REAL* fscores,
 		bool prob_output,bool prob_trans,double* rscores_o1,double* rscores_o2sib)
 {
-	const int THE_DIM = 3;
+	const int THE_DIM = 4;
 	int length = x->length();
 	int fs_dim = m->get_odim();
 	int num_label = fs_dim;

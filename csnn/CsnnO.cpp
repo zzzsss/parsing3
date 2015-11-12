@@ -84,21 +84,25 @@ void Csnn::f_inputs(){
 					//between features -> (h,m] or [m,h)
 					//2.4.1: word
 					p_word->forward(-1,to_assign);	//set 0
-					p_word->forward(this_input->wordl->at(cur_mod),to_assign,1);// !! DEBUG : maybe miss cur_mod
-					for(int ptr=cur_head+1;ptr<cur_mod;ptr++)
-						p_word->forward(this_input->wordl->at(ptr),to_assign,1);
-					for(int ptr=cur_mod+1;ptr<cur_head;ptr++)
-						p_word->forward(this_input->wordl->at(ptr),to_assign,1);
-					nn_math::op_y_mult_a(p_word->getd(),to_assign,1.0/(abs(cur_head-cur_mod)));	//average
+					if(cur_mod != cur_head){	//!!DEBUG: only happens when cur_mod==cur_head==0
+						p_word->forward(this_input->wordl->at(cur_mod),to_assign,1);// !! DEBUG : maybe miss cur_mod
+						for(int ptr=cur_head+1;ptr<cur_mod;ptr++)
+							p_word->forward(this_input->wordl->at(ptr),to_assign,1);
+						for(int ptr=cur_mod+1;ptr<cur_head;ptr++)
+							p_word->forward(this_input->wordl->at(ptr),to_assign,1);
+						nn_math::op_y_mult_a(p_word->getd(),to_assign,1.0/(abs(cur_head-cur_mod)));	//average
+					}
 					to_assign += p_word->getd();
 					//2.4.2: pos
 					p_pos->forward(-1,to_assign);	//set 0
-					p_pos->forward(this_input->posl->at(cur_mod),to_assign,1);// !! DEBUG : maybe miss cur_mod
-					for(int ptr=cur_head+1;ptr<cur_mod;ptr++)
-						p_pos->forward(this_input->posl->at(ptr),to_assign,1);
-					for(int ptr=cur_mod+1;ptr<cur_head;ptr++)
-						p_pos->forward(this_input->posl->at(ptr),to_assign,1);
-					nn_math::op_y_mult_a(p_pos->getd(),to_assign,1.0/(abs(cur_head-cur_mod)));	//average
+					if(cur_mod != cur_head){
+						p_pos->forward(this_input->posl->at(cur_mod),to_assign,1);// !! DEBUG : maybe miss cur_mod
+						for(int ptr=cur_head+1;ptr<cur_mod;ptr++)
+							p_pos->forward(this_input->posl->at(ptr),to_assign,1);
+						for(int ptr=cur_mod+1;ptr<cur_head;ptr++)
+							p_pos->forward(this_input->posl->at(ptr),to_assign,1);
+						nn_math::op_y_mult_a(p_pos->getd(),to_assign,1.0/(abs(cur_head-cur_mod)));	//average
+					}
 					to_assign += p_pos->getd();
 				}
 			}
@@ -199,20 +203,24 @@ void Csnn::b_inputs(){
 					if(the_option->NN_add_average){
 						//between features -> (h,m] or [m,h)
 						//2.4.1: word
-						nn_math::op_y_mult_a(p_word->getd(),to_grad,1.0/(abs(cur_head-cur_mod)));	//average
-						p_pos->backward(this_input->posl->at(cur_mod),to_grad);// !! DEBUG : maybe miss cur_mod
-						for(int ptr=cur_head+1;ptr<cur_mod;ptr++)
-							p_word->backward(this_input->wordl->at(ptr),to_grad);
-						for(int ptr=cur_mod+1;ptr<cur_head;ptr++)
-							p_word->backward(this_input->wordl->at(ptr),to_grad);
+						if(cur_mod != cur_head){
+							nn_math::op_y_mult_a(p_word->getd(),to_grad,1.0/(abs(cur_head-cur_mod)));	//average
+							p_pos->backward(this_input->posl->at(cur_mod),to_grad);// !! DEBUG : maybe miss cur_mod
+							for(int ptr=cur_head+1;ptr<cur_mod;ptr++)
+								p_word->backward(this_input->wordl->at(ptr),to_grad);
+							for(int ptr=cur_mod+1;ptr<cur_head;ptr++)
+								p_word->backward(this_input->wordl->at(ptr),to_grad);
+						}
 						to_grad += p_word->getd();
 						//2.4.2: pos
-						nn_math::op_y_mult_a(p_pos->getd(),to_grad,1.0/(abs(cur_head-cur_mod)));	//average
-						p_pos->backward(this_input->posl->at(cur_mod),to_grad);// !! DEBUG : maybe miss cur_mod
-						for(int ptr=cur_head+1;ptr<cur_mod;ptr++)
-							p_pos->backward(this_input->posl->at(ptr),to_grad);
-						for(int ptr=cur_mod+1;ptr<cur_head;ptr++)
-							p_pos->backward(this_input->posl->at(ptr),to_grad);
+						if(cur_mod != cur_head){
+							nn_math::op_y_mult_a(p_pos->getd(),to_grad,1.0/(abs(cur_head-cur_mod)));	//average
+							p_pos->backward(this_input->posl->at(cur_mod),to_grad);// !! DEBUG : maybe miss cur_mod
+							for(int ptr=cur_head+1;ptr<cur_mod;ptr++)
+								p_pos->backward(this_input->posl->at(ptr),to_grad);
+							for(int ptr=cur_mod+1;ptr<cur_head;ptr++)
+								p_pos->backward(this_input->posl->at(ptr),to_grad);
+						}
 						to_grad += p_pos->getd();
 					}
 				}
