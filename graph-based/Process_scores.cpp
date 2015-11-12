@@ -232,22 +232,24 @@ REAL* Process::forward_scores_o3g(DependencyInstance* x,Csnn* mac,nn_input** t,n
 				num_togo += 1;
 				//0,0,c,m
 				for(int c=1;c<m;c++){
-					TMP_push234(the_inputs,h,m,c,-1);
-					if(!testing){
-						if(TMP_check234(real_head,h,real_center,c,real_grand,-1))
-							{the_goals->push_back(is_labeled?(x->index_deprels->at(m)):0);num_good++;}
-						else{
-							if(TMP_higho_sample(hh)){
-								the_goals->push_back(nope_goal);
-								num_bad++;
-							}
+					if(!score_o1[get_index2(length,h,c)]){
+						TMP_push234(the_inputs,h,m,c,-1);
+						if(!testing){
+							if(TMP_check234(real_head,h,real_center,c,real_grand,-1))
+								{the_goals->push_back(is_labeled?(x->index_deprels->at(m)):0);num_good++;}
 							else{
-								TMP_pop234(the_inputs,h,m,c,-1);
-								num_togo -= 1;	//well, maybe the same
+								if(TMP_higho_sample(hh)){
+									the_goals->push_back(nope_goal);
+									num_bad++;
+								}
+								else{
+									TMP_pop234(the_inputs,h,m,c,-1);
+									num_togo -= 1;	//well, maybe the same
+								}
 							}
 						}
+						num_togo += 1;
 					}
-					num_togo += 1;
 				}
 			}
 		}
@@ -261,7 +263,7 @@ REAL* Process::forward_scores_o3g(DependencyInstance* x,Csnn* mac,nn_input** t,n
 			if(!norpob_hm){
 				for(int g=0;g<length;g++){
 					bool norpob_gh = score_o1[get_index2(length,g,h)];
-					if(g>=small && g<=large && !norpob_gh)	//non-proj not allowed
+					if((g>=small && g<=large) || norpob_gh)	//non-proj not allowed //!!DEBUG: yi-jing-wu-yu-le...
 						continue;
 					//for those c
 					//g,h,-1,m
