@@ -176,7 +176,8 @@ REAL* Process::forward_scores_o2sib(DependencyInstance* x,Csnn* mac,nn_input** t
 	REAL* tmp_scores = mac->forward(*t,testing);
 	return tmp_scores;
 }
-REAL* Process::forward_scores_o3g(DependencyInstance* x,Csnn* mac,nn_input** t,nn_input_helper* h,int testing,bool* cut_o1)
+REAL* Process::forward_scores_o3g(DependencyInstance* x,Csnn* mac,nn_input** t,nn_input_helper* h,
+		int testing,bool* cut_o1,HypherParameters*hh)
 {
 	//o3g
 	int odim = mac->get_odim();	//1 or 2 for no-labeled, otherwise...
@@ -204,6 +205,7 @@ REAL* Process::forward_scores_o3g(DependencyInstance* x,Csnn* mac,nn_input** t,n
 			TMP_push234(the_inputs,real_head,m,real_center,real_grand);
 			the_goals->push_back(is_labeled?(x->index_deprels->at(m)):0);
 			num_togo += 1;
+			num_good++;
 		}
 		//--others
 		//1.when h==0
@@ -215,9 +217,17 @@ REAL* Process::forward_scores_o3g(DependencyInstance* x,Csnn* mac,nn_input** t,n
 				TMP_push234(the_inputs,h,m,-1,-1);
 				if(!testing){
 					if(TMP_check234(real_head,h,real_center,-1,real_grand,-1))
-						the_goals->push_back(is_labeled?(x->index_deprels->at(m)):0);
-					else
-						the_goals->push_back(nope_goal);
+						{the_goals->push_back(is_labeled?(x->index_deprels->at(m)):0);num_good++;}
+					else{
+						if(TMP_higho_sample(hh)){
+							the_goals->push_back(nope_goal);
+							num_bad++;
+						}
+						else{
+							TMP_pop234(the_inputs,h,m,-1,-1);
+							num_togo -= 1;	//well, maybe the same
+						}
+					}
 				}
 				num_togo += 1;
 				//0,0,c,m
@@ -225,9 +235,17 @@ REAL* Process::forward_scores_o3g(DependencyInstance* x,Csnn* mac,nn_input** t,n
 					TMP_push234(the_inputs,h,m,c,-1);
 					if(!testing){
 						if(TMP_check234(real_head,h,real_center,c,real_grand,-1))
-							the_goals->push_back(is_labeled?(x->index_deprels->at(m)):0);
-						else
-							the_goals->push_back(nope_goal);
+							{the_goals->push_back(is_labeled?(x->index_deprels->at(m)):0);num_good++;}
+						else{
+							if(TMP_higho_sample(hh)){
+								the_goals->push_back(nope_goal);
+								num_bad++;
+							}
+							else{
+								TMP_pop234(the_inputs,h,m,c,-1);
+								num_togo -= 1;	//well, maybe the same
+							}
+						}
 					}
 					num_togo += 1;
 				}
@@ -247,12 +265,20 @@ REAL* Process::forward_scores_o3g(DependencyInstance* x,Csnn* mac,nn_input** t,n
 						continue;
 					//for those c
 					//g,h,-1,m
-					TMP_push234(the_inputs,h,m,-1,-1);
+					TMP_push234(the_inputs,h,m,-1,g);
 					if(!testing){
 						if(TMP_check234(real_head,h,real_center,-1,real_grand,g))
-							the_goals->push_back(is_labeled?(x->index_deprels->at(m)):0);
-						else
-							the_goals->push_back(nope_goal);
+							{the_goals->push_back(is_labeled?(x->index_deprels->at(m)):0);num_good++;}
+						else{
+							if(TMP_higho_sample(hh)){
+								the_goals->push_back(nope_goal);
+								num_bad++;
+							}
+							else{
+								TMP_pop234(the_inputs,h,m,-1,g);
+								num_togo -= 1;	//well, maybe the same
+							}
+						}
 					}
 					num_togo += 1;
 					//g,h,c,m
@@ -261,9 +287,17 @@ REAL* Process::forward_scores_o3g(DependencyInstance* x,Csnn* mac,nn_input** t,n
 							TMP_push234(the_inputs,h,m,c,g);
 							if(!testing){
 								if(TMP_check234(real_head,h,real_center,c,real_grand,g))
-									the_goals->push_back(is_labeled?(x->index_deprels->at(m)):0);
-								else
-									the_goals->push_back(nope_goal);
+									{the_goals->push_back(is_labeled?(x->index_deprels->at(m)):0);num_good++;}
+								else{
+									if(TMP_higho_sample(hh)){
+										the_goals->push_back(nope_goal);
+										num_bad++;
+									}
+									else{
+										TMP_pop234(the_inputs,h,m,c,g);
+										num_togo -= 1;	//well, maybe the same
+									}
+								}
 							}
 							num_togo += 1;
 						}

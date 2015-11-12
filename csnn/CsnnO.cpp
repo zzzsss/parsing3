@@ -22,8 +22,11 @@ void Csnn::f_inputs(){
 			//1.prepare the two nodes
 			int cur_mod = this_input->inputs->at((order+1)*i+t);	//cur_mod means cur-node, not necessarily m-node
 			int cur_head = this_hasedge[t];
-			if(cur_head >= 0)
+			if(cur_head >= 0){
 				cur_head = this_input->inputs->at((order+1)*i+cur_head);
+				if(cur_head < 0)	//special node only for g in o3g
+					cur_head = 0;
+			}
 			//2.prepares
 			int the_win = the_option->NN_win;	//window size(should be odd)
 			//2.special: s or g is -1, fill 0
@@ -142,8 +145,11 @@ void Csnn::b_inputs(){
 			//1.prepare the two nodes
 			int cur_mod = this_input->inputs->at((order+1)*i+t);
 			int cur_head = this_hasedge[t];
-			if(cur_head >= 0)
+			if(cur_head >= 0){
 				cur_head = this_input->inputs->at((order+1)*i+cur_head);
+				if(cur_head < 0)	//special node only for g in o3g
+					cur_head = 0;
+			}
 			//2.prepares
 			int the_win = the_option->NN_win;	//window size(should be odd)
 			//2.special: s or g is -1, fill 0

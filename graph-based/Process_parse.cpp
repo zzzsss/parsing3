@@ -145,7 +145,7 @@ void Process::parse_o3g(DependencyInstance* x,CsnnO1* o1_filter,CsnnO1* o1_score
 		bool o2s_is_labeled = (o2_scorer->get_odim() >= dictionary_labelnum);
 		if(is_labeled != o2s_is_labeled)
 			cerr << "Label-conf no match for o2_scorer" << endl;
-		o1s_rscores = get_scores_o2sib(x,o1_scorer,dict,is_trans,o1f_cut,0);	//here no combine scores
+		o2s_rscores = get_scores_o2sib(x,o1_scorer,dict,is_trans,o1f_cut,0);	//here no combine scores
 	}
 	//2.get o3g scores
 	double* rscores = get_scores_o3g(x,mach,dict,is_trans,o1f_cut,o1s_rscores,o2s_rscores);
@@ -179,4 +179,5 @@ void Process::parse_o3g(DependencyInstance* x,CsnnO1* o1_filter,CsnnO1* o1_score
 	delete []rscores;
 	delete []o1f_cut;
 	delete []o1s_rscores;
+	delete []o2s_rscores;
 }

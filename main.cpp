@@ -37,6 +37,9 @@ int main(int argc,char **argv)
 	case 2:
 		x = new M1_p1o2(conf);
 		break;
+	case 3:
+		x = new M1_p1o3(conf);
+		break;
 	}
 	if(argc == 2){
 		//training
