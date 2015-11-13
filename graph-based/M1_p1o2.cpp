@@ -24,8 +24,9 @@ void M1_p1o2::each_create_machine()
 	mach = Csnn::create(2,&hp->hp_nn);	//order 2 mach
 }
 
-void M1_p1o2::each_test_one(DependencyInstance* x,int noc_dev)
+void M1_p1o2::each_test_one(DependencyInstance* x,int dev)
 {
+	int noc_dev = dev ? hp->CONF_score_noc_dev : 0;
 	if(noc_dev)
 		Process::parse_o2sib(x,mfo1,0);
 	else

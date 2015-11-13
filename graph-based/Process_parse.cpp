@@ -11,13 +11,13 @@
 #include "../algorithms/EisnerO3g.h"
 
 //get max label
-static void TMP_get_maxlabel(int all,int ln,double* s,double** ascores_p,int** max_deperl_p)
+static void TMP_get_maxlabel(long all,int ln,double* s,double** ascores_p,int** max_deperl_p)
 {
 	double* ascores = new double[all];
 	int* max_deprel = new int[all];
 	double* to_scores = s;
 	//get the max one for each edge --- every dictionary_labelnum points
-	for(int tmp_ind=0;tmp_ind<all;tmp_ind++){
+	for(long tmp_ind=0;tmp_ind<all;tmp_ind++){
 		double tmp_max = to_scores[0];
 		int tmp_max_index = 0;
 		for(int tmp_index=0;tmp_index<ln;tmp_index++){	//!!DEBUG: missing init =0
@@ -151,7 +151,7 @@ void Process::parse_o3g(DependencyInstance* x,CsnnO1* o1_filter,CsnnO1* o1_score
 	double* rscores = get_scores_o3g(x,mach,dict,is_trans,o1f_cut,o1s_rscores,o2s_rscores,hp);
 	//3.graph-algorithm
 	if(is_labeled){
-		int len = x->length();
+		long len = x->length();
 		double* ascores;
 		int* max_deprel;
 		TMP_get_maxlabel(len*len*len*len,dictionary_labelnum,rscores,&ascores,&max_deprel);

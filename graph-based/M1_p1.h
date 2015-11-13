@@ -14,7 +14,7 @@ class M1_p1o1: public Process{
 protected:
 	virtual void each_create_machine();
 	virtual void each_train_one_iter();
-	virtual void each_test_one(DependencyInstance*,int noc_dev=0);		//set predict_head or predict_deprels here
+	virtual void each_test_one(DependencyInstance*,int);		//set predict_head or predict_deprels here
 public:
 	M1_p1o1(string cname):Process(cname){
 	}
@@ -28,7 +28,7 @@ private:
 protected:
 	virtual void each_create_machine();
 	virtual void each_train_one_iter();
-	virtual void each_test_one(DependencyInstance*,int noc_dev=0);		//set predict_head or predict_deprels here
+	virtual void each_test_one(DependencyInstance*,int);		//set predict_head or predict_deprels here
 public:
 	M1_p1o2(string cname):Process(cname){
 		mfo1 = dynamic_cast<CsnnO1*>(Csnn::read(hp->CONF_score_mach_fo1));
@@ -48,7 +48,7 @@ private:
 protected:
 	virtual void each_create_machine();
 	virtual void each_train_one_iter();
-	virtual void each_test_one(DependencyInstance*,int noc_dev=0);		//set predict_head or predict_deprels here
+	virtual void each_test_one(DependencyInstance*,int);		//set predict_head or predict_deprels here
 public:
 	M1_p1o3(string cname):Process(cname){
 		mfo1 = dynamic_cast<CsnnO1*>(Csnn::read(hp->CONF_score_mach_fo1));

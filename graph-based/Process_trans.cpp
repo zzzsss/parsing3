@@ -144,7 +144,7 @@ static void trans_o3g(double* s,double* nope,long len,int ln)
 				all_nope += nope[get_index2_o3g(len,0,0,c,m)];	//0,0,c,m
 		}
 		for(int h=0;h<len;h++){
-			int ind = 0;
+			long ind = 0;
 			if(h==m)
 				continue;
 			int small = GET_MIN_ONE(h,m);
@@ -152,13 +152,13 @@ static void trans_o3g(double* s,double* nope,long len,int ln)
 			for(int g=0;g<small;g++){
 				ind = get_index2_o3g(len,g,h,h,m);	//g,h,h,m
 				for(int la=0;la<ln;la++){
-					int ind_la = get_index2_o3g(len,g,h,h,m,la,ln);
+					long ind_la = get_index2_o3g(len,g,h,h,m,la,ln);
 					s[ind_la] += all_nope-nope[ind];
 				}
 				for(int c=small+1;c<large;c++){
 					ind = get_index2_o3g(len,g,h,c,m);	//g,h,c,m
 					for(int la=0;la<ln;la++){
-						int ind_la = get_index2_o3g(len,g,h,c,m,la,ln);
+						long ind_la = get_index2_o3g(len,g,h,c,m,la,ln);
 						s[ind_la] += all_nope-nope[ind];
 					}
 				}
@@ -166,26 +166,26 @@ static void trans_o3g(double* s,double* nope,long len,int ln)
 			for(int g=large+1;g<len;g++){
 				ind = get_index2_o3g(len,g,h,h,m);	//g,h,h,m
 				for(int la=0;la<ln;la++){
-					int ind_la = get_index2_o3g(len,g,h,h,m,la,ln);
+					long ind_la = get_index2_o3g(len,g,h,h,m,la,ln);
 					s[ind_la] += all_nope-nope[ind];
 				}
 				for(int c=small+1;c<large;c++){
 					ind = get_index2_o3g(len,g,h,c,m);	//g,h,c,m
 					for(int la=0;la<ln;la++){
-						int ind_la = get_index2_o3g(len,g,h,c,m,la,ln);
+						long ind_la = get_index2_o3g(len,g,h,c,m,la,ln);
 						s[ind_la] += all_nope-nope[ind];
 					}
 				}
 			}
 			ind = get_index2_o3g(len,0,0,0,m);	//special one
 			for(int la=0;la<ln;la++){
-				int ind_la = get_index2_o3g(len,0,0,0,m,la,ln);
+				long ind_la = get_index2_o3g(len,0,0,0,m,la,ln);
 				s[ind_la] += all_nope-nope[ind];
 			}
 			for(int c=m-1;c>0;c--){
 				ind = get_index2_o3g(len,0,0,c,m);	//0,0,c,m
 				for(int la=0;la<ln;la++){
-					int ind_la = get_index2_o3g(len,0,0,c,m,la,ln);
+					long ind_la = get_index2_o3g(len,0,0,c,m,la,ln);
 					s[ind_la] += all_nope-nope[ind];
 				}
 			}

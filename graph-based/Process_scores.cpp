@@ -442,7 +442,7 @@ double* Process::rearrange_scores_o3g(DependencyInstance* x,Csnn* m,nn_input* th
 		num_label -= 1;
 	//prepare
 	double* rscores = new double[length*length*length*length*num_label];
-	for(int i=0;i<length*length*length*length*num_label;i++)
+	for(long i=0;i<length*length*length*length*num_label;i++)
 		rscores[i] = DOUBLE_LARGENEG;
 	//make sure the width is THE_DIM
 	CHECK_EQUAL(the_inputs->get_numw(),THE_DIM,"!!!Wrong nn_input");
@@ -467,7 +467,7 @@ double* Process::rearrange_scores_o3g(DependencyInstance* x,Csnn* m,nn_input* th
 	if(prob_output && prob_trans){
 		//1.prepare the ignored nope prob
 		double* nope_probs = new double[length*length*length*length];
-		for(int i=0;i<length*length*length*length;i++)
+		for(long i=0;i<length*length*length*length;i++)
 			nope_probs[i] = 1;		//set to one firstly
 		REAL *to_assign = fscores;
 		for(int i=0;i<the_inputs->num_inst*THE_DIM;i+=THE_DIM){

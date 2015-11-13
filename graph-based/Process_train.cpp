@@ -83,14 +83,13 @@ double Process::nn_dev_test(string to_test,string output,string gold,int dev)
 	dict->prepare_corpus(dev_test_corpus,1);	//get those indexes
 	int token_num = 0;	//token number
 	int miss_count = 0;
-	int noc_dev = dev ? hp->CONF_score_noc_dev : 0;
 	time(&now);
 	cout << "#--Test at " << ctime(&now) << std::flush;
 	for(unsigned int i=0;i<dev_test_corpus->size();i++){
 		DependencyInstance* t = dev_test_corpus->at(i);
 		int length = t->forms->size();
 		token_num += length - 1;
-		each_test_one(t,noc_dev);		/*************virtual****************/
+		each_test_one(t,dev);		/*************virtual****************/
 		for(int i2=1;i2<length;i2++){	//ignore root
 			if((*(t->predict_heads))[i2] != (*(t->heads))[i2])
 				miss_count ++;
