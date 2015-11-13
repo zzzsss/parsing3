@@ -68,6 +68,9 @@ string CONF_score_mach_fo1;		//o1-filter mach
 string CONF_score_mach_so1;		//o1-scorer mach
 string CONF_score_mach_so2sib;	//o2sib-scorer mach
 double CONF_higho_percent;		//sample the 'wrong' factors in 2/3 order
+int CONF_score_noc_dev;	//no combine scores when dev
+double CONF_score_o1scale;
+double CONF_score_o2scale;
 
 //1.6-others
 //int CONF_p1o1_training_random;	//special random one for M1_p1o1
@@ -108,6 +111,9 @@ HypherParameters(string conf):hp_nn()
 	CONF_score_mach_so1="";
 	CONF_score_mach_so2sib="";
 	CONF_higho_percent=1.0;
+	CONF_score_noc_dev=1;
+	CONF_score_o1scale=1;
+	CONF_score_o2scale=1;
 
 //	CONF_p1o1_training_random=0;
 	CONF_embed_WL="";
@@ -170,6 +176,10 @@ HypherParameters(string conf):hp_nn()
 		else if(buf=="s_mach_so1")	fin >> CONF_score_mach_so1;
 		else if(buf=="s_mach_so2sib")	fin >> CONF_score_mach_so2sib;
 		else if(buf=="s_higho_per")	fin >> CONF_higho_percent;
+		else if(buf=="s_noc_dev")	fin >> CONF_score_noc_dev;
+		else if(buf=="s_scale_o1") fin >> CONF_score_o1scale;
+		else if(buf=="s_scale_o2")	fin >> CONF_score_o2scale;
+
 		//1.x -special : for nn_option
 		else if(buf=="n_wsize")		fin >> hp_nn.NN_wsize;
 		else if(buf=="n_psize")		fin >> hp_nn.NN_psize;

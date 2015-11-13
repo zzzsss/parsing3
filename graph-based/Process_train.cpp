@@ -52,7 +52,7 @@ void Process::train()
 		}
 		each_train_one_iter();
 		cout << "-- Iter done, waiting for test dev:" << endl;
-		double this_result = nn_dev_test(hp->CONF_dev_file,hp->CONF_output_file+".dev",hp->CONF_dev_file);
+		double this_result = nn_dev_test(hp->CONF_dev_file,hp->CONF_output_file+".dev",hp->CONF_dev_file,1);
 		dev_results[cur_iter] = this_result;
 		//write curr mach
 		mach->write(mach_cur_name);
@@ -75,21 +75,22 @@ void Process::train()
 	cout << endl;
 }
 
-double Process::nn_dev_test(string to_test,string output,string gold,int testing)
+double Process::nn_dev_test(string to_test,string output,string gold,int dev)
 {
 	time_t now;
 	//also assuming test-file itself is gold file(this must be true with dev file)
 	dev_test_corpus = read_corpus(to_test);
-	dict->prepare_corpus(dev_test_corpus,testing);	//get those indexes
+	dict->prepare_corpus(dev_test_corpus,1);	//get those indexes
 	int token_num = 0;	//token number
 	int miss_count = 0;
+	int noc_dev = dev ? hp->CONF_score_noc_dev : 0;
 	time(&now);
 	cout << "#--Test at " << ctime(&now) << std::flush;
 	for(unsigned int i=0;i<dev_test_corpus->size();i++){
 		DependencyInstance* t = dev_test_corpus->at(i);
 		int length = t->forms->size();
 		token_num += length - 1;
-		each_test_one(t);		/*************virtual****************/
+		each_test_one(t,noc_dev);		/*************virtual****************/
 		for(int i2=1;i2<length;i2++){	//ignore root
 			if((*(t->predict_heads))[i2] != (*(t->heads))[i2])
 				miss_count ++;
@@ -118,5 +119,5 @@ void Process::test(string m_name)
 	cout << "----- Testing -----" << endl;
 	dict = new Dictionary(hp->CONF_dict_file);
 	mach = Csnn::read(m_name);
-	nn_dev_test(hp->CONF_test_file,hp->CONF_output_file,hp->CONF_gold_file);
+	nn_dev_test(hp->CONF_test_file,hp->CONF_output_file,hp->CONF_gold_file,0);
 }

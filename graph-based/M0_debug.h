@@ -14,7 +14,7 @@ class M0_debug: public Process{
 protected:
 	virtual void each_create_machine();
 	virtual void each_train_one_iter();
-	virtual void each_test_one(DependencyInstance*);		//set predict_head or predict_deprels here
+	virtual void each_test_one(DependencyInstance*,int);		//set predict_head or predict_deprels here
 
 public:
 	M0_debug(string cname):Process(cname){

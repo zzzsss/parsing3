@@ -66,7 +66,7 @@ bool* Process::get_cut_o1(DependencyInstance* x,CsnnO1* o1_filter,Dictionary *di
 
 //2.the getting-score functions for parsing
 //used when testing or possible parsing in training
-double* Process::get_scores_o1(DependencyInstance* x,Csnn* m,Dictionary* dict,bool trans)
+double* Process::get_scores_o1(DependencyInstance* x,Csnn* m,Dictionary* dict,bool trans,HypherParameters*hh)
 {
 	//1.get the numbers and informations
 	int dictionary_labelnum = dict->getnum_deprel();
@@ -76,14 +76,14 @@ double* Process::get_scores_o1(DependencyInstance* x,Csnn* m,Dictionary* dict,bo
 	//2.getting the scores
 	nn_input* the_input;
 	REAL* fscores = forward_scores_o1(x,m,&the_input,dict->get_helper(),1);	//testing-mode, forward scores
-	double* rscores = rearrange_scores_o1(x,m,the_input,fscores,is_prob,is_trans);
+	double* rscores = rearrange_scores_o1(x,m,the_input,fscores,is_prob,is_trans,hh);
 	delete the_input;
 	delete []fscores;
 	return rscores;
 }
 
 double* Process::get_scores_o2sib(DependencyInstance* x,Csnn* m,Dictionary* dict,bool trans,
-		bool* cut_o1,double* rscores_o1)
+		bool* cut_o1,double* rscores_o1,HypherParameters*hh)
 {
 	//1.get the numbers and informations
 	int dictionary_labelnum = dict->getnum_deprel();
@@ -93,14 +93,14 @@ double* Process::get_scores_o2sib(DependencyInstance* x,Csnn* m,Dictionary* dict
 	//2.getting the scores
 	nn_input* the_input;
 	REAL* fscores = forward_scores_o2sib(x,m,&the_input,dict->get_helper(),1,cut_o1);	//testing-mode, forward scores
-	double* rscores = rearrange_scores_o2sib(x,m,the_input,fscores,is_prob,is_trans,rscores_o1);
+	double* rscores = rearrange_scores_o2sib(x,m,the_input,fscores,is_prob,is_trans,rscores_o1,hh);
 	delete the_input;
 	delete []fscores;
 	return rscores;
 }
 
 double* Process::get_scores_o3g(DependencyInstance* x,Csnn* m,Dictionary* dict,bool trans,
-		bool* cut_o1,double* rscores_o1,double* rscores_o2sib)
+		bool* cut_o1,double* rscores_o1,double* rscores_o2sib,HypherParameters*hh)
 {
 	//1.get the numbers and informations
 	int dictionary_labelnum = dict->getnum_deprel();
@@ -110,7 +110,7 @@ double* Process::get_scores_o3g(DependencyInstance* x,Csnn* m,Dictionary* dict,b
 	//2.getting the scores
 	nn_input* the_input;
 	REAL* fscores = forward_scores_o3g(x,m,&the_input,dict->get_helper(),1,cut_o1);	//testing-mode, forward scores
-	double* rscores = rearrange_scores_o3g(x,m,the_input,fscores,is_prob,is_trans,rscores_o1,rscores_o2sib);
+	double* rscores = rearrange_scores_o3g(x,m,the_input,fscores,is_prob,is_trans,rscores_o1,rscores_o2sib,hh);
 	delete the_input;
 	delete []fscores;
 	return rscores;

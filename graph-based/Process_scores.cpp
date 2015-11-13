@@ -318,7 +318,7 @@ REAL* Process::forward_scores_o3g(DependencyInstance* x,Csnn* mac,nn_input** t,n
 // x for length, m for odim, t for outputs, fscores for forward-scores(no arrange)
 // prob_output for output is label+1; prob_trans to trans prob only when prob_output
 double* Process::rearrange_scores_o1(DependencyInstance* x,Csnn* m,nn_input* the_inputs,REAL* fscores,
-		bool prob_output,bool prob_trans)
+		bool prob_output,bool prob_trans,HypherParameters*hh)
 {
 	const int THE_DIM = 2;
 	int length = x->length();
@@ -363,7 +363,7 @@ double* Process::rearrange_scores_o1(DependencyInstance* x,Csnn* m,nn_input* the
 }
 
 double* Process::rearrange_scores_o2sib(DependencyInstance* x,Csnn* m,nn_input* the_inputs,REAL* fscores,
-		bool prob_output,bool prob_trans,double* rscores_o1)
+		bool prob_output,bool prob_trans,double* rscores_o1,HypherParameters*hh)
 {
 	const int THE_DIM = 3;
 	int length = x->length();
@@ -417,7 +417,7 @@ double* Process::rearrange_scores_o2sib(DependencyInstance* x,Csnn* m,nn_input* 
 			for(int h=0;h<length;h++){
 				if(m!=h){
 					for(int la=0;la<num_label;la++){
-					double score_tmp = rscores_o1[get_index2(length,h,m,la,num_label)];
+					double score_tmp = rscores_o1[get_index2(length,h,m,la,num_label)] * hh->CONF_score_o1scale;
 					rscores[get_index2_o2sib(length,h,h,m,la,num_label)] += score_tmp;
 					for(int c=h+1;c<m;c++)
 						rscores[get_index2_o2sib(length,h,c,m,la,num_label)] += score_tmp;
@@ -432,7 +432,7 @@ double* Process::rearrange_scores_o2sib(DependencyInstance* x,Csnn* m,nn_input* 
 }
 
 double* Process::rearrange_scores_o3g(DependencyInstance* x,Csnn* m,nn_input* the_inputs,REAL* fscores,
-		bool prob_output,bool prob_trans,double* rscores_o1,double* rscores_o2sib)
+		bool prob_output,bool prob_trans,double* rscores_o1,double* rscores_o2sib,HypherParameters*hh)
 {
 	const int THE_DIM = 4;
 	long length = x->length();
@@ -493,13 +493,13 @@ double* Process::rearrange_scores_o3g(DependencyInstance* x,Csnn* m,nn_input* th
 			for(int la=0;la<num_label;la++){	//LABEL
 			double s_0m = 0,s_0xm=0;
 			if(rscores_o1)
-				s_0m = rscores_o1[get_index2(length,0,m,la,num_label)];
+				s_0m = rscores_o1[get_index2(length,0,m,la,num_label)] * hh->CONF_score_o1scale;
 			if(rscores_o2sib)
-				s_0xm = rscores_o2sib[get_index2_o2sib(length,0,0,m,la,num_label)];
+				s_0xm = rscores_o2sib[get_index2_o2sib(length,0,0,m,la,num_label)] * hh->CONF_score_o2scale;
 			rscores[get_index2_o3g(length,0,0,0,m,la,num_label)] += s_0m + s_0xm;
 			for(int c=m-1;c>0;c--){
 				if(rscores_o2sib)
-					s_0xm = rscores_o2sib[get_index2_o2sib(length,0,c,m,la,num_label)];
+					s_0xm = rscores_o2sib[get_index2_o2sib(length,0,c,m,la,num_label)] * hh->CONF_score_o2scale;
 				rscores[get_index2_o3g(length,0,0,c,m,la,num_label)] += s_0m + s_0xm;
 			}
 			}
@@ -509,24 +509,24 @@ double* Process::rearrange_scores_o3g(DependencyInstance* x,Csnn* m,nn_input* th
 				for(int la=0;la<num_label;la++){	//LABEL
 				double s_st=0,s_ts=0;
 				if(rscores_o1){
-					s_st = rscores_o1[get_index2(length,s,t,la,num_label)];
-					s_ts = rscores_o1[get_index2(length,t,s,la,num_label)];
+					s_st = rscores_o1[get_index2(length,s,t,la,num_label)] * hh->CONF_score_o1scale;
+					s_ts = rscores_o1[get_index2(length,t,s,la,num_label)] * hh->CONF_score_o1scale;
 				}
 				for(int g=0;g<length;g++){
 					if(g>=s && g<=t)	//no non-projective
 						continue;
 					double s_sxt=0,s_txs=0;
 					if(rscores_o2sib){
-						s_sxt = rscores_o2sib[get_index2_o2sib(length,s,s,t,la,num_label)];
-						s_txs = rscores_o2sib[get_index2_o2sib(length,t,t,s,la,num_label)];
+						s_sxt = rscores_o2sib[get_index2_o2sib(length,s,s,t,la,num_label)] * hh->CONF_score_o2scale;
+						s_txs = rscores_o2sib[get_index2_o2sib(length,t,t,s,la,num_label)] * hh->CONF_score_o2scale;
 					}
 					rscores[get_index2_o3g(length,g,s,s,t,la,num_label)] += s_st + s_sxt;
 					rscores[get_index2_o3g(length,g,t,t,s,la,num_label)] += s_ts + s_txs;
 					for(int c=s+1;c<t;c++){
 						double s_sct=0,s_tcs=0;
 						if(rscores_o2sib){
-							s_sct = rscores_o2sib[get_index2_o2sib(length,s,c,t,la,num_label)];
-							s_tcs = rscores_o2sib[get_index2_o2sib(length,t,c,s,la,num_label)];
+							s_sct = rscores_o2sib[get_index2_o2sib(length,s,c,t,la,num_label)] * hh->CONF_score_o2scale;
+							s_tcs = rscores_o2sib[get_index2_o2sib(length,t,c,s,la,num_label)] * hh->CONF_score_o2scale;
 						}
 						rscores[get_index2_o3g(length,g,s,c,t,la,num_label)] += s_st + s_sct;
 						rscores[get_index2_o3g(length,g,t,c,s,la,num_label)] += s_ts + s_tcs;

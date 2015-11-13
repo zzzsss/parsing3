@@ -23,7 +23,7 @@ void M1_p1o1::each_create_machine()
 	mach = Csnn::create(1,&hp->hp_nn);
 }
 
-void M1_p1o1::each_test_one(DependencyInstance* x)
+void M1_p1o1::each_test_one(DependencyInstance* x,int noc_dev)
 {
 	Process::parse_o1(x);
 }

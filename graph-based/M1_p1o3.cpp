@@ -24,9 +24,12 @@ void M1_p1o3::each_create_machine()
 	mach = Csnn::create(3,&hp->hp_nn);	//order 3 mach
 }
 
-void M1_p1o3::each_test_one(DependencyInstance* x)
+void M1_p1o3::each_test_one(DependencyInstance* x,int noc_dev)
 {
-	Process::parse_o3g(x,mfo1,mso1,mso2);
+	if(noc_dev)
+		Process::parse_o3g(x,mfo1,0,0);
+	else
+		Process::parse_o3g(x,mfo1,mso1,mso2);
 }
 
 void M1_p1o3::each_train_one_iter()

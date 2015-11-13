@@ -54,7 +54,7 @@ protected:
 	//0.virtuals
 	virtual void each_create_machine()=0;
 	virtual void each_train_one_iter()=0;
-	virtual void each_test_one(DependencyInstance*)=0;		//set predict_head or predict_deprels here
+	virtual void each_test_one(DependencyInstance*x,int noc_dev=0)=0;		//set predict_head or predict_deprels here
 
 	//1.1:helper-learning rate
 	int set_lrate_one_iter();	//lrate schedule
@@ -65,20 +65,20 @@ protected:
 	void init_embed();
 
 	//2.test and dev
-	double nn_dev_test(string to_test,string output,string gold,int testing=1);
+	double nn_dev_test(string to_test,string output,string gold,int dev);
 
 	//3.1:forward scores and rearrange scores
 	static REAL* forward_scores_o1(DependencyInstance* x,Csnn* m,nn_input** t,nn_input_helper* h,int testing,HypherParameters*hh=0);
 	static REAL* forward_scores_o2sib(DependencyInstance* x,Csnn* m,nn_input** t,nn_input_helper* h,int testing,bool* cut_o1,HypherParameters*hh=0);
 	static REAL* forward_scores_o3g(DependencyInstance* x,Csnn* m,nn_input** t,nn_input_helper* h,int testing,bool* cut_o1,HypherParameters*hh=0);
-	static double* rearrange_scores_o1(DependencyInstance* x,Csnn* m,nn_input* t,REAL* fscores,bool prob_ouput,bool prob_trans);
-	static double* rearrange_scores_o2sib(DependencyInstance* x,Csnn* m,nn_input* t,REAL* fscores,bool prob_ouput,bool prob_trans,double* rscores_o1);
-	static double* rearrange_scores_o3g(DependencyInstance* x,Csnn* m,nn_input* t,REAL* fscores,bool prob_ouput,bool prob_trans,double* rscores_o1,double* rscores_o2sib);
+	static double* rearrange_scores_o1(DependencyInstance* x,Csnn* m,nn_input* t,REAL* fscores,bool prob_ouput,bool prob_trans,HypherParameters*hh);
+	static double* rearrange_scores_o2sib(DependencyInstance* x,Csnn* m,nn_input* t,REAL* fscores,bool prob_ouput,bool prob_trans,double* rscores_o1,HypherParameters*hh);
+	static double* rearrange_scores_o3g(DependencyInstance* x,Csnn* m,nn_input* t,REAL* fscores,bool prob_ouput,bool prob_trans,double* rscores_o1,double* rscores_o2sib,HypherParameters*hh);
 	//3.1-c: get scores (combine forward and rearrange) --- only testing or training-parsing
 	static bool* get_cut_o1(DependencyInstance* x,CsnnO1* m,Dictionary *dict,double cut);
-	static double* get_scores_o1(DependencyInstance* x,Csnn* m,Dictionary* dict,bool trans);
-	static double* get_scores_o2sib(DependencyInstance* x,Csnn* m,Dictionary* dict,bool trans,bool* cut_o1,double* rscores_o1);
-	static double* get_scores_o3g(DependencyInstance* x,Csnn* m,Dictionary* dict,bool trans,bool* cut_o1,double* rscores_o1,double* rscores_o2sib);
+	static double* get_scores_o1(DependencyInstance* x,Csnn* m,Dictionary* dict,bool trans,HypherParameters*hh);
+	static double* get_scores_o2sib(DependencyInstance* x,Csnn* m,Dictionary* dict,bool trans,bool* cut_o1,double* rscores_o1,HypherParameters*hh);
+	static double* get_scores_o3g(DependencyInstance* x,Csnn* m,Dictionary* dict,bool trans,bool* cut_o1,double* rscores_o1,double* rscores_o2sib,HypherParameters*hh);
 	//3.2:parse (take care of the labeled situation)
 	void parse_o1(DependencyInstance* x);
 	void parse_o2sib(DependencyInstance* x,CsnnO1* o1_filter,CsnnO1* o1_scorer);
