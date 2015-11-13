@@ -109,13 +109,13 @@ static void trans_o2sib(double* s,double* nope,int len,int ln)
 	}
 }
 
-static void trans_o3g(double* s,double* nope,int len,int ln)
+static void trans_o3g(double* s,double* nope,long len,int ln)
 {
 	{
 	//to log number
 	double* tmp_yes = s;
 	double* tmp_nope = nope;
-	for(int i=0;i<len*len*len*len;i++){
+	for(long i=0;i<len*len*len*len;i++){
 		SET_LOG_HERE(tmp_yes,tmp_nope,ln);
 		tmp_yes += ln;
 		tmp_nope += 1;

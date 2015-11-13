@@ -185,7 +185,7 @@ void Process::filter_write(bool** noprobs)
 		for(int i=0;i<training_corpus->size();i++){
 			DependencyInstance* x = training_corpus->at(i);
 			int len = x->length();
-			noprobs[i] = new bool[len*len];		//o1filter
+//			noprobs[i] = new bool[len*len];		//o1filter	//DEBUG...
 			fout.write((char*)(noprobs[i]),sizeof(bool)*len*len);
 		}
 		fout.close();

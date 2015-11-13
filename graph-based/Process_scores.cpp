@@ -435,7 +435,7 @@ double* Process::rearrange_scores_o3g(DependencyInstance* x,Csnn* m,nn_input* th
 		bool prob_output,bool prob_trans,double* rscores_o1,double* rscores_o2sib)
 {
 	const int THE_DIM = 4;
-	int length = x->length();
+	long length = x->length();
 	int fs_dim = m->get_odim();
 	int num_label = fs_dim;
 	if(prob_output)	//if prob output, there is one for no-rel
