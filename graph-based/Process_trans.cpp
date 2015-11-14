@@ -124,7 +124,13 @@ static void trans_o3g(double* s,double* nope,long len,int ln)
 	//sum
 	for(int m=1;m<len;m++){
 		double all_nope = 0;
-		for(int h=0;h<len;h++){
+		//1.calculate nope
+		{//h=0
+			all_nope += nope[get_index2_o3g(len,0,0,0,m)];	//special one
+			for(int c=m-1;c>0;c--)
+				all_nope += nope[get_index2_o3g(len,0,0,c,m)];	//0,0,c,m
+		}
+		for(int h=1;h<len;h++){
 			if(h==m)
 				continue;
 			int small = GET_MIN_ONE(h,m);
@@ -139,11 +145,24 @@ static void trans_o3g(double* s,double* nope,long len,int ln)
 				for(int c=small+1;c<large;c++)
 					all_nope += nope[get_index2_o3g(len,g,h,c,m)];	//g,h,c,m
 			}
-			all_nope += nope[get_index2_o3g(len,0,0,0,m)];	//special one
-			for(int c=m-1;c>0;c--)
-				all_nope += nope[get_index2_o3g(len,0,0,c,m)];	//0,0,c,m
 		}
-		for(int h=0;h<len;h++){
+		//2.then ...
+		{
+			long ind = 0;
+			ind = get_index2_o3g(len,0,0,0,m);	//special one
+			for(int la=0;la<ln;la++){
+				long ind_la = get_index2_o3g(len,0,0,0,m,la,ln);
+				s[ind_la] += all_nope-nope[ind];
+			}
+			for(int c=m-1;c>0;c--){
+				ind = get_index2_o3g(len,0,0,c,m);	//0,0,c,m
+				for(int la=0;la<ln;la++){
+					long ind_la = get_index2_o3g(len,0,0,c,m,la,ln);
+					s[ind_la] += all_nope-nope[ind];
+				}
+			}
+		}
+		for(int h=1;h<len;h++){
 			long ind = 0;
 			if(h==m)
 				continue;
@@ -175,18 +194,6 @@ static void trans_o3g(double* s,double* nope,long len,int ln)
 						long ind_la = get_index2_o3g(len,g,h,c,m,la,ln);
 						s[ind_la] += all_nope-nope[ind];
 					}
-				}
-			}
-			ind = get_index2_o3g(len,0,0,0,m);	//special one
-			for(int la=0;la<ln;la++){
-				long ind_la = get_index2_o3g(len,0,0,0,m,la,ln);
-				s[ind_la] += all_nope-nope[ind];
-			}
-			for(int c=m-1;c>0;c--){
-				ind = get_index2_o3g(len,0,0,c,m);	//0,0,c,m
-				for(int la=0;la<ln;la++){
-					long ind_la = get_index2_o3g(len,0,0,c,m,la,ln);
-					s[ind_la] += all_nope-nope[ind];
 				}
 			}
 		}
