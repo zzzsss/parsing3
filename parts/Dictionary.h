@@ -41,6 +41,9 @@ private:
 public:
 	static string POS_START,POS_END,POS_UNK;
 	static string WORD_START,WORD_END,WORD_UNK;
+	static string WORD_DUMMY_L,WORD_DUMMY_R,WORD_ROOTG;
+	static string POS_DUMMY_L,POS_DUMMY_R,POS_ROOTG;
+
 	int getnum_word(){return map_word->size();}
 	int getnum_pos(){return map_pos->size();}
 	int getnum_deprel(){return map_deprel->size();}

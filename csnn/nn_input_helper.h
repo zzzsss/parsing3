@@ -17,6 +17,13 @@ public:
 	int start_pos;
 	int end_pos;
 
+	int dl_word;
+	int dr_word;
+	int rg_word;
+	int dl_pos;
+	int dr_pos;
+	int rg_pos;
+
 	static const int DIST_MAX=10,DIST_MIN=-10;
 	static int get_distance_index(int distance){
 		if(distance < DIST_MIN)

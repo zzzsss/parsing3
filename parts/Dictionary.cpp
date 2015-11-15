@@ -14,6 +14,13 @@ string Dictionary::WORD_START = "<w-s>";
 string Dictionary::WORD_END = "<w-e>";
 string Dictionary::WORD_UNK = "<w-unk>";
 
+string Dictionary::WORD_DUMMY_L = "<w-dl>";
+string Dictionary::WORD_DUMMY_R = "<w-dr>";
+string Dictionary::WORD_ROOTG = "<w-rg>";
+string Dictionary::POS_DUMMY_L = "<pos-dl>";
+string Dictionary::POS_DUMMY_R = "<pos-dr>";
+string Dictionary::POS_ROOTG = "<pos-rg>";
+
 //helper for special info
 nn_input_helper* Dictionary::common_helper = 0;
 nn_input_helper* Dictionary::get_helper(){
@@ -23,6 +30,13 @@ nn_input_helper* Dictionary::get_helper(){
 		common_helper->end_word = get_index_word(&WORD_END);
 		common_helper->start_pos = get_index_pos(&POS_START);
 		common_helper->end_pos = get_index_pos(&POS_END);
+
+		common_helper->dl_word = get_index_word(&WORD_DUMMY_L);
+		common_helper->dr_word = get_index_word(&WORD_DUMMY_R);
+		common_helper->rg_word = get_index_word(&WORD_ROOTG);
+		common_helper->dl_pos = get_index_pos(&POS_DUMMY_L);
+		common_helper->dr_pos = get_index_pos(&POS_DUMMY_R);
+		common_helper->rg_pos = get_index_pos(&POS_ROOTG);
 	}
 	return common_helper;
 }
@@ -37,6 +51,9 @@ void Dictionary::construct_dictionary(vector<DependencyInstance*>* corpus,void* 
 	map_pos->insert(pair<string*, int>(&POS_START,count++));
 	map_pos->insert(pair<string*, int>(&POS_END,count++));
 	map_pos->insert(pair<string*, int>(&POS_UNK,count++));
+	map_pos->insert(pair<string*, int>(&POS_DUMMY_L,count++));
+	map_pos->insert(pair<string*, int>(&POS_DUMMY_R,count++));
+	map_pos->insert(pair<string*, int>(&POS_ROOTG,count++));
 	for(int i=0;i<corpus->size();i++){
 		DependencyInstance* one = corpus->at(i);
 		vector<string*>* one_pos = one->postags;
@@ -84,6 +101,9 @@ void Dictionary::construct_dictionary(vector<DependencyInstance*>* corpus,void* 
 	map_word->insert(pair<string*, int>(&WORD_START,count++));
 	map_word->insert(pair<string*, int>(&WORD_END,count++));
 	map_word->insert(pair<string*, int>(&WORD_UNK,count++));
+	map_word->insert(pair<string*, int>(&WORD_DUMMY_L,count++));
+	map_word->insert(pair<string*, int>(&WORD_DUMMY_R,count++));
+	map_word->insert(pair<string*, int>(&WORD_ROOTG,count++));
 	for(HashMap::iterator iter=word_freq.begin();iter!=word_freq.end();iter++){
 		if(iter->second < remove_single){}
 		else

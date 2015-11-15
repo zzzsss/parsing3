@@ -31,14 +31,27 @@ void Csnn::f_inputs(){
 			int the_win = the_option->NN_win;	//window size(should be odd)
 			//2.special: s or g is -1, fill 0
 			if(cur_mod < 0){
+				//special word and pos
+				bool hm_direction = (this_input->inputs->at((order+1)*i) > this_input->inputs->at((order+1)*i+1));
+				int tmp_word_index, tmp_pos_index;
+				if(cur_head >= 0){	//only for s, and don't care about which one
+					tmp_word_index = hm_direction ? this_input->helper->dl_word : this_input->helper->dr_word;
+					tmp_pos_index = hm_direction ? this_input->helper->dl_pos : this_input->helper->dr_pos;
+				}
+				else{
+					tmp_word_index = this_input->helper->rg_word;
+					tmp_pos_index = this_input->helper->rg_pos;
+				}
+				//assign
 				for(int w=0;w<the_win;w++){	//!!DEBUG not <= but <
-					p_word->forward(-1,to_assign);
+					p_word->forward(tmp_word_index,to_assign);
 					to_assign += p_word->getd();
 				}
 				for(int w=0;w<the_win;w++){
-					p_pos->forward(-1,to_assign);
+					p_pos->forward(tmp_pos_index,to_assign);
 					to_assign += p_pos->getd();
 				}
+				//for s, these set to 0
 				if(cur_head >= 0){
 					p_distance->forward(-1,to_assign);
 					to_assign += p_distance->getd();
@@ -158,10 +171,26 @@ void Csnn::b_inputs(){
 			int the_win = the_option->NN_win;	//window size(should be odd)
 			//2.special: s or g is -1, fill 0
 			if(cur_mod < 0){		//no update //!!!!DEBUG:but need to add, right...
-				for(int w=0;w<the_win;w++)
+				//special word and pos
+				bool hm_direction = (this_input->inputs->at((order+1)*i) > this_input->inputs->at((order+1)*i+1));
+				int tmp_word_index, tmp_pos_index;
+				if(cur_head >= 0){	//only for s, and don't care about which one
+					tmp_word_index = hm_direction ? this_input->helper->dl_word : this_input->helper->dr_word;
+					tmp_pos_index = hm_direction ? this_input->helper->dl_pos : this_input->helper->dr_pos;
+				}
+				else{
+					tmp_word_index = this_input->helper->rg_word;
+					tmp_pos_index = this_input->helper->rg_pos;
+				}
+				//assign
+				for(int w=0;w<the_win;w++){
+					p_word->backward(tmp_word_index,to_grad);
 					to_grad += p_word->getd();
-				for(int w=0;w<the_win;w++)
+				}
+				for(int w=0;w<the_win;w++){
+					p_pos->backward(tmp_pos_index,to_grad);
 					to_grad += p_pos->getd();
+				}
 				if(cur_head >= 0){
 					to_grad += p_distance->getd();
 					if(the_option->NN_add_average){
