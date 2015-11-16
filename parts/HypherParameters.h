@@ -72,6 +72,8 @@ int CONF_score_noc_dev;	//no combine scores when dev
 double CONF_score_o1scale;
 double CONF_score_o2scale;
 
+double CONF_score_p2reg;	//reg directly for scores
+
 //1.6-others
 //int CONF_p1o1_training_random;	//special random one for M1_p1o1
 string CONF_embed_WL;	//word-list for embedding
@@ -114,6 +116,7 @@ HypherParameters(string conf):hp_nn()
 	CONF_score_noc_dev=1;
 	CONF_score_o1scale=1;
 	CONF_score_o2scale=1;
+	CONF_score_p2reg=0;
 
 //	CONF_p1o1_training_random=0;
 	CONF_embed_WL="";
@@ -179,6 +182,7 @@ HypherParameters(string conf):hp_nn()
 		else if(buf=="s_noc_dev")	fin >> CONF_score_noc_dev;
 		else if(buf=="s_scale_o1") fin >> CONF_score_o1scale;
 		else if(buf=="s_scale_o2")	fin >> CONF_score_o2scale;
+		else if(buf=="s_p2_reg")	fin >> CONF_score_p2reg;
 
 		//1.x -special : for nn_option
 		else if(buf=="n_wsize")		fin >> hp_nn.NN_wsize;

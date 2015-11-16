@@ -1,5 +1,5 @@
 /*
- * M2_p2o1.cpp
+ * M2_p2o2.cpp
  *
  *  Created on: Nov 16, 2015
  *      Author: zzs
@@ -7,8 +7,9 @@
 
 #include "M2_p2.h"
 #include "../algorithms/Eisner.h"
+#include "../algorithms/EisnerO2sib.h"
 
-void M2_p2o1::each_create_machine()
+void M2_p2o2::each_create_machine()
 {
 	//several need setting places
 	hp->hp_nn.NN_wnum = dict->getnum_word();
@@ -20,16 +21,40 @@ void M2_p2o1::each_create_machine()
 	else
 		hp->hp_nn.NN_out_size = 1;
 	//create the new mach
-	mach = Csnn::create(1,&hp->hp_nn);
+	mach = Csnn::create(2,&hp->hp_nn);
 }
 
-void M2_p2o1::each_test_one(DependencyInstance* x,int dev)
+void M2_p2o2::each_test_one(DependencyInstance* x,int dev)
 {
-	Process::parse_o1(x);
+	int noc_dev = dev ? hp->CONF_score_noc_dev : 0;
+	if(noc_dev)
+		Process::parse_o2sib(x,mfo1,0);
+	else
+		Process::parse_o2sib(x,mfo1,mso1);
 }
 
-void M2_p2o1::each_train_one_iter()
+void M2_p2o2::each_train_one_iter()
 {
+	static bool** STA_noprobs = 0;	//static ine, init only once
+	if(STA_noprobs==0 && !filter_read(STA_noprobs)){
+		//init only once
+		int all_tokens_train=0,all_token_filter_wrong=0;
+		time_t now;
+		time(&now);
+		cout << "-Preparing no_probs at " << ctime(&now) << endl;
+		STA_noprobs = new bool*[training_corpus->size()];
+		for(int i=0;i<training_corpus->size();i++){
+			DependencyInstance* x = training_corpus->at(i);
+			STA_noprobs[i] = get_cut_o1(x,mfo1,dict,hp->CONF_score_o1filter_cut);
+			all_tokens_train += x->length()-1;
+			for(int m=1;m<x->length();m++)
+				if(STA_noprobs[i][get_index2(x->length(),x->heads->at(m),m)])
+					all_token_filter_wrong ++;
+		}
+		cout << "For o1 filter: all " << all_tokens_train << ";filter wrong " << all_token_filter_wrong << endl;
+		filter_write(STA_noprobs);
+	}
+
 	//per-sentence approach
 	int mini_batch = hp->CONF_minibatch;
 	int num_sentences = training_corpus->size();
@@ -43,7 +68,7 @@ void M2_p2o1::each_train_one_iter()
 	//training
 	time_t now;
 	time(&now); //ctime is not rentrant ! use ctime_r() instead if needed
-	cout << "##*** //p2o1// Start the training for iter " << cur_iter << " at " << ctime(&now)
+	cout << "##*** Start the p1o2 training for iter " << cur_iter << " at " << ctime(&now)
 			<< "with lrate " << cur_lrate << endl;
 	cout << "#Sentences is " << num_sentences << " and resample (about)" << num_sentences*hp->CONF_NN_resample << endl;
 	for(int i=0;i<num_sentences;){
@@ -65,7 +90,7 @@ void M2_p2o1::each_train_one_iter()
 			//forward
 			DependencyInstance* x = training_corpus->at(i);
 			nn_input* the_inputs;
-			REAL *fscores = forward_scores_o1(x,mach,&the_inputs,dict->get_helper(),0,hp);
+			REAL *fscores = forward_scores_o2sib(x,mach,&the_inputs,dict->get_helper(),0,STA_noprobs[i],hp);
 			double* rscores = 0;
 			double* tmp_marginals = 0;
 
@@ -80,8 +105,8 @@ void M2_p2o1::each_train_one_iter()
 			int length = x->length();
 			if(!hp->CONF_labeled){
 				//calculate prob
-				rscores = rearrange_scores_o1(x,mach,the_inputs,fscores,0,0,hp);
-				tmp_marginals = encodeMarginals(length,rscores);
+				rscores = rearrange_scores_o2sib(x,mach,the_inputs,fscores,0,0,0,hp);
+				tmp_marginals = encodeMarginals_o2sib(length,rscores);
 			}
 			else{
 				FatalError("Not implemented now.");
@@ -92,24 +117,23 @@ void M2_p2o1::each_train_one_iter()
 			for(int ii=0;ii<the_inputs->num_inst*HERE_dim;ii+=HERE_dim){
 				int tmph = the_inputs->inputs->at(ii);
 				int tmpm = the_inputs->inputs->at(ii+1);
+				int tmps = the_inputs->inputs->at(ii+2);
+				if(tmps<0)
+					tmps = tmph;
 				int tmp_goal = the_inputs->goals->at(ii/HERE_dim);
 				for(int once=0;once<odim;once++,to_assign++){
 					if(tmp_goal == once)
-						*to_assign = -1 * (1 - tmp_marginals[get_index2(length,tmph,tmpm,once,odim)]) + *to_assign * hp->CONF_score_p2reg;
+						*to_assign = -1 * (1 - tmp_marginals[get_index2_o2sib(length,tmph,tmps,tmpm,once,odim)]) + *to_assign * hp->CONF_score_p2reg;
 					else
-						*to_assign = tmp_marginals[get_index2(length,tmph,tmpm,once,odim)] + *to_assign * hp->CONF_score_p2reg;	//now object is maximum
+						*to_assign = tmp_marginals[get_index2_o2sib(length,tmph,tmps,tmpm,once,odim)] + *to_assign * hp->CONF_score_p2reg;	//now object is maximum
 				}
 			}
 
 			//backward
 			mach->backward(fscores);
 
-			//mach->check_gradients(the_inputs);
-
 			delete the_inputs;
 			delete []fscores;
-			delete []rscores;
-			delete []tmp_marginals;
 
 			//out of the mini-batch
 			if(i>=num_sentences)
