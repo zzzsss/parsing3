@@ -88,6 +88,13 @@ protected:
 	bool filter_read(bool**&);	//read success if true
 	void filter_write(bool**);
 
+	//5.just for init of p2
+	void adjust_hp_p2(){
+		//make sure things go right even no setting in conf
+		hp->CONF_higho_percent = 1;
+		hp->CONF_score_prob = 0;
+	}
+
 public:
 	Process(string);
 	virtual ~Process(){}

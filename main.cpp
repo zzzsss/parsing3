@@ -10,6 +10,7 @@
 #include "graph-based/Process.h"
 #include "graph-based/M0_debug.h"
 #include "graph-based/M1_p1.h"
+#include "graph-based/M2_p2.h"
 
 /* <Version 1.6>
  * 		-- usage:	(mode 3 and 4 are for debugging)
@@ -39,6 +40,9 @@ int main(int argc,char **argv)
 		break;
 	case 3:
 		x = new M1_p1o3(conf);
+		break;
+	case 4:
+		x = new M2_p2o1(conf);
 		break;
 	}
 	if(argc == 2){
