@@ -68,7 +68,7 @@ void M2_p2o2::each_train_one_iter()
 	//training
 	time_t now;
 	time(&now); //ctime is not rentrant ! use ctime_r() instead if needed
-	cout << "##*** Start the p1o2 training for iter " << cur_iter << " at " << ctime(&now)
+	cout << "##*** // Start the p2o2 training for iter " << cur_iter << " at " << ctime(&now)
 			<< "with lrate " << cur_lrate << endl;
 	cout << "#Sentences is " << num_sentences << " and resample (about)" << num_sentences*hp->CONF_NN_resample << endl;
 	for(int i=0;i<num_sentences;){
