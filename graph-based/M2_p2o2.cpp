@@ -134,6 +134,8 @@ void M2_p2o2::each_train_one_iter()
 
 			delete the_inputs;
 			delete []fscores;
+			delete []rscores;
+			delete []tmp_marginals;
 
 			//out of the mini-batch
 			if(i>=num_sentences)
