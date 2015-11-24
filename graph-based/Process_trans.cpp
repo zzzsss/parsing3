@@ -19,8 +19,8 @@ static inline void SET_LOG_HERE(double* tmp_yes,double* tmp_nope,int ln){
 		else
 			tmp_yes[i] = log(tmp_yes[i]);
 	}
-	if(*tmp_nope == 1)//!!DEBUG
-		*tmp_nope = 0;
+	if(*tmp_nope <= 0)//!! ==0, it can happen
+		*tmp_nope = DOUBLE_LARGENEG;
 	else
 		*tmp_nope = log(*tmp_nope);
 }
