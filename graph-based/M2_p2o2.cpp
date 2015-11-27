@@ -109,7 +109,9 @@ void M2_p2o2::each_train_one_iter()
 				tmp_marginals = encodeMarginals_o2sib(length,rscores);
 			}
 			else{
-				FatalError("Not implemented now.");
+				//calculate prob
+				rscores = rearrange_scores_o2sib(x,mach,the_inputs,fscores,0,0,0,hp);
+				tmp_marginals = LencodeMarginals_o2sib(length,rscores,mach->get_odim());
 			}
 			//set gradients
 			int HERE_dim = the_inputs->num_width;

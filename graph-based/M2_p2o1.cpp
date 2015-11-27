@@ -84,7 +84,9 @@ void M2_p2o1::each_train_one_iter()
 				tmp_marginals = encodeMarginals(length,rscores);
 			}
 			else{
-				FatalError("Not implemented now.");
+				//calculate prob
+				rscores = rearrange_scores_o1(x,mach,the_inputs,fscores,0,0,hp);
+				tmp_marginals = LencodeMarginals(length,rscores,mach->get_odim());
 			}
 			//set gradients
 			int HERE_dim = the_inputs->num_width;
