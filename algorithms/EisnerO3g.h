@@ -43,7 +43,8 @@ inline long get_index2_o3g(int len,int g,int h,int c,int m,int l=0,int ln=1)
 }
 
 extern vector<int>* decodeProjective_o3g(int length,double* scores);
-extern double* encodeMarginals_o3g(const int length,const double* scores);
+extern double* encodeMarginals_o3g(const long length,const double* scores);
+extern double* LencodeMarginals_o3g(const long length,const double* scores,const int ln);	//labeled
 
 
 

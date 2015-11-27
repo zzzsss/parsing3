@@ -1,7 +1,7 @@
 /*
  * EncoderO3g.cpp
  *
- *  Created on: 2015Äê7ÔÂ15ÈÕ
+ *  Created on: 2015.7.15
  *      Author: zzs
  */
 
@@ -435,7 +435,7 @@ static void calc_outside(const int length,const double *beta,const double *probs
 //direction: 0,st(right);1,ts(left)
 //spans: 0,incomplete;1,complete;2,sibling
 
-double* encodeMarginals_o3g(const int length,const double* scores)
+double* encodeMarginals_o3g(const long length,const double* scores)
 {
 	double* marginals = new double[length*length*length*length];	//use get_index2
 	double *beta = new double[length * length * length * 2 * 3];
@@ -487,7 +487,73 @@ double* encodeMarginals_o3g(const int length,const double* scores)
 	return marginals;
 }
 
+double* LencodeMarginals_o3g(const long length,const double* scores,const int ln)
+{
+	double* marginals = new double[length*length*length*length*ln];	//use get_index2
+	double *beta = new double[length * length * length * 2 * 3];
+	double *alpha = new double[length * length * length * 2 * 3];
+	//sumlabel score
+	double* sum_scores = TMP_get_sumlabel(length*length*length*length,ln,scores);
+	double z = calc_inside(length, beta,sum_scores);
+	calc_outside(length,beta,sum_scores,alpha);
 
+	//get them
+	for(int s=0;s<length;s++){
+		for(int t=s+1;t<length;t++){
+			//loop on g
+			for(int g=0;g<length;g++){
+				if(g>=s && g<=t)
+					continue;
+			//gsst
+			for(int zl=0;zl<ln;zl++){
+				int key_assign = get_index2_o3g(length,g,s,s,t,zl,ln);
+				marginals[key_assign] = exp(beta[getKey(s,s+1,t,1,1,length)]+alpha[getKey(g,s,t,0,0,length)]+scores[key_assign]-z);
+			}
+			for(int r=s+1;r<t;r++){
+				//gsrt
+				for(int zl=0;zl<ln;zl++){
+					int key_assign = get_index2_o3g(length,g,s,r,t,zl,ln);
+					marginals[key_assign] = exp(beta[getKey(g,s,r,0,0,length)]+beta[getKey(s,r,t,0,2,length)]
+												 +alpha[getKey(g,s,t,0,0,length)]+scores[key_assign]-z);
+				}
+			}
+			//gtts
+			for(int zl=0;zl<ln;zl++){
+				int key_assign = get_index2_o3g(length,g,t,t,s,zl,ln);
+				marginals[key_assign] = exp(beta[getKey(t,s,t-1,0,1,length)]+alpha[getKey(g,s,t,1,0,length)]+scores[key_assign]-z);
+			}
+			for(int r=s+1;r<t;r++){
+				//gtrs
+				for(int zl=0;zl<ln;zl++){
+					int key_assign = get_index2_o3g(length,g,t,r,s,zl,ln);
+					marginals[key_assign] = exp(beta[getKey(g,r,t,1,0,length)]+beta[getKey(t,s,r,0,2,length)]
+												 +alpha[getKey(g,s,t,1,0,length)]+scores[key_assign]-z);
+				}
+			}
+			}
+		}
+	}
+	for(int t=1;t<length;t++){
+		//000t
+		for(int zl=0;zl<ln;zl++){
+			int key_assign = get_index2_o3g(length,0,0,0,t,zl,ln);
+			marginals[key_assign] = exp(beta[getKey(0,1,t,1,1,length)]+alpha[getKey(0,0,t,0,0,length)]+scores[key_assign]-z);
+		}
+		//00rt
+		for(int r=1;r<t;r++){
+			for(int zl=0;zl<ln;zl++){
+				int key_assign = get_index2_o3g(length,0,0,r,t,zl,ln);
+				marginals[key_assign] = exp(beta[getKey(0,0,r,0,0,length)]+beta[getKey(0,r,t,0,2,length)]
+											 +alpha[getKey(0,0,t,0,0,length)]+scores[key_assign]-z);
+			}
+		}
+	}
+
+	delete []beta;
+	delete []alpha;
+	delete []sum_scores;
+	return marginals;
+}
 
 
 

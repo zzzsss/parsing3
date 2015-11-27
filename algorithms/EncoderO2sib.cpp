@@ -1,7 +1,7 @@
 /*
  * EncoderO2sib.cpp
  *
- *  Created on: 2015Äê7ÔÂ7ÈÕ
+ *  Created on: 2015.7.7
  *      Author: zzs
  */
 
@@ -289,6 +289,54 @@ double* encodeMarginals_o2sib(const int length,const double* scores)
 
 	delete []beta;
 	delete []alpha;
+	return marginals;
+}
+
+double* LencodeMarginals_o2sib(const long length,const double* scores,const int ln)
+{
+	double* marginals = new double[length*length*length*ln];	//use get_index2
+	double *beta = new double[length * length * 2 * 3];
+	double *alpha = new double[length * length * 2 * 3];
+	//sumlabel score
+	double* sum_scores = TMP_get_sumlabel(length*length*length,ln,scores);
+	double z = calc_inside(length, beta,sum_scores);
+	calc_outside(length,beta,sum_scores,alpha);
+
+	//get them
+	for(int s=0;s<length;s++){
+		for(int t=s+1;t<length;t++){
+			//sst
+			for(int zl=0;zl<ln;zl++){
+				int key_assign = get_index2_o2sib(length,s,s,t,zl,ln);
+				marginals[key_assign] = exp(beta[getKey(s+1,t,1,1,length)]+alpha[getKey(s,t,0,0,length)]+scores[key_assign]-z);
+			}
+			for(int r=s+1;r<t;r++){
+				//srt
+				for(int zl=0;zl<ln;zl++){
+					int key_assign = get_index2_o2sib(length,s,r,t,zl,ln);
+					marginals[key_assign] = exp(beta[getKey(s,r,0,0,length)]+beta[getKey(r,t,0,2,length)]
+												 +alpha[getKey(s,t,0,0,length)]+scores[key_assign]-z);
+				}
+			}
+			//tts
+			for(int zl=0;zl<ln;zl++){
+				int key_assign = get_index2_o2sib(length,t,t,s,zl,ln);
+				marginals[key_assign] = exp(beta[getKey(s,t-1,0,1,length)]+alpha[getKey(s,t,1,0,length)]+scores[key_assign]-z);
+			}
+			for(int r=s+1;r<t;r++){
+				//trs
+				for(int zl=0;zl<ln;zl++){
+					int key_assign = get_index2_o2sib(length,t,r,s,zl,ln);
+					marginals[key_assign] = exp(beta[getKey(r,t,1,0,length)]+beta[getKey(s,r,0,2,length)]
+												 +alpha[getKey(s,t,1,0,length)]+scores[key_assign]-z);
+				}
+			}
+		}
+	}
+
+	delete []beta;
+	delete []alpha;
+	delete []sum_scores;
 	return marginals;
 }
 

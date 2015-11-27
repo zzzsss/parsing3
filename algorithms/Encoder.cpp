@@ -189,3 +189,39 @@ double* encodeMarginals(const int length,const double* scores)
 	delete []alpha;
 	return marginals;
 }
+
+double* LencodeMarginals(const int length,const double* scores,const int ln)
+{
+	double* marginals = new double[length*length*ln];
+	double *beta = new double[length * length * 2 * 2];
+	double *alpha = new double[length * length * 2 * 2];
+	//sumlabel score
+	double* sum_scores = TMP_get_sumlabel(length*length,ln,scores);
+	double z = calc_inside(length, beta,sum_scores);
+	calc_outside(length,beta,sum_scores,alpha);
+
+	for(int i=0;i<length;i++){
+		for(int j=i+1;j<length;j++){
+			//i->j
+			int key_io = getKey(i, j, 0, 0, length);
+			double tmp_mscore = beta[key_io]+alpha[key_io]-z-sum_scores[get_index2(length,i,j)];
+			for(int zl=0;zl<ln;zl++){
+				int key_assign = get_index2(length,i,j,zl,ln);
+				marginals[key_assign] = exp(tmp_mscore+scores[key_assign]);
+			}
+			//j->i
+			key_io = getKey(i, j, 1, 0, length);
+			tmp_mscore = beta[key_io]+alpha[key_io]-z-sum_scores[get_index2(length,j,i)];
+			for(int zl=0;zl<ln;zl++){
+				int key_assign = get_index2(length,j,i,zl,ln);
+				marginals[key_assign] = exp(tmp_mscore+scores[key_assign]);
+			}
+		}
+	}
+	delete []beta;
+	delete []alpha;
+	delete []sum_scores;
+	return marginals;
+}
+
+

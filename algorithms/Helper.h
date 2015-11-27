@@ -1,7 +1,7 @@
 /*
  * Helper.h
  *
- *  Created on: 2015Äê6ÔÂ8ÈÕ
+ *  Created on:
  *      Author: zzs
  */
 
@@ -21,6 +21,24 @@ inline double logsumexp(double x, double y, bool flg) {
 	}else{
 		return vmax + log(exp(vmin - vmax) + 1.0);
 	}
+}
+
+static double* TMP_get_sumlabel(long all,int ln,const double* s)
+{
+	//for all, sum-score = logsum(scores-of-labels); s==all*ln
+	double* ret = new double[all];
+	double* to_assign = ret;
+	const double* from_assign = s;
+	for(long i=0;i<all;i++){
+		bool flg = true;
+		for(int ll=0;ll<ln;ll++){
+			*to_assign = logsumexp(*to_assign,*from_assign,flg);
+			from_assign++;
+			flg = false;
+		}
+		to_assign++;
+	}
+	return ret;
 }
 
 #endif /* ALGORITHMS_HELPER_H_ */
