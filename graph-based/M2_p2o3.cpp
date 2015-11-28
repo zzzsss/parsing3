@@ -1,30 +1,31 @@
 /*
- * M1_p1o3.cpp
+ * M2_p2o3.cpp
  *
- *  Created on: Nov 12, 2015
+ *  Created on: Nov 28, 2015
  *      Author: zzs
  */
 
-#include "M1_p1.h"
+#include "M2_p2.h"
 #include "../algorithms/Eisner.h"
+#include "../algorithms/EisnerO3g.h"
 
-//only before training (and after building dictionary)
-void M1_p1o3::each_create_machine()
+
+void M2_p2o3::each_create_machine()
 {
 	//several need setting places
 	hp->hp_nn.NN_wnum = dict->getnum_word();
 	hp->hp_nn.NN_pnum = dict->getnum_pos();
 	hp->hp_nn.NN_dnum = dict->get_helper()->get_distance_num();
-	hp->hp_nn.NN_out_prob = 1;
+	hp->hp_nn.NN_out_prob = 0;	//not softmax here
 	if(hp->CONF_labeled)
-		hp->hp_nn.NN_out_size = dict->getnum_deprel()+1;
+		hp->hp_nn.NN_out_size = dict->getnum_deprel();
 	else
-		hp->hp_nn.NN_out_size = 2;
+		hp->hp_nn.NN_out_size = 1;
 	//create the new mach
-	mach = Csnn::create(3,&hp->hp_nn);	//order 3 mach
+	mach = Csnn::create(3,&hp->hp_nn);
 }
 
-void M1_p1o3::each_test_one(DependencyInstance* x,int dev)
+void M2_p2o3::each_test_one(DependencyInstance* x,int dev)
 {
 	int noc_dev = dev ? hp->CONF_score_noc_dev : 0;
 	if(noc_dev)
@@ -33,7 +34,7 @@ void M1_p1o3::each_test_one(DependencyInstance* x,int dev)
 		Process::parse_o3g(x,mfo1,mso1,mso2);
 }
 
-void M1_p1o3::each_train_one_iter()
+void M2_p2o3::each_train_one_iter()
 {
 	static bool** STA_noprobs = 0;	//static ine, init only once
 	if(STA_noprobs==0 && !filter_read(STA_noprobs)){
@@ -68,7 +69,7 @@ void M1_p1o3::each_train_one_iter()
 	//training
 	time_t now;
 	time(&now); //ctime is not rentrant ! use ctime_r() instead if needed
-	cout << "##*** Start the p1o3 training for iter " << cur_iter << " at " << ctime(&now)
+	cout << "##*** // Start the p2o3 training for iter " << cur_iter << " at " << ctime(&now)
 			<< "with lrate " << cur_lrate << endl;
 	cout << "#Sentences is " << num_sentences << " and resample (about)" << num_sentences*hp->CONF_NN_resample << endl;
 	for(int i=0;i<num_sentences;){
@@ -91,6 +92,8 @@ void M1_p1o3::each_train_one_iter()
 			DependencyInstance* x = training_corpus->at(i);
 			nn_input* the_inputs;
 			REAL *fscores = forward_scores_o3g(x,mach,&the_inputs,dict->get_helper(),0,STA_noprobs[i],hp);
+			double* rscores = 0;
+			double* tmp_marginals = 0;
 
 			this_instance += the_inputs->get_numi();
 			all_forward_instance += the_inputs->get_numi();
@@ -99,12 +102,37 @@ void M1_p1o3::each_train_one_iter()
 			this_sentence ++;
 			i++;
 
-			//prepare gradients --- softmax -> fscores as gradient
-			REAL *to_change = fscores;
-			for(int ii=0;ii<the_inputs->get_numi();ii++){
-				int tmp_goal = the_inputs->goals->at(ii);
-				to_change[tmp_goal] -= 1;	//-1 for the right one
-				to_change += odim;
+			//two situations
+			int length = x->length();
+			if(!hp->CONF_labeled){
+				//calculate prob
+				rscores = rearrange_scores_o3g(x,mach,the_inputs,fscores,0,0,0,0,hp);
+				tmp_marginals = encodeMarginals_o3g(length,rscores);
+			}
+			else{
+				//calculate prob
+				rscores = rearrange_scores_o3g(x,mach,the_inputs,fscores,0,0,0,0,hp);
+				tmp_marginals = LencodeMarginals_o3g(length,rscores,mach->get_odim());
+			}
+			//set gradients
+			int HERE_dim = the_inputs->num_width;
+			REAL* to_assign = fscores;
+			for(int ii=0;ii<the_inputs->num_inst*HERE_dim;ii+=HERE_dim){
+				int tmph = the_inputs->inputs->at(ii);
+				int tmpm = the_inputs->inputs->at(ii+1);
+				int tmps = the_inputs->inputs->at(ii+2);
+				int tmpg = the_inputs->inputs->at(ii+3);
+				if(tmps<0)
+					tmps = tmph;
+				if(tmpg<0)
+					tmpg = 0;
+				int tmp_goal = the_inputs->goals->at(ii/HERE_dim);
+				for(int once=0;once<odim;once++,to_assign++){
+					if(tmp_goal == once)
+						*to_assign = -1 * (1 - tmp_marginals[get_index2_o3g(length,tmpg,tmph,tmps,tmpm,once,odim)]) + *to_assign * hp->CONF_score_p2reg;
+					else
+						*to_assign = tmp_marginals[get_index2_o3g(length,tmpg,tmph,tmps,tmpm,once,odim)] + *to_assign * hp->CONF_score_p2reg;	//now object is maximum
+				}
 			}
 
 			//backward
@@ -112,6 +140,8 @@ void M1_p1o3::each_train_one_iter()
 
 			delete the_inputs;
 			delete []fscores;
+			delete []rscores;
+			delete []tmp_marginals;
 
 			//out of the mini-batch
 			if(i>=num_sentences)
@@ -131,6 +161,3 @@ void M1_p1o3::each_train_one_iter()
 	cout << "Iter done, skip " << skip_sent_num << " sentences and f&b " << all_forward_instance
 			<< ";good/bad: " << all_inst_right << "/" << all_inst_wrong << endl;
 }
-
-
-

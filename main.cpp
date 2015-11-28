@@ -47,6 +47,9 @@ int main(int argc,char **argv)
 	case 5:
 		x = new M2_p2o2(conf);
 		break;
+	case 6:
+		x = new M2_p2o3(conf);
+		break;
 	}
 	if(argc == 2){
 		//training

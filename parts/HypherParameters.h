@@ -82,6 +82,7 @@ double CONF_embed_ISCALE;
 int CONF_NN_untied_changeto;	//later change to untied ones
 int CONF_NN_untied_changetoiter;//when to change
 string CONF_o1filter_file;		//stored file for o1filter
+int CONF_o3_toolong;	//when training, skip long sentences
 
 //init
 HypherParameters(string conf):hp_nn()
@@ -92,7 +93,7 @@ HypherParameters(string conf):hp_nn()
 	CONF_mach_name="nn.mach";
 	CONF_mach_cur_suffix=".curr";
 	CONF_mach_best_suffix=".best";
-	CONF_NN_LRATE=0.03;
+	CONF_NN_LRATE=0.04;
 	CONF_NN_ITER=12;	//maybe more iters
 	CONF_NN_ITER_decrease=1;
 	CONF_NN_ITER_force_half=3;	//usually cut three times
@@ -107,16 +108,16 @@ HypherParameters(string conf):hp_nn()
 	CONF_minibatch=-256;		//-256: at least 256 instances
 	CONF_dict_remove=3;
 	CONF_random_seed=12345;
-	CONF_labeled=0;
+	CONF_labeled=1;
 	CONF_score_prob=1;
-	CONF_score_o1filter_cut=1e-5;
+	CONF_score_o1filter_cut=1e-4;
 	CONF_score_mach_so1="";
 	CONF_score_mach_so2sib="";
 	CONF_higho_percent=1.0;
 	CONF_score_noc_dev=1;
 	CONF_score_o1scale=1;
 	CONF_score_o2scale=1;
-	CONF_score_p2reg=0;
+	CONF_score_p2reg=1e-3;
 
 //	CONF_p1o1_training_random=0;
 	CONF_embed_WL="";
@@ -124,6 +125,7 @@ HypherParameters(string conf):hp_nn()
 	CONF_embed_ISCALE=1;
 	CONF_NN_untied_changeto=0;
 	CONF_NN_untied_changetoiter=-1; //nope
+	CONF_o3_toolong = 110;
 
 	//read in conf-file
 #define DATA_LINE_LEN 10000
@@ -212,6 +214,7 @@ HypherParameters(string conf):hp_nn()
 		else if(buf=="untied_change_way")	fin >> CONF_NN_untied_changeto;
 		else if(buf=="untied_change_iter")	fin >> CONF_NN_untied_changetoiter;
 		else if(buf=="filter_file")	fin >> CONF_o1filter_file;
+		else if(buf=="o3_toolong")	fin >> CONF_o3_toolong;
 		else
 			cerr << "Unknown option " << buf << endl;
 	}
