@@ -38,9 +38,11 @@ int main(int argc,char **argv)
 	case 2:
 		x = new M1_p1o2(conf);
 		break;
+//----------------method3 is quite not stable---------
 	case 3:
 		x = new M1_p1o3(conf);
 		break;
+//----------------------------------------------------
 	case 4:
 		x = new M2_p2o1(conf);
 		break;
