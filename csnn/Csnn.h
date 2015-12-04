@@ -18,6 +18,7 @@
 #include <fstream>
 
 #include "nn_options.h"
+#include "sl_part.h"
 using namespace std;
 
 //----------------------CSNN-----------------------
@@ -50,6 +51,9 @@ protected:
 	nn_wv *p_word;
 	nn_wv *p_pos;
 	nn_wv *p_distance;
+	nn_wv *p_sd;	//sent-level distance
+
+	sl_part *p_sl;
 
 	void construct_caches();			//init and read
 	void prepare_caches(int);			//before f/b

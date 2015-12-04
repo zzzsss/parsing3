@@ -45,7 +45,7 @@ void Csnn::check_gradients(nn_input* in)
 	const REAL step = 1e-2;
 	const REAL threshold = 1e-4;
 
-	for(int p=0;p<to_changes.size();p++){
+	for(unsigned int p=0;p<to_changes.size();p++){
 		//check on w
 		for(int i=0;i<TMP_each_times;i++){
 			nn_wb* to_change = to_changes[p];
@@ -109,7 +109,7 @@ void Csnn::check_gradients(nn_input* in)
 	to_changes2.push_back(p_pos);
 	to_changes2.push_back(p_distance);
 	//const int TMP_each_times = 10;
-	for(int p=0;p<to_changes.size();p++){
+	for(unsigned int p=0;p<to_changes.size();p++){
 	for(int i=0;i<TMP_each_times;i++){
 		nn_wv* to_change = to_changes2[p];
 		//choose one

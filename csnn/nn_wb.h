@@ -20,6 +20,7 @@ private:
 	bool updating;
 	int idim;
 	int odim;
+	bool nobias;
 
 	REAL* w;	//o*i
 	REAL* b;	//o
@@ -45,10 +46,12 @@ private:
 		//memset(b_square,0,sizeof(REAL)*odim);
 		for(int i=0;i<odim;i++)
 			b_square[i] = 1;
+		if(nobias)
+			memset(b,0,sizeof(REAL)*odim);
 	}
 
 public:
-	nn_wb(int i,int o):updating(true),idim(i),odim(o){
+	nn_wb(int i,int o,bool no=false):updating(true),idim(i),odim(o),nobias(no){
 		int all = i*o;	//int is enough
 		w = new REAL[all];
 		b = new REAL[o];
@@ -71,6 +74,7 @@ public:
 		b_moment = new REAL[o];
 		w_square = new REAL[all];
 		b_square = new REAL[o];
+		nobias = x.nobias;
 		init_clear();
 		//only copy w and b, right ??
 		memcpy(w,x.w,sizeof(REAL)*all);
@@ -80,6 +84,8 @@ public:
 		memcpy(b_moment,x.b_moment,sizeof(REAL)*o);
 		memcpy(w_square,x.w_square,sizeof(REAL)*all);
 		memcpy(b_square,x.b_square,sizeof(REAL)*o);
+		if(nobias)
+			memset(b,0,sizeof(REAL)*odim);
 	}
 	void get_init(const REAL frange,const REAL range){
 		//fanio for weight and random for bias
@@ -123,6 +129,7 @@ public:
 
 	//binary r/w
 	nn_wb(std::ifstream &fin):updating(true){
+		fin.read((char*)&nobias,sizeof(bool));
 		fin.read((char*)&idim,sizeof(int));
 		fin.read((char*)&odim,sizeof(int));
 		int all = idim*odim;	//int is enough
@@ -139,6 +146,7 @@ public:
 		init_clear();
 	}
 	void write_params(std::ofstream &fout){
+		fout.write((char*)&nobias,sizeof(bool));
 		fout.write((char*)&idim,sizeof(int));
 		fout.write((char*)&odim,sizeof(int));
 		fout.write((char*)w,sizeof(REAL)*idim*odim);	//!!DEBUG, don't need &

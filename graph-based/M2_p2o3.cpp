@@ -44,7 +44,7 @@ void M2_p2o3::each_train_one_iter()
 		time(&now);
 		cout << "-Preparing no_probs at " << ctime(&now) << endl;
 		STA_noprobs = new bool*[training_corpus->size()];
-		for(int i=0;i<training_corpus->size();i++){
+		for(unsigned int i=0;i<training_corpus->size();i++){
 			DependencyInstance* x = training_corpus->at(i);
 			STA_noprobs[i] = get_cut_o1(x,mfo1,dict,hp->CONF_score_o1filter_cut);
 			all_tokens_train += x->length()-1;
@@ -57,7 +57,6 @@ void M2_p2o3::each_train_one_iter()
 	}
 
 	//per-sentence approach
-	int mini_batch = hp->CONF_minibatch;
 	int num_sentences = training_corpus->size();
 	//statistics
 	int skip_sent_num = 0;

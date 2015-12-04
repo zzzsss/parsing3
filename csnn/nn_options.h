@@ -47,9 +47,18 @@ public:
 	REAL NN_init_wvrange;
 
 	//special dropout and activation for the first layer
-	REAL NN_dropout_wrepr;
-	int NN_act_wrepr;
+	REAL NN_dropout_repr;
+	int NN_act_repr;
 
+	//###FOR SENT-LEVEL REPR###
+	// -- before: NN_add_sent; NN_srsize;
+	int NN_sl_way;
+	int NN_sdnum;	//number of sl-distance	//------------------need setting before training------------//
+	int NN_sdsize;	//sl-distance embed size
+	int NN_sl_filter;
+
+//------------------------------------------------------------------------------------
+	//---size for repr layer
 	int get_NN_srsize(){
 		if(NN_add_sent)
 			return NN_srsize;
@@ -67,8 +76,14 @@ public:
 	}
 
 	//init and r/w
-	nn_options(){default_init();}
-	nn_options(std::ifstream &fin){read(fin);}
+	void init_check(){
+		if(NN_dropout_repr<0)
+			NN_dropout_repr = NN_dropout;
+		if(NN_act_repr<0)
+			NN_act_repr = NN_act;
+	}
+	nn_options(){default_init();init_check();}
+	nn_options(std::ifstream &fin){read(fin);init_check();}
 
 	void default_init(){
 		//!! need setting !!
@@ -94,7 +109,7 @@ public:
 		NN_act = 0;		//ACT_TANH
 		NN_hidden_size = 100;
 		NN_wrsize = 200;
-		NN_srsize = 0;
+		NN_srsize = 100;
 
 		NN_dropout = 0;
 
@@ -102,8 +117,16 @@ public:
 		NN_init_wb_brange = 0.1;
 		NN_init_wvrange = 0.1;
 
-		NN_dropout_wrepr=0;
-		NN_act_wrepr=0;
+		//default as NN_act and NN_dropout
+		NN_dropout_repr=-1;
+		NN_act_repr=-1;
+
+		//###SENTENCE-LEVEL###
+		NN_sl_way = 0;
+		//NN_sdnum = ?;	//!! need setting !!
+		NN_sdnum = 100;	//or setting
+		NN_sdsize = 50;
+		NN_sl_filter = 7;
 	}
 	//
 	void read(std::ifstream &fin){
@@ -136,8 +159,13 @@ public:
 		fin.read((char*)&NN_init_wb_brange,sizeof(REAL));
 		fin.read((char*)&NN_init_wvrange,sizeof(REAL));
 
-		fin.read((char*)&NN_dropout_wrepr,sizeof(REAL));
-		fin.read((char*)&NN_act_wrepr,sizeof(int));
+		fin.read((char*)&NN_dropout_repr,sizeof(REAL));
+		fin.read((char*)&NN_act_repr,sizeof(int));
+
+		fin.read((char*)&NN_sl_way,sizeof(int));
+		fin.read((char*)&NN_sdnum,sizeof(int));
+		fin.read((char*)&NN_sdsize,sizeof(int));
+		fin.read((char*)&NN_sl_filter,sizeof(int));
 	}
 	void write(std::ofstream &fout){
 		fout.write((char*)&NN_wnum,sizeof(int));
@@ -169,8 +197,13 @@ public:
 		fout.write((char*)&NN_init_wb_brange,sizeof(REAL));
 		fout.write((char*)&NN_init_wvrange,sizeof(REAL));
 
-		fout.write((char*)&NN_dropout_wrepr,sizeof(REAL));
-		fout.write((char*)&NN_act_wrepr,sizeof(int));
+		fout.write((char*)&NN_dropout_repr,sizeof(REAL));
+		fout.write((char*)&NN_act_repr,sizeof(int));
+
+		fout.write((char*)&NN_sl_way,sizeof(int));
+		fout.write((char*)&NN_sdnum,sizeof(int));
+		fout.write((char*)&NN_sdsize,sizeof(int));
+		fout.write((char*)&NN_sl_filter,sizeof(int));
 	}
 };
 

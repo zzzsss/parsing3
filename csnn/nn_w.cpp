@@ -17,7 +17,7 @@ void nn_wb::forward(/*const*/REAL* in,REAL* out,int bsize)
 	// out   =   w   *   in   +   b
 	// o*bs		o*i		i*bs
 	for (int e=0; e<bsize; e++)
-		memcpy(out+e*odim,b,odim*sizeof(REAL));
+		memcpy(out+e*odim,b,odim*sizeof(REAL));	//if nobias, b should always be 0
 	if(bsize > 1)
 		nn_math::op_A_mult_B(out,w,in,odim,bsize,idim,false,false,1,1);
 	else
@@ -39,8 +39,10 @@ void nn_wb::backward(/*const*/REAL* ograd,REAL* igrad,/*const*/REAL* in,int bsiz
 	if(updating){
 		//gradient of b
 		REAL *gptr = ograd;
-		for (int e=0; e<bsize; e++, gptr+=odim)
-			nn_math::op_y_plus_ax(odim,b_grad,gptr,1);	//!!DEBUG: not ograd but gptr
+		if(!nobias){
+			for (int e=0; e<bsize; e++, gptr+=odim)
+				nn_math::op_y_plus_ax(odim,b_grad,gptr,1);	//!!DEBUG: not ograd but gptr
+		}
 		//gradient of w
 		//gw += ograd * in'
 		//o*i	o*b		b*i
@@ -52,7 +54,9 @@ void nn_wb::update(int way,REAL lrate,REAL wdecay,REAL m_alpha,REAL rms_smooth,i
 {
 	//update
 	nn_math::opt_update(way,idim*odim,lrate,wdecay,m_alpha,rms_smooth,w,w_grad,w_moment,w_square,mbsize);
-	nn_math::opt_update(way,odim,lrate,0,m_alpha,rms_smooth,b,b_grad,b_moment,b_square,mbsize);	//no wd for b
+	if(!nobias){
+		nn_math::opt_update(way,odim,lrate,0,m_alpha,rms_smooth,b,b_grad,b_moment,b_square,mbsize);	//no wd for b
+	}
 	//clear the gradient
 	clear_grad();
 }
@@ -61,7 +65,8 @@ void nn_wb::nesterov_update(int way,REAL m_alpha)
 {
 	//Nesterov update before mini-batch (currently only for nn_wb)
 	nn_math::op_y_plus_ax(idim*odim,w,w_moment,m_alpha);
-	nn_math::op_y_plus_ax(odim,b,b_moment,m_alpha);
+	if(!nobias)
+		nn_math::op_y_plus_ax(odim,b,b_moment,m_alpha);
 }
 
 //----------------------------------------------------------

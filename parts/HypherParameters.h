@@ -203,8 +203,12 @@ HypherParameters(string conf):hp_nn()
 		else if(buf=="n_init_wfio")	fin >> hp_nn.NN_init_wb_faniorange;	//if <= 0, no-fanio,just brange
 		else if(buf=="n_init_wb")	fin >> hp_nn.NN_init_wb_brange;
 		else if(buf=="n_init_wv")	fin >> hp_nn.NN_init_wvrange;
-		else if(buf=="n_drop_w")	fin >> hp_nn.NN_dropout_wrepr;
-		else if(buf=="n_act_w")		fin >> hp_nn.NN_act_wrepr;
+		else if(buf=="n_drop_r")	fin >> hp_nn.NN_dropout_repr;
+		else if(buf=="n_act_r")		fin >> hp_nn.NN_act_repr;
+
+		else if(buf=="n_sdsize")	fin >> hp_nn.NN_sdsize;
+		else if(buf=="n_sl_way")	fin >> hp_nn.NN_sl_way;
+		else if(buf=="n_sl_filter")	fin >> hp_nn.NN_sl_filter;
 
 		//1.6-others
 //		else if(buf=="M1_train_random")		fin >> CONF_p1o1_training_random;

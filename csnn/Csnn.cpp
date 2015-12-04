@@ -65,11 +65,13 @@ void Csnn::prepare_dropout(){
 	//set possible dropout
 	//this is done before each MiniBatch
 	for(vector<nn_cache*>::iterator i=c_allcaches->begin();i!=c_allcaches->end();i++){
-		if(the_option->NN_dropout > 0 && (*i)!=c_out && (*i)!=c_wrepr)
+		if(the_option->NN_dropout > 0 && (*i)!=c_out)
 			(*i)->gen_dropout(the_option->NN_dropout);
 	}
-	if(the_option->NN_dropout_wrepr)
-		c_wrepr->gen_dropout(the_option->NN_dropout_wrepr);
+	if(the_option->NN_dropout_repr){
+		c_wrepr->gen_dropout(the_option->NN_dropout_repr);
+		c_srepr->gen_dropout(the_option->NN_dropout_repr);
+	}
 }
 
 void Csnn::clear_params(){
@@ -82,6 +84,9 @@ void Csnn::clear_params(){
 	p_word->clear_grad();
 	p_pos->clear_grad();
 	p_distance->clear_grad();
+	p_sd->clear_grad();
+	if(the_option->NN_add_sent)
+		p_sl->clear_grad();
 }
 
 void Csnn::construct_params(){
@@ -103,6 +108,10 @@ void Csnn::construct_params(){
 	p_pos->get_init(the_option->NN_init_wvrange);
 	p_distance = new nn_wv(the_option->NN_dnum,the_option->NN_dsize);
 	p_distance->get_init(the_option->NN_init_wvrange);
+	p_sd = new nn_wv(the_option->NN_sdnum,the_option->NN_sdsize);
+	p_sd->get_init(the_option->NN_init_wvrange);
+	if(the_option->NN_add_sent)
+		p_sl = new sl_part(the_option,get_order(),p_word,p_pos,p_sd);
 }
 
 void Csnn::read_params(std::ifstream &fin){
@@ -123,6 +132,9 @@ void Csnn::read_params(std::ifstream &fin){
 	p_word = new nn_wv(fin);
 	p_pos = new nn_wv(fin);
 	p_distance = new nn_wv(fin);
+	p_sd = new nn_wv(fin);
+	if(the_option->NN_add_sent)
+		p_sl = new sl_part(fin,the_option,get_order(),p_word,p_pos,p_sd);
 }
 
 void Csnn::write_params(std::ofstream &fout){
@@ -146,6 +158,9 @@ void Csnn::write_params(std::ofstream &fout){
 	p_word->write_params(fout);
 	p_pos->write_params(fout);
 	p_distance->write_params(fout);
+	p_sd->write_params(fout);
+	if(the_option->NN_add_sent)
+		p_sl->write_params(fout);
 }
 
 //-----------main methods-------------------------------
@@ -220,8 +235,14 @@ REAL* Csnn::forward(nn_input* in,int testing)
 		break;
 		}
 	}
+
+	//2.1.sl
+	if(the_option->NN_add_sent)
+		p_sl->forward(this_input,c_srepr->get_values());
+
 	//2.1.x: active and drop-out
-	c_wrepr->activate(the_option->NN_act_wrepr,this_bsize,the_option->NN_dropout_wrepr,testing);	//!!special NN_act_wrepr
+	c_wrepr->activate(the_option->NN_act_repr,this_bsize,the_option->NN_dropout_repr,testing);	//!!special NN_act_wrepr
+	c_srepr->activate(the_option->NN_act_repr,this_bsize,the_option->NN_dropout_repr,testing);
 
 	//2.x: combine and get c_repr, and then activate and drop-out
 	vector<nn_cache*> tmp_list;tmp_list.push_back(c_wrepr);tmp_list.push_back(c_srepr);
@@ -272,7 +293,8 @@ void Csnn::backward(REAL* gradients)
 	c_repr->dispatch_cache_grad(tmp_list,this_bsize);	//here gradient not adding, but really too lazy to change it
 
 	//4.0.x: wrepr backgrad
-	c_wrepr->backgrad(the_option->NN_act_wrepr,this_bsize,the_option->NN_dropout_wrepr);	//!!NN_act_wrepr
+	c_wrepr->backgrad(the_option->NN_act_repr,this_bsize,the_option->NN_dropout_repr);	//!!NN_act_wrepr
+	c_srepr->backgrad(the_option->NN_act_repr,this_bsize,the_option->NN_dropout_repr);
 
 	//4.1:wrepr->input --- the untied
 	if(the_option->NN_untied_dim==nn_options::NN_UNTIED_NOPE){
@@ -293,6 +315,10 @@ void Csnn::backward(REAL* gradients)
 			ptr_out += output_size;
 		}
 	}
+
+	//4.1.sl
+	if(the_option->NN_add_sent)
+		p_sl->backward(c_srepr->get_gradients());
 
 	//5: the input wv
 	// - no activation
@@ -316,6 +342,10 @@ void Csnn::update(int way,REAL lrate,REAL wdecay,REAL m_alpha,REAL rms_smooth)
 		p_pos->update(way,lrate,wdecay,m_alpha,rms_smooth,this_mbsize);
 	if(p_distance->need_updating())
 		p_distance->update(way,lrate,wdecay,m_alpha,rms_smooth,this_mbsize);
+	if(p_sd->need_updating())
+		p_sd->update(way,lrate,wdecay,m_alpha,rms_smooth,this_mbsize);
+	if(the_option->NN_add_sent && p_sl->need_updating())
+		p_sl->update(way,lrate,wdecay,m_alpha,rms_smooth,this_mbsize);
 	this_mbsize = 0;
 }
 
@@ -336,4 +366,6 @@ void Csnn::nesterov_update(int way,REAL m_alpha)
 		if(ttt != 0 && ttt->need_updating())
 			ttt->nesterov_update(way,m_alpha);
 	}
+	if(the_option->NN_add_sent && p_sl->need_updating())
+		p_sl->nesterov_update(way,m_alpha);
 }

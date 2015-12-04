@@ -14,6 +14,7 @@ void M1_p1o1::each_create_machine()
 	hp->hp_nn.NN_wnum = dict->getnum_word();
 	hp->hp_nn.NN_pnum = dict->getnum_pos();
 	hp->hp_nn.NN_dnum = dict->get_helper()->get_distance_num();
+	hp->hp_nn.NN_sdnum = dict->get_helper()->get_sd_num();
 	hp->hp_nn.NN_out_prob = 1;
 	if(hp->CONF_labeled)
 		hp->hp_nn.NN_out_size = dict->getnum_deprel()+1;
@@ -31,7 +32,6 @@ void M1_p1o1::each_test_one(DependencyInstance* x,int dev)
 void M1_p1o1::each_train_one_iter()
 {
 	//per-sentence approach
-	int mini_batch = hp->CONF_minibatch;
 	int num_sentences = training_corpus->size();
 	//statistics
 	int skip_sent_num = 0;

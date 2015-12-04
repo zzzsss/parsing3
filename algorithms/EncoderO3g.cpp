@@ -214,7 +214,7 @@ static void calc_outside(const int length,const double *beta,const double *probs
 		for(int s = 0; s + j < length; s++){
 			int t = s + j;
 			int key_a, key_b;
-			bool coord;
+			//bool coord;
 
 			for(int g = 0; g < s; g++){
 				//sibling spans
