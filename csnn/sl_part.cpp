@@ -103,6 +103,7 @@ void sl_part::forward(nn_input* inputs,REAL* out)
 		memcpy(mto_assign,mfrom_assign,sizeof(REAL)*odim);
 		for(int tmpi=0;tmpi<odim;tmpi++)
 			mto_index[tmpi] = 0;
+		mfrom_assign += odim;
 		//(2).update max one
 		for(int i=1;i<this_len;i++){	//from next one
 			for(int elem=0;elem<odim;elem++){
@@ -179,9 +180,9 @@ void sl_part::backward(/*const*/REAL* ograd)
 	}
 	nn_math::CHECK_EQUAL(grad_assign,ograd+odim*this_size,"Backward error of grad_assign.");
 	nn_math::CHECK_EQUAL(grad_dist,g_output_dist+odim*this_len*this_size,"Backward error of grad_dist.");
-	nn_math::CHECK_EQUAL(grad_wp,g_output_wp+odim*this_len,"Backward error of grad_wp.");
+	//nn_math::CHECK_EQUAL(grad_wp,g_output_wp+odim*this_len,"Backward error of grad_wp.");
 	nn_math::CHECK_EQUAL(val_dist,c_output_dist+odim*this_len*this_size,"Backward error of val_dist.");
-	nn_math::CHECK_EQUAL(val_wp,c_output_wp+odim*this_len,"Backward error of val_wp.");
+	//nn_math::CHECK_EQUAL(val_wp,c_output_wp+odim*this_len,"Backward error of val_wp.");
 	nn_math::CHECK_EQUAL(max_index,c_which+odim*this_size,"Backward error of max_index.");
 
 	//3.backward
