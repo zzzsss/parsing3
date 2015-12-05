@@ -10,7 +10,7 @@
 void sl_part::forward(nn_input* inputs,REAL* out)
 {
 	this_input = inputs;
-	const long this_size = inputs->num_inst;
+	const long this_size = this_input->num_inst;
 	const long this_len = this_input->wordl->size();
 	const int the_win = op->NN_sl_filter;	//should be odd-number
 
@@ -52,7 +52,7 @@ void sl_part::forward(nn_input* inputs,REAL* out)
 			}
 			d_word->forward(single_index,to_assign);
 			to_assign += d_word->getd();
-			d_pos->forward(single_index,to_assign);
+			d_pos->forward(pos_index,to_assign);
 			to_assign += d_pos->getd();
 		}
 	}
@@ -90,6 +90,8 @@ void sl_part::forward(nn_input* inputs,REAL* out)
 		nn_math::act_f(nn_math::ACT_TANH,c_output_dist,odim*this_len*this_size,0);
 		nn_math::op_y_elem_x(odim*this_len*this_size,c_output_tmp,c_output_dist);
 		break;
+	default:
+		nn_math::CHECK_EQUAL(op->NN_sl_way,(int)nn_options::NN_SL_ADDING,"Forward error of unknown attach-method.");
 	}
 
 	//5.max-pooling
@@ -124,5 +126,118 @@ void sl_part::forward(nn_input* inputs,REAL* out)
 
 void sl_part::backward(/*const*/REAL* ograd)
 {
+	const long this_size = this_input->num_inst;
+	const long this_len = this_input->wordl->size();
+	const int the_win = op->NN_sl_filter;	//should be odd-number
 
+	const int idim_wp = p_main->geti();
+	const int idim_dist = p_dist->geti();
+	const int odim = p_main->geto();
+
+	//1.allocate memory
+	REAL* g_input_wp = new REAL[idim_wp*this_len];
+	REAL* g_input_dist = new REAL[idim_dist*this_len*this_size];
+	REAL* g_output_wp = new REAL[odim*this_len];
+	REAL* g_output_dist = new REAL[odim*this_len*this_size];
+	memset(g_input_wp,0,sizeof(REAL)*idim_wp*this_len);
+	memset(g_input_dist,0,sizeof(REAL)*idim_dist*this_len*this_size);
+	memset(g_output_wp,0,sizeof(REAL)*odim*this_len);
+	memset(g_output_dist,0,sizeof(REAL)*odim*this_len*this_size);
+
+	//5.max-pooling && 4.attach distance
+	// ograd: srsize * num_inst (odim*this_size)
+	REAL* grad_assign = ograd;
+	REAL* grad_dist = g_output_dist;
+	REAL* grad_wp = g_output_wp;
+	REAL* val_dist = c_output_dist;
+	REAL* val_wp = c_output_wp;
+	int* max_index = c_which;
+	for(int inst=0;inst<this_size;inst++){
+		for(int elem=0;elem<odim;elem++){
+			REAL tmp_g = grad_assign[elem];
+			int tmp_index = max_index[elem];
+			int tmp_one = odim*tmp_index+elem;
+			switch(op->NN_sl_way){
+			case nn_options::NN_SL_ADDING:	//directly adding
+				grad_wp[tmp_one] += tmp_g;
+				grad_dist[tmp_one] += tmp_g;
+				break;
+			case nn_options::NN_SL_TANHMUL:	//element-wise multiply tanh(dist)
+				grad_wp[tmp_one] += tmp_g*val_dist[tmp_one];
+				grad_dist[tmp_one] += tmp_g*val_wp[tmp_one] * (1 - val_dist[tmp_one] * val_dist[tmp_one]);
+				break;
+			default:
+				nn_math::CHECK_EQUAL(op->NN_sl_way,(int)nn_options::NN_SL_ADDING,"Backward error of unknown attach-method.");
+			}
+		}
+		grad_assign += odim;
+		grad_dist += odim*this_len;
+		//grad_wp += 0;
+		val_dist += odim*this_len;
+		//val_wp += 0;
+		max_index += odim;
+	}
+	nn_math::CHECK_EQUAL(grad_assign,ograd+odim*this_size,"Backward error of grad_assign.");
+	nn_math::CHECK_EQUAL(grad_dist,g_output_dist+odim*this_len*this_size,"Backward error of grad_dist.");
+	nn_math::CHECK_EQUAL(grad_wp,g_output_wp+odim*this_len,"Backward error of grad_wp.");
+	nn_math::CHECK_EQUAL(val_dist,c_output_dist+odim*this_len*this_size,"Backward error of val_dist.");
+	nn_math::CHECK_EQUAL(val_wp,c_output_wp+odim*this_len,"Backward error of val_wp.");
+	nn_math::CHECK_EQUAL(max_index,c_which+odim*this_size,"Backward error of max_index.");
+
+	//3.backward
+	// --- notice this may be some kind of wasteful because many entries are 0, but maybe this is the most convenient way
+	p_main->backward(g_output_wp,g_input_wp,c_input_wp,this_len);
+	p_dist->backward(g_output_dist,g_input_dist,c_input_dist,this_len*this_size);
+
+	//2.back to embedding
+	//2.1 sentence
+	REAL* to_grad = g_input_wp;
+	for(int i=0;i<this_len;i++){	//for each center word
+		for(int w=i-the_win/2;w<=i+the_win/2;w++){
+			int single_index,pos_index;
+			if(w<0){
+				single_index = this_input->helper->start_word;
+				pos_index = this_input->helper->start_pos;
+			}
+			else if(w>=this_len){
+				single_index = this_input->helper->end_word;
+				pos_index = this_input->helper->end_pos;
+			}
+			else{
+				single_index = this_input->wordl->at(w);
+				pos_index = this_input->posl->at(w);
+			}
+			d_word->backward(single_index,to_grad);
+			to_grad += d_word->getd();
+			d_pos->backward(pos_index,to_grad);
+			to_grad += d_pos->getd();
+		}
+	}
+	nn_math::CHECK_EQUAL(to_grad,g_input_wp+idim_wp*this_len,"Backward error of g_input_wp.");
+	//2.2 sl distances
+	to_grad = g_input_dist;
+	for(vector<int>::const_iterator iter=this_input->inputs->begin();iter!=this_input->inputs->end();iter+=this_input->num_width){
+		for(int i=0;i<this_len;i++){
+			for(int ord=0;ord<this_input->num_width;ord++){
+				int location = *(iter+ord);
+				if(location < 0)
+					d_ds->backward(this_input->helper->get_sd_dummy(),to_grad);
+				else{
+					location = this_input->helper->get_sd_index(location - i);
+					d_ds->backward(location,to_grad);
+				}
+				to_grad += d_ds->getd();
+			}
+		}
+	}
+	nn_math::CHECK_EQUAL(to_grad,g_input_dist+idim_dist*this_len*this_size,"Backward error of g_input_dist.");
+
+	//clear
+	delete[] g_input_wp;
+	delete[] g_input_dist;
+	delete[] g_output_wp;
+	delete[] g_output_dist;
+
+	return;
 }
+
