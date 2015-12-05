@@ -52,6 +52,9 @@ public:
 
 	//###FOR SENT-LEVEL REPR###
 	// -- before: NN_add_sent; NN_srsize;
+	enum{
+		NN_SL_ADDING,NN_SL_TANHMUL
+	};
 	int NN_sl_way;
 	int NN_sdnum;	//number of sl-distance	//------------------need setting before training------------//
 	int NN_sdsize;	//sl-distance embed size

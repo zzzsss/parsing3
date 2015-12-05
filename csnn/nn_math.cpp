@@ -26,6 +26,12 @@ namespace nn_math{
 	void op_y_2(int n,REAL* y){
 		VSQR(&n,y);
 	}
+	//y = y <ele>* x
+	void op_y_elem_x(int n,REAL*y,const REAL*x){
+		//element-wise multiply
+		for(int i=0;i<n;i++,y++,x++)
+			*y *= *x;
+	}
 
 	//  GEMM( transa, transb, m, n, k, alpha, a, lda, b, ldb, beta, c, ldc )
 	// ** ld* means stride(property of A,B themselves); m,n,k means real dim after possible transposes

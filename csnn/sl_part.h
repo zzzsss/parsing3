@@ -32,7 +32,7 @@ protected:
 	nn_wb* p_dist;	//about distance info
 
 	//from outside
-	nn_input* this_input;
+	const nn_input* this_input;
 	nn_wv* d_word;
 	nn_wv* d_pos;
 	nn_wv* d_ds;	//remember this is sl-distance
@@ -40,9 +40,10 @@ protected:
 	//caches
 	REAL* c_input_wp;	//for input words and pos	(filter_num*(w+p)*len)
 	REAL* c_input_dist;	//for input distances		((order+1)*sd*len*num_inst)
-	REAL* c_output_wp;	//srsize*len*num_inst
+	REAL* c_output_wp;	//srsize*len
 	REAL* c_output_dist;//srsize*len*num_inst
 	//[nope, directly use outside one]REAL* c_max;		//srsize*num_inst --- after max-pooling
+	REAL* c_output_tmp;	//before max-pooling
 	int * c_which;		//which one is max (srsize*num_inst, [0,len))
 
 	void the_init(nn_options* o,int the_order,nn_wv* dw,nn_wv* dp,nn_wv* dd){
@@ -51,6 +52,7 @@ protected:
 		this_input = 0;
 		c_input_wp = c_input_dist = 0;
 		c_output_wp = c_output_dist = 0;
+		c_output_tmp = 0;
 		c_which = 0;
 		d_word=dw;d_pos=dp;d_ds=dd;
 	}
