@@ -13,11 +13,17 @@
 //for nn_wb
 void nn_wb::forward(/*const*/REAL* in,REAL* out,int bsize)
 {
+	if(odim<=0)	return;
 	// classical matrix multiplication -- column major
 	// out   =   w   *   in   +   b
 	// o*bs		o*i		i*bs
-	for (int e=0; e<bsize; e++)
-		memcpy(out+e*odim,b,odim*sizeof(REAL));	//if nobias, b should always be 0
+	if(!nobias){
+		for (int e=0; e<bsize; e++)
+			memcpy(out+e*odim,b,odim*sizeof(REAL));	//if nobias, b should always be 0
+	}
+	else{
+		memset(out,0,odim*bsize*sizeof(REAL));
+	}
 	if(bsize > 1)
 		nn_math::op_A_mult_B(out,w,in,odim,bsize,idim,false,false,1,1);
 	else
@@ -26,6 +32,7 @@ void nn_wb::forward(/*const*/REAL* in,REAL* out,int bsize)
 
 void nn_wb::backward(/*const*/REAL* ograd,REAL* igrad,/*const*/REAL* in,int bsize)
 {
+	if(odim<=0)	return;
 	// again matrix
     // backprop gradient:   igrad   +=        w'        *   ograd
     //                    idim x bsize = (odim x idim)'  *  odim x bsize
@@ -52,6 +59,7 @@ void nn_wb::backward(/*const*/REAL* ograd,REAL* igrad,/*const*/REAL* in,int bsiz
 
 void nn_wb::update(int way,REAL lrate,REAL wdecay,REAL m_alpha,REAL rms_smooth,int mbsize)
 {
+	if(odim<=0)	return;
 	//update
 	nn_math::opt_update(way,idim*odim,lrate,wdecay,m_alpha,rms_smooth,w,w_grad,w_moment,w_square,mbsize);
 	if(!nobias){
@@ -63,6 +71,7 @@ void nn_wb::update(int way,REAL lrate,REAL wdecay,REAL m_alpha,REAL rms_smooth,i
 
 void nn_wb::nesterov_update(int way,REAL m_alpha)
 {
+	if(odim<=0)	return;
 	//Nesterov update before mini-batch (currently only for nn_wb)
 	nn_math::op_y_plus_ax(idim*odim,w,w_moment,m_alpha);
 	if(!nobias)

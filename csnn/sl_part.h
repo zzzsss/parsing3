@@ -103,6 +103,10 @@ public:
 		p_main->clear_grad();
 		p_dist->clear_grad();
 	}
+
+	//--------------------for gradient check---------------------------------------
+	nn_wb* get_pmain(){return p_main;}
+	nn_wb* get_pdist(){return p_dist;}
 };
 
 
