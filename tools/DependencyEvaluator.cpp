@@ -14,6 +14,7 @@ double DependencyEvaluator::evaluate(std::string &act_file, std::string &pred_fi
 	punctSet.insert(".");
 	punctSet.insert(":");
 	punctSet.insert(",");
+	punctSet.insert("PU");	//for CTB
 
 	CONLLReader* goldReader = new CONLLReader();
 	goldReader->startReading(act_file.c_str());
