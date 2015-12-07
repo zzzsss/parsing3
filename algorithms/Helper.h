@@ -23,6 +23,8 @@ inline double logsumexp(double x, double y, bool flg) {
 	}
 }
 
+#define DOUBLE_LARGENEG_P1 (-10000000.0+1)		//maybe it is enough	/******!! ../Process.h ******/
+
 static double* TMP_get_sumlabel(long all,int ln,const double* s)
 {
 	//for all, sum-score = logsum(scores-of-labels); s==all*ln
@@ -30,6 +32,12 @@ static double* TMP_get_sumlabel(long all,int ln,const double* s)
 	double* to_assign = ret;
 	const double* from_assign = s;
 	for(long i=0;i<all;i++){
+		if(*from_assign <= DOUBLE_LARGENEG_P1){	//----------------- to avoid exp for pruned edges, must be careful !!!!
+			*to_assign = *from_assign;
+			from_assign += ln;
+			to_assign ++;
+			continue;
+		}
 		bool flg = true;
 		for(int ll=0;ll<ln;ll++){
 			*to_assign = logsumexp(*to_assign,*from_assign,flg);
