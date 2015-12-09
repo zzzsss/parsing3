@@ -83,36 +83,58 @@ void sl_part::forward(nn_input* inputs,REAL* out)
 	for(int i=0;i<this_size;i++)
 		memcpy(c_output_tmp+i*odim*this_len,c_output_wp,sizeof(REAL)*odim*this_len);
 	switch(op->NN_sl_way){
-	case nn_options::NN_SL_ADDING:	//directly adding
+	case nn_options::NN_SL_ADDING_M:
+	case nn_options::NN_SL_ADDING_A:	//directly adding
 		nn_math::op_y_plus_ax(odim*this_len*this_size,c_output_tmp,c_output_dist,1);
 		break;
-	case nn_options::NN_SL_TANHMUL:	//element-wise multiply tanh(dist)
+	case nn_options::NN_SL_TANHMUL_M:
+	case nn_options::NN_SL_TANHMUL_A:	//element-wise multiply tanh(dist)
 		nn_math::act_f(nn_math::ACT_TANH,c_output_dist,odim*this_len*this_size,0);
 		nn_math::op_y_elem_x(odim*this_len*this_size,c_output_tmp,c_output_dist);
 		break;
 	default:
-		nn_math::CHECK_EQUAL(op->NN_sl_way,(int)nn_options::NN_SL_ADDING,"Forward error of unknown attach-method.");
+		nn_math::CHECK_EQUAL(op->NN_sl_way,(int)nn_options::NN_SL_ADDING_M,"Forward error of unknown attach-method.");
 	}
 
-	//5.max-pooling
+	//5.max-pooling or average-pooling
 	REAL* mto_assign = out;
 	int* mto_index = c_which;
 	const REAL* mfrom_assign = c_output_tmp;
 	for(int inst=0;inst<this_size;inst++){
-		//(1).all set to 0
-		memcpy(mto_assign,mfrom_assign,sizeof(REAL)*odim);
-		for(int tmpi=0;tmpi<odim;tmpi++)
-			mto_index[tmpi] = 0;
-		mfrom_assign += odim;
-		//(2).update max one
-		for(int i=1;i<this_len;i++){	//from next one
-			for(int elem=0;elem<odim;elem++){
-				REAL TMP_cur = *mfrom_assign++;	//add here
-				if(TMP_cur > mto_assign[elem]){
-					mto_assign[elem] = TMP_cur;
-					mto_index[elem] = i;
+		switch(op->NN_sl_way){
+		case nn_options::NN_SL_ADDING_M:
+		case nn_options::NN_SL_TANHMUL_M:
+			//(1).all set to 0
+			memcpy(mto_assign,mfrom_assign,sizeof(REAL)*odim);
+			for(int tmpi=0;tmpi<odim;tmpi++)
+				mto_index[tmpi] = 0;
+			mfrom_assign += odim;
+			//(2).update max one
+			for(int i=1;i<this_len;i++){	//from next one
+				for(int elem=0;elem<odim;elem++){
+					REAL TMP_cur = *mfrom_assign++;	//add here
+					if(TMP_cur > mto_assign[elem]){
+						mto_assign[elem] = TMP_cur;
+						mto_index[elem] = i;
+					}
 				}
 			}
+			break;
+		case nn_options::NN_SL_ADDING_A:
+		case nn_options::NN_SL_TANHMUL_A:
+			//set to 0 firstly
+			for(int tmpi=0;tmpi<odim;tmpi++)
+				mto_assign[tmpi] = 0;
+			//adding all
+			for(int i=0;i<this_len;i++){	//from 0
+				nn_math::op_y_plus_ax(odim,mto_assign,mfrom_assign,1);
+				mfrom_assign += odim;
+			}
+			//average
+			nn_math::op_y_mult_a(odim,mto_assign,1.0/this_len);
+			break;
+		default:
+			nn_math::CHECK_EQUAL(op->NN_sl_way,(int)nn_options::NN_SL_ADDING_M,"Forward error of unknown attach-method.");
 		}
 		mto_assign += odim;
 		mto_index += odim;
@@ -159,16 +181,32 @@ void sl_part::backward(/*const*/REAL* ograd)
 			int tmp_index = max_index[elem];
 			int tmp_one = odim*tmp_index+elem;
 			switch(op->NN_sl_way){
-			case nn_options::NN_SL_ADDING:	//directly adding
+			case nn_options::NN_SL_ADDING_M:	//directly adding
 				grad_wp[tmp_one] += tmp_g;
 				grad_dist[tmp_one] += tmp_g;
 				break;
-			case nn_options::NN_SL_TANHMUL:	//element-wise multiply tanh(dist)
+			case nn_options::NN_SL_TANHMUL_M:	//element-wise multiply tanh(dist)
 				grad_wp[tmp_one] += tmp_g*val_dist[tmp_one];
 				grad_dist[tmp_one] += tmp_g*val_wp[tmp_one] * (1 - val_dist[tmp_one] * val_dist[tmp_one]);
 				break;
+			case nn_options::NN_SL_ADDING_A:
+				tmp_g /= this_len;
+				for(int tmpl=0;tmpl<this_len;tmpl++){
+					int tmp_one = odim*tmpl+elem;
+					grad_wp[tmp_one] += tmp_g;
+					grad_dist[tmp_one] += tmp_g;
+				}
+				break;
+			case nn_options::NN_SL_TANHMUL_A:
+				tmp_g /= this_len;
+				for(int tmpl=0;tmpl<this_len;tmpl++){
+					int tmp_one = odim*tmpl+elem;
+					grad_wp[tmp_one] += tmp_g*val_dist[tmp_one];
+					grad_dist[tmp_one] += tmp_g*val_wp[tmp_one] * (1 - val_dist[tmp_one] * val_dist[tmp_one]);
+				}
+				break;
 			default:
-				nn_math::CHECK_EQUAL(op->NN_sl_way,(int)nn_options::NN_SL_ADDING,"Backward error of unknown attach-method.");
+				nn_math::CHECK_EQUAL(op->NN_sl_way,(int)nn_options::NN_SL_ADDING_M,"Backward error of unknown attach-method.");
 			}
 		}
 		grad_assign += odim;

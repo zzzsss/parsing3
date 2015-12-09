@@ -52,8 +52,8 @@ public:
 
 	//###FOR SENT-LEVEL REPR###
 	// -- before: NN_add_sent; NN_srsize;
-	enum{
-		NN_SL_ADDING,NN_SL_TANHMUL
+	enum{	//max-pooling or average-pooling
+		NN_SL_ADDING_M,NN_SL_TANHMUL_M,NN_SL_ADDING_A,NN_SL_TANHMUL_A
 	};
 	int NN_sl_way;
 	int NN_sdnum;	//number of sl-distance	//------------------need setting before training------------//
