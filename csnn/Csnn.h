@@ -53,7 +53,11 @@ protected:
 	nn_wv *p_distance;
 	nn_wv *p_sd;	//sent-level distance
 
-	sl_part *p_sl;
+	sl_part *p_sl;	//sent-level part
+
+	int pr_count;
+	nn_wb* p_pr_all;	//adding of all p_prs
+	nn_wb* p_pr;	//perceptron part, 0 means nope
 
 	void construct_caches();			//init and read
 	void prepare_caches(int);			//before f/b
@@ -86,13 +90,18 @@ protected:
 		fin.read((char*)&order,sizeof(order));	//!!first order
 		the_option = new nn_options(fin);
 		read_params(fin);
+		read_prparams(fin);		//should be at the end of fin, perceptron parameters
 		fin.close();
 		construct_caches();
 		print_info();
 	}
 	void print_info(){
 		cout << "-Structure for mach:" << c_wv->get_len() << "->" << c_repr->get_len()
-				<< "->" << c_h->get_len() << "->" << c_out->get_len() << endl;
+				<< "->" << c_h->get_len() << "->" << c_out->get_len();
+		if(p_pr){
+			cout << "->(Perceptron) " << p_pr->geto();
+		}
+		cout << endl;
 	}
 
 public:
@@ -106,6 +115,7 @@ public:
 		fout.write((char*)&order,sizeof(order));
 		the_option->write(fout);
 		write_params(fout);
+		write_prparams(fout);	//
 		fout.close();
 	}
 	static Csnn* read(string fname);
@@ -115,7 +125,7 @@ public:
 	//-- SHOULD BE: while(MiniBatch){prepare_batch;while(sent){f;b;}update;}
 	void prepare_batch();
 	//forward for one sentence
-	REAL* forward(nn_input* in,int testing);	//return new ones
+	REAL* forward(nn_input* in,int testing,nn_cache** c_for_pr=0);	//return new ones
 	//backward and accumulate the gradients --- should be immediately after a forward
 	void backward(REAL* gradients);
 	//update parameters
@@ -139,9 +149,13 @@ public:
 		the_option->NN_untied_dim = way;
 	}
 
+	//----------------------------careful for the adding of perceptron---------------
 	//the important info --- from the machine
 	int get_odim(){	//!!!! careful
-		return p_out->geto();
+		if(p_pr)
+			return p_pr->geto();
+		else
+			return p_out->geto();
 	}
 	int get_classdim(){	//the real class (exclude no-prob one)
 		int n = get_odim();
@@ -150,8 +164,66 @@ public:
 		return n;
 	}
 	int get_output_prob(){	//!!! careful
+		if(p_pr)	//no more softmax as last layer even if originally it is
+			return 0;
 		return the_option->NN_out_prob;
 	}
+
+protected:
+	static const int PERC_YES=1993;	//magic numbers
+	Csnn(){
+		pr_count = 0;
+		p_pr_all = 0;
+		p_pr=0;
+	}	//this indicates no peceptron
+	//for the last perceptron layer --- get the representations
+	int get_allrepr_len(){
+		return c_repr->get_len() + c_h->get_len() + c_out->get_len();
+	}
+	nn_cache* get_allrepr(){
+		//only after a forward process
+		int len = get_allrepr_len();
+		nn_cache* ret = new nn_cache(this_bsize,len);
+		//cat them in
+		vector<nn_cache*> tmp_list;tmp_list.push_back(c_repr);tmp_list.push_back(c_h);tmp_list.push_back(c_out);
+		ret->combine_cache_value(tmp_list,this_bsize);
+		return ret;
+	}
+	//io
+	void read_prparams(std::ifstream &fin){
+		if(fin.eof()){	//no perceptron
+			p_pr = 0;
+			return;
+		}
+		int magic;
+		fin.read((char*)&magic,sizeof(int));
+		nn_math::CHECK_EQUAL(magic,PERC_YES,"Failed on pr magic.");
+		fin.read((char*)&pr_count,sizeof(int));
+		p_pr = new nn_wb(fin);
+		p_pr_all = new nn_wb(fin);
+	}
+	void write_prparams(std::ofstream &fout){
+		if(p_pr){
+			int magic = PERC_YES;
+			fout.write((char*)&magic,sizeof(int));
+			fout.write((char*)&pr_count,sizeof(int));
+			p_pr->write_params(fout);
+			p_pr_all->write_params(fout);
+		}
+	}
+public:
+	void start_perceptron(int odim){	//evolve to perceptron mode
+		//adding perceptron
+		nn_math::CHECK_EQUAL(p_pr,(nn_wb*)0,"Already in perceptron mode.");
+		pr_count = 0;
+		p_pr = new nn_wb(get_allrepr_len(),odim,true);	//no bias
+		p_pr->get_init(0,0);	//init to 0
+		p_pr_all = new nn_wb(get_allrepr_len(),odim,true);	//no bias
+		p_pr_all->get_init(0,0);	//init to 0
+	}
+	void update_pr(nn_input* good,nn_input* bad);
+	void update_pr_adding();
+	void finish_perceptron();
 };
 
 /************  three orders of nn  ********************/

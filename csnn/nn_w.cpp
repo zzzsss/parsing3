@@ -118,4 +118,27 @@ void nn_wv::update(int way,REAL lrate,REAL wdecay,REAL m_alpha,REAL rms_smooth,i
 	clear_grad();
 }
 
+//------------------------------------------------------------
+//perceptron part for nn_wb
+void nn_wb::update_pr(REAL* inputs,int row,REAL a)
+{
+	//!! this is quite specified, for COLUMN major matrix
+	// and no checks here
+	REAL* start = w+row;
+	for(int i=0;i<idim;i++){
+		*start += a * *inputs;
+		start += odim;
+		inputs++;
+	}
+}
+
+void nn_wb::add_w(nn_wb* x)
+{
+	nn_math::op_y_plus_ax(idim*odim,w,x->w,1);
+}
+
+void nn_wb::div_w(REAL a)
+{
+	nn_math::op_y_mult_a(idim*odim,w,a);
+}
 

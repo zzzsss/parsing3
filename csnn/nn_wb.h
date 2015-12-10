@@ -156,6 +156,12 @@ public:
 	//only for gradient check
 	REAL* get_wb(int index,bool isw){return isw ? &w[index] : &b[index];}
 	REAL get_g(int index,bool isw){return isw ? w_grad[index] : b_grad[index];}
+
+public:
+	//for perceptron
+	void update_pr(REAL* inputs,int row,REAL a);
+	void add_w(nn_wb* x);
+	void div_w(REAL a);
 };
 
 

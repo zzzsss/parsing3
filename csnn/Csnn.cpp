@@ -112,6 +112,7 @@ void Csnn::construct_params(){
 	p_sd->get_init(the_option->NN_init_wvrange);
 	if(the_option->NN_add_sent)
 		p_sl = new sl_part(the_option,get_order(),p_word,p_pos,p_sd);
+	p_pr = 0;
 }
 
 void Csnn::read_params(std::ifstream &fin){
@@ -177,7 +178,7 @@ void Csnn::prepare_batch()
 	prepare_dropout();
 }
 
-REAL* Csnn::forward(nn_input* in,int testing)
+REAL* Csnn::forward(nn_input* in,int testing,nn_cache** c_for_pr)
 {
 	//testing is set when no book-keeping for backward (when testing or other specific situations)
 	//1.prepare inputs
@@ -263,9 +264,25 @@ REAL* Csnn::forward(nn_input* in,int testing)
 		c_out->calc_softmax(this_bsize);
 	}
 
-	REAL *ret = new REAL[this_bsize*p_out->geto()];
-	memcpy(ret,c_out->get_values(),this_bsize*the_option->NN_out_size*sizeof(REAL));
-	return ret;
+	//!!5.perceptron part
+	if(!p_pr){
+		REAL *ret = new REAL[this_bsize*p_out->geto()];
+		memcpy(ret,c_out->get_values(),this_bsize*the_option->NN_out_size*sizeof(REAL));
+		return ret;
+	}
+	else{
+		nn_cache* c_pr = get_allrepr();
+		if(c_for_pr){
+			*c_for_pr = c_pr;
+			return 0;	//only from Csnn::update_pr
+		}
+		else{
+			REAL* ret = new REAL[this_bsize*p_pr->geto()];	//directly output
+			p_pr->forward(c_pr->get_values(),ret,this_bsize);
+			delete c_pr;
+			return ret;
+		}
+	}
 }
 
 //bs must be this_bsize...
