@@ -84,6 +84,12 @@ int CONF_NN_untied_changetoiter;//when to change
 string CONF_o1filter_file;		//stored file for o1filter
 int CONF_o3_toolong;	//when training, skip long sentences
 
+//1.7-perceptron
+//!!what is re-used(even with different meanings) in pr-method
+//1.file names: fo1,so1,so2sib and others
+//2.training: CONF_NN_ITER,CONF_NN_resample,CONF_minibatch<1 for online>
+//3.others: o1filter_file
+
 //init
 HypherParameters(string conf):hp_nn()
 {

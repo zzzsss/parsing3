@@ -31,6 +31,9 @@ void Csnn::update_pr(nn_input* good,nn_input* bad)
 		p_pr->update_pr(c_good->get_values()+i*input_size,good->goals->at(i),1);
 		p_pr->update_pr(c_bad->get_values()+i*input_size,bad->goals->at(i),1);
 	}
+
+	delete c_good;
+	delete c_bad;
 }
 
 void Csnn::update_pr_adding()
