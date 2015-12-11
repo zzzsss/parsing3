@@ -191,12 +191,12 @@ protected:
 	}
 	//io
 	void read_prparams(std::ifstream &fin){
+		int magic;
+		fin.read((char*)&magic,sizeof(int));
 		if(fin.eof()){	//no perceptron
 			p_pr = 0;
 			return;
 		}
-		int magic;
-		fin.read((char*)&magic,sizeof(int));
 		nn_math::CHECK_EQUAL(magic,PERC_YES,"Failed on pr magic.");
 		fin.read((char*)&pr_count,sizeof(int));
 		p_pr = new nn_wb(fin);

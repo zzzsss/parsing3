@@ -120,7 +120,7 @@ void sl_part::forward(nn_input* inputs,REAL* out)
 				}
 			}
 			break;
-		case nn_options::NN_SL_ADDING_A:
+		case nn_options::NN_SL_ADDING_A:	//adding-average maybe is bad for it can not distinguish
 		case nn_options::NN_SL_TANHMUL_A:
 			//set to 0 firstly
 			for(int tmpi=0;tmpi<odim;tmpi++)
