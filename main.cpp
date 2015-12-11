@@ -11,8 +11,9 @@
 #include "graph-based/M0_debug.h"
 #include "graph-based/M1_p1.h"
 #include "graph-based/M2_p2.h"
+#include "graph-based/M3_pr.h"
 
-/* <Version 1.6>
+/* <Version 2.2>
  * 		-- usage:	(mode 3 and 4 are for debugging)
  * 	1.training: <exe-file> conf
  * 	2.testing: <exe-file> conf best-machine-name
@@ -51,6 +52,9 @@ int main(int argc,char **argv)
 		break;
 	case 6:
 		x = new M2_p2o3(conf);
+		break;
+	case 7:
+		x = new M3_pro2(conf);
 		break;
 	}
 	if(argc == 2){

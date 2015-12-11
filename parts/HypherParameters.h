@@ -89,6 +89,9 @@ int CONF_o3_toolong;	//when training, skip long sentences
 //1.file names: fo1,so1,so2sib and others
 //2.training: CONF_NN_ITER,CONF_NN_resample,CONF_minibatch<1 for online>
 //3.others: o1filter_file
+// mach name to write at last
+string CONF_pr_macho1;
+string CONF_pr_macho2;
 
 //init
 HypherParameters(string conf):hp_nn()
@@ -132,6 +135,9 @@ HypherParameters(string conf):hp_nn()
 	CONF_NN_untied_changeto=0;
 	CONF_NN_untied_changetoiter=-1; //nope
 	CONF_o3_toolong = 110;
+
+	CONF_pr_macho1 = "pro1.mach";
+	CONF_pr_macho2 = "pro2.mach";
 
 	//read in conf-file
 #define DATA_LINE_LEN 10000
@@ -225,6 +231,11 @@ HypherParameters(string conf):hp_nn()
 		else if(buf=="untied_change_iter")	fin >> CONF_NN_untied_changetoiter;
 		else if(buf=="filter_file")	fin >> CONF_o1filter_file;
 		else if(buf=="o3_toolong")	fin >> CONF_o3_toolong;
+
+		//1.7-pr
+		else if(buf=="p_o1name")	fin >> CONF_pr_macho1;
+		else if(buf=="p_o2name")	fin >> CONF_pr_macho2;
+
 		else
 			cerr << "Unknown option " << buf << endl;
 	}

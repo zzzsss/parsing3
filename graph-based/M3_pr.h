@@ -22,6 +22,10 @@ protected:
 
 	virtual void train();		//override
 	virtual void test(string);	//override
+
+	//static methods
+	void get_nninput_o1(DependencyInstance* x,nn_input** good,nn_input**bad);
+	void get_nninput_o2sib(DependencyInstance* x,nn_input** good,nn_input**bad);
 public:
 	M3_pro2(string cname):Process(cname){
 		//need special conf for perceptron learning

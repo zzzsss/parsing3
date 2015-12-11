@@ -6,6 +6,7 @@
  */
 
 #include "M3_pr.h"
+#include "../algorithms/Eisner.h"
 
 //only before training (and after building dictionary)
 void M3_pro2::each_create_machine()
@@ -56,9 +57,6 @@ void M3_pro2::each_train_one_iter()
 	int num_sentences = training_corpus->size();
 	//statistics
 	int skip_sent_num = 0;
-	int all_forward_instance = 0;
-	//some useful info
-	int odim = mach->get_odim();
 	//training
 	time_t now;
 	time(&now); //ctime is not rentrant ! use ctime_r() instead if needed
@@ -89,7 +87,20 @@ void M3_pro2::each_train_one_iter()
 		}
 
 		//update
-
+		for(int ii=0;ii<xs.size();ii++){
+			DependencyInstance* x = xs[ii];
+			nn_input* good_o1,* good_o2;
+			nn_input* bad_o1, * bad_o2;
+			get_nninput_o1(x,&good_o1,&bad_o1);
+			get_nninput_o2sib(x,&good_o2,&bad_o2);
+			mso1->update_pr(good_o1,bad_o1);
+			mach->update_pr(good_o2,bad_o2);
+			delete good_o1;delete bad_o1;
+			delete good_o2;delete bad_o2;
+		}
+		xs.clear();
+		mso1->update_pr_adding();
+		mach->update_pr_adding();
 	}
 	cout << "Iter done, skip " << skip_sent_num << " sentences." << endl;
 
@@ -100,9 +111,71 @@ void M3_pro2::train()
 	Process::train();
 	//averaging and saving
 	cout << "--//don't care about the nn.mach.* files ..." << endl;
+	mso1->finish_perceptron();
+	mach->finish_perceptron();
+	mso1->write(hp->CONF_pr_macho1);
+	mach->write(hp->CONF_pr_macho2);
+	cout << "--OK, final averaging and saving." << endl;
 }
 
-void M3_pro2::test(string)
+void M3_pro2::test(string x)
 {
+	cout << "!! Warning, the machine name should be specified in conf, no-use of cmd mach name." << endl;
+	mso1 = dynamic_cast<CsnnO1*>(Csnn::read(hp->CONF_pr_macho1));
+	//<not here>mach = Csnn::read(hp->CONF_pr_macho2);
+	Process::test(hp->CONF_pr_macho2);
+}
 
+//---------------helpers---------------
+// !! nn-input must be consistent with specified !!
+void M3_pro2::get_nninput_o1(DependencyInstance* x,nn_input** good,nn_input**bad)
+{
+	vector<int>* ginput = new vector<int>();
+	vector<int>* ggoals = new vector<int>();
+	vector<int>* binput = new vector<int>();
+	vector<int>* bgoals = new vector<int>();
+	int len = x->length();
+	for(int m=1;m<len;m++){
+		ginput->push_back(x->heads->at(m));
+		ginput->push_back(m);
+		ggoals->push_back(x->index_deprels->at(m));
+		binput->push_back(x->predict_heads->at(m));
+		binput->push_back(m);
+		bgoals->push_back(x->predict_deprels->at(m));
+	}
+	*good = new nn_input(ggoals->size(),2,ginput,ggoals,x->index_forms,x->index_pos,dict->get_helper(),0,0);
+	*bad = new nn_input(bgoals->size(),2,binput,bgoals,x->index_forms,x->index_pos,dict->get_helper(),0,0);
+}
+
+static int TMP_get_sib(vector<int>* heads,int m)	//-1 for no-sib
+{
+	int h = heads->at(m);
+	int step = (h>m)?1:-1;	//m->h
+	int sib;
+	for(sib=m+step;sib!=h;sib+=step){
+		if(heads->at(sib)==h)
+			break;
+	}
+	return (sib==h)?-1:sib;
+}
+
+void M3_pro2::get_nninput_o2sib(DependencyInstance* x,nn_input** good,nn_input**bad)
+{
+	vector<int>* ginput = new vector<int>();
+	vector<int>* ggoals = new vector<int>();
+	vector<int>* binput = new vector<int>();
+	vector<int>* bgoals = new vector<int>();
+	int len = x->length();
+	for(int m=1;m<len;m++){
+		ginput->push_back(x->heads->at(m));
+		ginput->push_back(m);
+		ginput->push_back(TMP_get_sib(x->heads,m));
+		ggoals->push_back(x->index_deprels->at(m));
+		binput->push_back(x->predict_heads->at(m));
+		binput->push_back(m);
+		binput->push_back(TMP_get_sib(x->predict_heads,m));
+		bgoals->push_back(x->predict_deprels->at(m));
+	}
+	*good = new nn_input(ggoals->size(),3,ginput,ggoals,x->index_forms,x->index_pos,dict->get_helper(),0,0);
+	*bad = new nn_input(bgoals->size(),3,binput,bgoals,x->index_forms,x->index_pos,dict->get_helper(),0,0);
 }
