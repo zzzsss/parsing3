@@ -69,7 +69,8 @@ public:
 		p_main = new nn_wb(tmp_idim,op->NN_srsize);
 		p_main->get_init(op->NN_init_wb_faniorange,op->NN_init_wb_brange);
 		tmp_idim = (order+1) * op->NN_sdsize;
-		p_dist = new nn_wb(tmp_idim,op->NN_srsize,true);	//nobias for p_dist
+		bool TMP_nobias = op->NN_sl_dnobias;
+		p_dist = new nn_wb(tmp_idim,op->NN_srsize,TMP_nobias);	//nobias for p_dist
 		p_dist->get_init(op->NN_init_wb_faniorange,op->NN_init_wb_brange);
 	}
 	sl_part(std::ifstream &fin,nn_options* o,int the_order,nn_wv* dw,nn_wv* dp,nn_wv* dd):updating(true){

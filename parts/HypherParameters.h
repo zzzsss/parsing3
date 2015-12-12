@@ -221,6 +221,7 @@ HypherParameters(string conf):hp_nn()
 		else if(buf=="n_sdsize")	fin >> hp_nn.NN_sdsize;
 		else if(buf=="n_sl_way")	fin >> hp_nn.NN_sl_way;
 		else if(buf=="n_sl_filter")	fin >> hp_nn.NN_sl_filter;
+		else if(buf=="n_sl_nobias")	fin >> hp_nn.NN_sl_dnobias;
 
 		//1.6-others
 //		else if(buf=="M1_train_random")		fin >> CONF_p1o1_training_random;

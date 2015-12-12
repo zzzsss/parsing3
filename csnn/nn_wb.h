@@ -62,7 +62,7 @@ public:
 		w_square = new REAL[all];
 		b_square = new REAL[o];
 	}
-	nn_wb(nn_wb &x):updating(x.updating),idim(x.idim),odim(x.odim){
+	nn_wb(nn_wb &x):updating(x.updating),idim(x.idim),odim(x.odim),nobias(x.nobias){
 		int i = x.idim;
 		int o = x.odim;
 		int all = i*o;	//int is enough

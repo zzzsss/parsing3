@@ -60,6 +60,9 @@ public:
 	int NN_sdsize;	//sl-distance embed size
 	int NN_sl_filter;
 
+	//-----------DONT'T NEED TO WRITE (ONLY INIT)-----------
+	int NN_sl_dnobias;
+
 //------------------------------------------------------------------------------------
 	//---size for repr layer
 	int get_NN_srsize(){
@@ -86,7 +89,7 @@ public:
 			NN_act_repr = NN_act;
 	}
 	nn_options(){default_init();init_check();}
-	nn_options(std::ifstream &fin){read(fin);init_check();}
+	nn_options(std::ifstream &fin){default_init();read(fin);init_check();}
 
 	void default_init(){
 		//!! need setting !!
@@ -130,6 +133,9 @@ public:
 		NN_sdnum = 100;	//or setting
 		NN_sdsize = 50;
 		NN_sl_filter = 7;
+
+		//-----------DONT'T NEED TO WRITE (ONLY INIT)-----------
+		NN_sl_dnobias = 1;
 	}
 	//
 	void read(std::ifstream &fin){
