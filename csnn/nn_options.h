@@ -132,7 +132,7 @@ public:
 		//NN_sdnum = ?;	//!! need setting !!
 		NN_sdnum = 100;	//or setting
 		NN_sdsize = 50;
-		NN_sl_filter = 7;
+		NN_sl_filter = 3;
 
 		//-----------DONT'T NEED TO WRITE (ONLY INIT)-----------
 		NN_sl_dnobias = 1;
