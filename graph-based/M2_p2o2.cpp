@@ -139,6 +139,8 @@ void M2_p2o2::each_train_one_iter()
 			delete []rscores;
 			delete []tmp_marginals;
 
+			if(i>=num_sentences)
+				break;
 			//out of the mini-batch
 			while(training_corpus->at(i)->length() >= hp->CONF_higho_toolong){	//HAVE to compromise, bad choice
 				skip_sent_num ++;
