@@ -189,6 +189,10 @@ REAL* Csnn::forward(nn_input* in,int testing,nn_cache** c_for_pr)
 	this_untied_index.clear();
 	f_inputs();		/**********VIRTUAL***********/	//now c_wv ready, and here also prepare this_untied_index(unchecked)
 
+	//2.0: c_wv dropout, special option semantics
+	if(the_option->NN_dropout_repr < 0)
+		c_wv->activate(nn_math::ACT_LIN,this_bsize,-1*the_option->NN_dropout_repr,testing);
+
 	//2.1:input->wrepr --- need take care of untied
 	int input_size = p_untied->at(0)->geti();
 	int output_size = p_untied->at(0)->geto();
@@ -338,6 +342,10 @@ void Csnn::backward(REAL* gradients)
 		p_sl->backward(c_srepr->get_gradients());
 
 	//5: the input wv
+	//-c_wv dropout, special option semantics
+	if(the_option->NN_dropout_repr < 0)
+		c_wv->backgrad(nn_math::ACT_LIN,this_bsize,-1*the_option->NN_dropout_repr);
+
 	// - no activation
 	b_inputs();			/**********VIRTUAL***********/
 }

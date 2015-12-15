@@ -15,7 +15,7 @@
  *  2. training: for each minibatch(for sentence{decode();update_pr();} adding()); finish(after several iters)
  */
 
-void Csnn::update_pr(nn_input* good,nn_input* bad)
+void Csnn::update_pr(nn_input* good,nn_input* bad,REAL wdecay)
 {
 	int bsize = 0;
 	nn_cache* c_good;
@@ -28,8 +28,10 @@ void Csnn::update_pr(nn_input* good,nn_input* bad)
 	//perceptron update --- use goals to indicate the label
 	int input_size = p_pr->geti();
 	for(int i=0;i<bsize;i++){
+		if(wdecay > 0)
+			p_pr_all->div_w(1-wdecay);	//this is in fact multiply
 		p_pr->update_pr(c_good->get_values()+i*input_size,good->goals->at(i),1);
-		p_pr->update_pr(c_bad->get_values()+i*input_size,bad->goals->at(i),1);
+		p_pr->update_pr(c_bad->get_values()+i*input_size,bad->goals->at(i),-1);
 	}
 
 	delete c_good;

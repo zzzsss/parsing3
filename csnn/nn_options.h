@@ -47,7 +47,7 @@ public:
 	REAL NN_init_wvrange;
 
 	//special dropout and activation for the first layer
-	REAL NN_dropout_repr;
+	REAL NN_dropout_repr;		//!!!! sepecial meaning when <0, really bad choice, but ...
 	int NN_act_repr;
 
 	//###FOR SENT-LEVEL REPR###
@@ -124,8 +124,8 @@ public:
 		NN_init_wvrange = 0.1;
 
 		//default as NN_act and NN_dropout
-		NN_dropout_repr=-1;
-		NN_act_repr=-1;
+		NN_dropout_repr=0;
+		NN_act_repr=0;
 
 		//###SENTENCE-LEVEL###
 		NN_sl_way = 0;

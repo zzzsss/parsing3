@@ -221,7 +221,7 @@ public:
 		p_pr_all = new nn_wb(get_allrepr_len(),odim,true);	//no bias
 		p_pr_all->get_init(0,0);	//init to 0
 	}
-	void update_pr(nn_input* good,nn_input* bad);
+	void update_pr(nn_input* good,nn_input* bad,REAL wdecay);
 	void update_pr_adding();
 	void finish_perceptron();
 };

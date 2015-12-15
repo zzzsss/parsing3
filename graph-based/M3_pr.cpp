@@ -97,8 +97,8 @@ void M3_pro2::each_train_one_iter()
 			nn_input* bad_o1, * bad_o2;
 			get_nninput_o1(x,&good_o1,&bad_o1);
 			get_nninput_o2sib(x,&good_o2,&bad_o2);
-			mso1->update_pr(good_o1,bad_o1);
-			mach->update_pr(good_o2,bad_o2);
+			mso1->update_pr(good_o1,bad_o1,hp->CONF_NN_WD);
+			mach->update_pr(good_o2,bad_o2,hp->CONF_NN_WD);
 			delete good_o1;delete bad_o1;
 			delete good_o2;delete bad_o2;
 		}

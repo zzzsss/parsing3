@@ -166,6 +166,8 @@ namespace nn_math{
 				*x = tanh(*x);
 			}
 			break;
+		case ACT_LIN:
+			break;
 		default:
 			std::cerr << "Unknown opt method." << std::endl;
 			exit(1);
@@ -195,6 +197,8 @@ namespace nn_math{
 				REAL tmp = *xb;
 				*g *= (3*tmp*tmp+1);
 			}
+			break;
+		case ACT_LIN:
 			break;
 		default:
 			std::cerr << "Unknown opt method." << std::endl;

@@ -141,4 +141,3 @@ void nn_wb::div_w(REAL a)
 {
 	nn_math::op_y_mult_a(idim*odim,w,a);
 }
-

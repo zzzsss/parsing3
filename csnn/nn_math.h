@@ -35,7 +35,7 @@ const bool opt_hasmomentum[] = {false,true,false,false,true};
 
 //3.activation functions
 enum{
-	ACT_TANH,ACT_HTANH,ACT_LRECT,ACT_TANHCUBE
+	ACT_TANH,ACT_HTANH,ACT_LRECT,ACT_TANHCUBE,ACT_LIN
 };
 void act_f(int which,REAL* x,int n,REAL* xb);
 void act_b(int which,const REAL* x,REAL* g,int n,REAL* xb);
