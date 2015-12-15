@@ -140,6 +140,10 @@ void M2_p2o2::each_train_one_iter()
 			delete []tmp_marginals;
 
 			//out of the mini-batch
+			while(training_corpus->at(i)->length() >= hp->CONF_higho_toolong){	//HAVE to compromise, bad choice
+				skip_sent_num ++;
+				i ++;
+			}
 			if(i>=num_sentences)
 				break;
 			if(hp->CONF_minibatch > 0){

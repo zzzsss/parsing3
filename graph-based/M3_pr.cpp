@@ -66,7 +66,7 @@ void M3_pro2::each_train_one_iter()
 	vector<DependencyInstance*> xs;
 	for(int i=0;i<num_sentences;){
 		//random skip (instead of shuffling every time)
-		if(drand48() > hp->CONF_NN_resample){
+		if(drand48() > hp->CONF_NN_resample || training_corpus->at(i)->length() >= hp->CONF_higho_toolong){
 			skip_sent_num ++;
 			i ++;
 			continue;
@@ -80,6 +80,10 @@ void M3_pro2::each_train_one_iter()
 			Process::parse_o2sib(x,mfo1,mso1);
 
 			//out of the mini-batch
+			while(training_corpus->at(i)->length() >= hp->CONF_higho_toolong){	//HAVE to compromise, bad choice
+				skip_sent_num ++;
+				i ++;
+			}
 			if(i>=num_sentences)
 				break;
 			if(int(xs.size()) >= hp->CONF_minibatch)
