@@ -73,7 +73,7 @@ void M2_p2o2::each_train_one_iter()
 	cout << "#Sentences is " << num_sentences << " and resample (about)" << num_sentences*hp->CONF_NN_resample << endl;
 	for(int i=0;i<num_sentences;){
 		//random skip (instead of shuffling every time)
-		if(drand48() > hp->CONF_NN_resample){
+		if(drand48() > hp->CONF_NN_resample || training_corpus->at(i)->length() >= hp->CONF_higho_toolong){
 			skip_sent_num ++;
 			i ++;
 			continue;
