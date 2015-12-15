@@ -17,13 +17,14 @@
 
 void Csnn::update_pr(nn_input* good,nn_input* bad,REAL wdecay)
 {
-	int bsize = 0;
+	int bsize = good->num_inst;
+	nn_math::CHECK_EQUAL(good->num_inst,bad->num_inst,"No match for good and bad.");
+	if(bsize <= 0)	//nope
+		return;
 	nn_cache* c_good;
 	nn_cache* c_bad;
 	forward(good,1,&c_good);	//testing == 1, fix the other parts (as in testing mode), and no return
-	bsize = this_bsize;
 	forward(bad,1,&c_bad);
-	nn_math::CHECK_EQUAL(bsize,this_bsize,"No match for good and bad.");
 
 	//perceptron update --- use goals to indicate the label
 	int input_size = p_pr->geti();
