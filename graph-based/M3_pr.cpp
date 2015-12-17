@@ -20,8 +20,8 @@ void M3_pro2::each_create_machine()
 	Process::CHECK_EQUAL(mso1->get_odim(),class_num,"Pr. so1 bad odim.");
 	Process::CHECK_EQUAL(mach->get_odim(),class_num,"Pr. so2sib bad odim.");
 
-	mso1->start_perceptron(class_num);
-	mach->start_perceptron(class_num);
+	mso1->start_perceptron(class_num,hp->CONF_pr_initway);
+	mach->start_perceptron(class_num,hp->CONF_pr_initway);
 	//but not for fo1 !!
 }
 
@@ -66,6 +66,7 @@ void M3_pro2::each_train_one_iter()
 	cout << "#Sentences is " << num_sentences << " and resample (about)" << num_sentences*hp->CONF_NN_resample << endl;
 
 	vector<DependencyInstance*> xs;
+	int all_token=0,all_right=0;
 	for(int i=0;i<num_sentences;){
 		//random skip (instead of shuffling every time)
 		if(drand48() > hp->CONF_NN_resample || training_corpus->at(i)->length() >= hp->CONF_higho_toolong){
@@ -80,6 +81,13 @@ void M3_pro2::each_train_one_iter()
 			xs.push_back(x);
 
 			Process::parse_o2sib(x,mfo1,mso1);
+			// -- statistic
+			all_token += x->length()-1;
+			for(int i2=1;i2<x->length();i2++){	//ignore root
+				if((*(x->predict_heads))[i2] == (*(x->heads))[i2])
+					all_right ++;
+			}
+			//
 			i++;
 
 			if(i>=num_sentences)
@@ -102,8 +110,8 @@ void M3_pro2::each_train_one_iter()
 			nn_input* bad_o1, * bad_o2;
 			get_nninput_o1(x,&good_o1,&bad_o1);
 			get_nninput_o2sib(x,&good_o2,&bad_o2);
-			mso1->update_pr(good_o1,bad_o1,hp->CONF_NN_WD);
-			mach->update_pr(good_o2,bad_o2,hp->CONF_NN_WD);
+			mso1->update_pr(good_o1,bad_o1,hp->CONF_pr_alpha,hp->CONF_NN_WD);
+			mach->update_pr(good_o2,bad_o2,hp->CONF_pr_alpha,hp->CONF_NN_WD);
 			delete good_o1;delete bad_o1;
 			delete good_o2;delete bad_o2;
 		}
@@ -111,7 +119,8 @@ void M3_pro2::each_train_one_iter()
 		mso1->update_pr_adding();
 		mach->update_pr_adding();
 	}
-	cout << "Iter done, skip " << skip_sent_num << " sentences." << endl;
+	cout << "Iter done, skip " << skip_sent_num << " sentences." << "AND training UAS:"
+			<< all_right << "/" << all_token << "=" << all_right/(0.0+all_token) << endl;
 
 }
 

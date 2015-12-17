@@ -162,6 +162,10 @@ public:
 	void update_pr(REAL* inputs,int row,REAL a);
 	void add_w(nn_wb* x);
 	void div_w(REAL a);
+
+	void set_w(int column,int row,REAL x){
+		w[column*odim+row] = x;	//!! COLUMN major
+	}
 };
 
 

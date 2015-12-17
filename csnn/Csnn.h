@@ -212,16 +212,9 @@ protected:
 		}
 	}
 public:
-	void start_perceptron(int odim){	//evolve to perceptron mode
-		//adding perceptron
-		nn_math::CHECK_EQUAL(p_pr,(nn_wb*)0,"Already in perceptron mode.");
-		pr_count = 0;
-		p_pr = new nn_wb(get_allrepr_len(),odim,true);	//no bias
-		p_pr->get_init(0,0);	//init to 0
-		p_pr_all = new nn_wb(get_allrepr_len(),odim,true);	//no bias
-		p_pr_all->get_init(0,0);	//init to 0
-	}
-	void update_pr(nn_input* good,nn_input* bad,REAL wdecay);
+	enum {PR_INIT_NOPE,PR_INIT_IDEN};
+	void start_perceptron(int odim,int init_way);
+	void update_pr(nn_input* good,nn_input* bad,REAL alpha,REAL wdecay);
 	void update_pr_adding();
 	void finish_perceptron();
 };

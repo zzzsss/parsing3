@@ -87,11 +87,14 @@ int CONF_higho_toolong;	//when training, skip long sentences
 //1.7-perceptron
 //!!what is re-used(even with different meanings) in pr-method
 //1.file names: fo1,so1,so2sib and others
-//2.training: CONF_NN_ITER,CONF_NN_resample,CONF_minibatch<1 for online>
+//2.training: CONF_NN_ITER,CONF_NN_resample,CONF_minibatch<1 for online>,CONF_NN_WD
 //3.others: o1filter_file
 // mach name to write at last
 string CONF_pr_macho1;
 string CONF_pr_macho2;
+
+int CONF_pr_initway;
+REAL CONF_pr_alpha;		//maybe lrate, but does not change
 
 //init
 HypherParameters(string conf):hp_nn()
@@ -138,6 +141,8 @@ HypherParameters(string conf):hp_nn()
 
 	CONF_pr_macho1 = "pro1.mach";
 	CONF_pr_macho2 = "pro2.mach";
+	CONF_pr_initway = 0;
+	CONF_pr_alpha = 1;
 
 	//read in conf-file
 #define DATA_LINE_LEN 10000
@@ -236,6 +241,8 @@ HypherParameters(string conf):hp_nn()
 		//1.7-pr
 		else if(buf=="p_o1name")	fin >> CONF_pr_macho1;
 		else if(buf=="p_o2name")	fin >> CONF_pr_macho2;
+		else if(buf=="p_init")		fin >> CONF_pr_initway;
+		else if(buf=="p_alpha")		fin >> CONF_pr_alpha;
 
 		else
 			cerr << "Unknown option " << buf << endl;

@@ -15,7 +15,28 @@
  *  2. training: for each minibatch(for sentence{decode();update_pr();} adding()); finish(after several iters)
  */
 
-void Csnn::update_pr(nn_input* good,nn_input* bad,REAL wdecay)
+void Csnn::start_perceptron(int odim,int init_way){	//evolve to perceptron mode
+	//adding perceptron
+	nn_math::CHECK_EQUAL(p_pr,(nn_wb*)0,"Already in perceptron mode.");
+	pr_count = 0;
+	p_pr = new nn_wb(get_allrepr_len(),odim,true);	//no bias
+	p_pr->get_init(0,0);	//init to 0
+	switch(init_way){
+	case PR_INIT_NOPE:
+		break;
+	case PR_INIT_IDEN:
+		//output -> output
+		//!! assuming c_out is the last one
+		for(int i=0,c=p_pr->geti()-p_pr->geto();i<p_pr->geto();i++,c++){
+			p_pr->set_w(c,i,1);
+		}
+		break;
+	}
+	p_pr_all = new nn_wb(get_allrepr_len(),odim,true);	//no bias
+	p_pr_all->get_init(0,0);	//init to 0
+}
+
+void Csnn::update_pr(nn_input* good,nn_input* bad,REAL alpha,REAL wdecay)
 {
 	int bsize = good->num_inst;
 	nn_math::CHECK_EQUAL(good->num_inst,bad->num_inst,"No match for good and bad.");
@@ -31,8 +52,8 @@ void Csnn::update_pr(nn_input* good,nn_input* bad,REAL wdecay)
 	for(int i=0;i<bsize;i++){
 		if(wdecay > 0)
 			p_pr_all->div_w(1-wdecay);	//this is in fact multiply
-		p_pr->update_pr(c_good->get_values()+i*input_size,good->goals->at(i),1);
-		p_pr->update_pr(c_bad->get_values()+i*input_size,bad->goals->at(i),-1);
+		p_pr->update_pr(c_good->get_values()+i*input_size,good->goals->at(i),alpha);
+		p_pr->update_pr(c_bad->get_values()+i*input_size,bad->goals->at(i),-1*alpha);
 	}
 
 	delete c_good;
