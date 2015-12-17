@@ -28,10 +28,28 @@ void M2_p2o3::each_create_machine()
 void M2_p2o3::each_test_one(DependencyInstance* x,int dev)
 {
 	int noc_dev = dev ? hp->CONF_score_noc_dev : 0;
-	if(noc_dev)
-		Process::parse_o3g(x,mfo1,0,0);
-	else
-		Process::parse_o3g(x,mfo1,mso1,mso2);
+	if(noc_dev){
+		if(x->length() >= hp->CONF_higho_toolong){
+			//default is set to 0
+			x->predict_heads = new vector<int>(x->length(),0);
+			x->predict_deprels = new vector<int>(x->length(),0);
+		}
+		else{
+			Process::parse_o3g(x,mfo1,0,0);
+		}
+	}
+	else{
+		if(x->length() >= hp->CONF_higho_toolong){
+			//tricky ...
+			Csnn* tmp = mach;
+			mach = mso2;
+			Process::parse_o2sib(x,mfo1,mso1);
+			mach = tmp;
+		}
+		else{
+			Process::parse_o3g(x,mfo1,mso1,mso2);
+		}
+	}
 }
 
 void M2_p2o3::each_train_one_iter()
