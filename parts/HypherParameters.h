@@ -96,6 +96,8 @@ string CONF_pr_macho2;
 int CONF_pr_initway;
 REAL CONF_pr_alpha;		//maybe lrate, but does not change
 
+int CONF_pr_devavrage;	//average when dev
+
 //init
 HypherParameters(string conf):hp_nn()
 {
@@ -143,6 +145,7 @@ HypherParameters(string conf):hp_nn()
 	CONF_pr_macho2 = "pro2.mach";
 	CONF_pr_initway = 0;
 	CONF_pr_alpha = 1;
+	CONF_pr_devavrage = 1;
 
 	//read in conf-file
 #define DATA_LINE_LEN 10000
@@ -243,6 +246,7 @@ HypherParameters(string conf):hp_nn()
 		else if(buf=="p_o2name")	fin >> CONF_pr_macho2;
 		else if(buf=="p_init")		fin >> CONF_pr_initway;
 		else if(buf=="p_alpha")		fin >> CONF_pr_alpha;
+		else if(buf=="p_devavr")		fin >> CONF_pr_devavrage;
 
 		else
 			cerr << "Unknown option " << buf << endl;

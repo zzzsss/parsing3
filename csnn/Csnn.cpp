@@ -394,3 +394,12 @@ void Csnn::nesterov_update(int way,REAL m_alpha)
 	if(the_option->NN_add_sent && p_sl->need_updating())
 		p_sl->nesterov_update(way,m_alpha);
 }
+
+
+Csnn::~Csnn()
+{
+	for(int i=0;i<c_allcaches->size();i++)
+		delete c_allcaches->at(i);
+	delete c_allcaches;
+	//remains ... (too lazy to do it ...)
+}

@@ -105,7 +105,7 @@ protected:
 	}
 
 public:
-	virtual ~Csnn(){}	//need-to-do:clear
+	virtual ~Csnn();	//clear
 	//write out
 	void write(std::string fname){
 		std::ofstream fout;
