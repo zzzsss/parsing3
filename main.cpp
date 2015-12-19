@@ -17,7 +17,7 @@
  * 		-- usage:	(mode 3 and 4 are for debugging)
  * 	1.training: <exe-file> conf
  * 	2.testing: <exe-file> conf best-machine-name
- * 	3.check-o1-filter: <exe-file> conf best-machine-name cut-point
+ * 	3.check-o1-filter: <exe-file> conf best-machine-name cut-point check-file
  */
 
 int main(int argc,char **argv)
@@ -70,9 +70,12 @@ int main(int argc,char **argv)
 		//only testing
 		x->test(string(argv[2]));
 	}
-	else if(argc == 4){
+	else if(argc == 5){
 		//check o1-filter
-		x->check_o1_filter(string(argv[2]),string(argv[3]));
+		x->check_o1_filter(string(argv[2]),string(argv[3]),string(argv[4]));
+	}
+	else{
+		HypherParameters::Error("Wrong parameters for cmd.");
 	}
 	return 0;
 }
