@@ -27,24 +27,31 @@ void M3_pro2::each_create_machine()
 
 void M3_pro2::each_test_one(DependencyInstance* x,int dev)
 {
+	Process::parse_o2sib(x,mfo1,mso1);
+}
+
+double M3_pro2::nn_dev_test(string to_test,string output,string gold,int dev)	//overwrite
+{
+	CsnnO1* old_o1 = mso1;
+	Csnn* old_o2 = mach;
 	if(dev && hp->CONF_pr_devavrage){
 		//again really tricky
-		CsnnO1* old_o1 = mso1;
-		Csnn* old_o2 = mach;
 		mso1->write(hp->CONF_pr_macho1);
 		mach->write(hp->CONF_pr_macho2);
 		mso1 = dynamic_cast<CsnnO1*>(Csnn::read(hp->CONF_pr_macho1));
 		mach = Csnn::read(hp->CONF_pr_macho2);
 		mso1->finish_perceptron();
-		mach->finish_perceptron();	//only for the re-read ones
-		Process::parse_o2sib(x,mfo1,mso1);
+		mach->finish_perceptron();      //only for the re-read ones
+	}
+	//dev-
+	double ret = Process::nn_dev_test(to_test,output,gold,dev);
+	if(dev && hp->CONF_pr_devavrage){
 		delete mso1;
 		delete mach;
 		mso1 = old_o1;
 		mach = old_o2;
 	}
-	else
-		Process::parse_o2sib(x,mfo1,mso1);
+	return ret;
 }
 
 void M3_pro2::each_train_one_iter()

@@ -65,7 +65,7 @@ protected:
 	void init_embed();
 
 	//2.test and dev
-	double nn_dev_test(string to_test,string output,string gold,int dev);
+	virtual double nn_dev_test(string to_test,string output,string gold,int dev);
 
 	//3.1:forward scores and rearrange scores
 	static REAL* forward_scores_o1(DependencyInstance* x,Csnn* m,nn_input** t,nn_input_helper* h,int testing,HypherParameters*hh=0);

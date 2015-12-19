@@ -22,6 +22,7 @@ protected:
 
 	virtual void train();		//override
 	virtual void test(string);	//override
+	double nn_dev_test(string to_test,string output,string gold,int dev);
 
 	//static methods
 	void get_nninput_o1(DependencyInstance* x,nn_input** good,nn_input**bad);
