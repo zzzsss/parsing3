@@ -16,9 +16,15 @@ void Process::nn_train_prepare()
 	training_corpus = read_corpus(hp->CONF_train_file);
 	dev_test_corpus = 0;
 	//3. get dictionary and write
-	cout << "3.get dict from scratch:" << endl;
-	dict = new Dictionary(training_corpus,hp->CONF_dict_remove);
-	dict->write(hp->CONF_dict_file);
+	if(hp->CONF_traindict_file.length() > 0){
+		cout << "3.get dict from " << hp->CONF_traindict_file << endl;
+		dict = new Dictionary(hp->CONF_traindict_file);
+	}
+	else{
+		cout << "3.get dict from scratch:" << endl;
+		dict = new Dictionary(training_corpus,hp->CONF_dict_remove);
+		dict->write(hp->CONF_dict_file);
+	}
 	dict->prepare_corpus(training_corpus);	//get those indexes
 	//4.create machine
 	cout << "4.get mach from scratch:" << endl;

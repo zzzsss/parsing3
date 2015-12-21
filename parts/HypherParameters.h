@@ -36,6 +36,7 @@ string CONF_output_file;
 string CONF_gold_file;	//golden files
 //1.2-other files
 string CONF_dict_file;		//for dictionary
+string CONF_traindict_file;		//outside dictionary file for training
 string CONF_mach_name;		//mach name
 string CONF_mach_cur_suffix;
 string CONF_mach_best_suffix;
@@ -147,6 +148,8 @@ HypherParameters(string conf):hp_nn()
 	CONF_pr_alpha = 1;
 	CONF_pr_devavrage = 1;
 
+	CONF_traindict_file = "";	//!!new-file
+
 	//read in conf-file
 #define DATA_LINE_LEN 10000
 	ifstream fin(conf.c_str());
@@ -171,6 +174,7 @@ HypherParameters(string conf):hp_nn()
 		else if(buf=="output")	fin >> CONF_output_file;
 		else if(buf=="gold")	fin >> CONF_gold_file;
 		else if(buf=="dict")	fin >> CONF_dict_file;
+		else if(buf=="tdict")	fin >> CONF_traindict_file;		//!!new-file
 		else if(buf=="mach-prefix") fin >> CONF_mach_name;
 		//1.3
 		else if(buf=="nn_lrate") fin >> CONF_NN_LRATE;
