@@ -22,7 +22,9 @@ void nn_wb::forward(/*const*/REAL* in,REAL* out,int bsize)
 			memcpy(out+e*odim,b,odim*sizeof(REAL));	//if nobias, b should always be 0
 	}
 	else{
-		memset(out,0,odim*bsize*sizeof(REAL));
+		//(bug-of-overflow)memset(out,0,odim*bsize*sizeof(REAL));
+		for (int e=0; e<bsize; e++)
+			memset(out+e*odim,0,odim*sizeof(REAL));
 	}
 	if(bsize > 1)
 		nn_math::op_A_mult_B(out,w,in,odim,bsize,idim,false,false,1,1);

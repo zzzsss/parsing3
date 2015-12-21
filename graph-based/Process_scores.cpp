@@ -87,6 +87,11 @@ REAL* Process::forward_scores_o1(DependencyInstance* x,Csnn* mac,nn_input** t,nn
 	}
 	(*t) = new nn_input(num_pair_togo,2,the_inputs,the_goals,x->index_forms,x->index_pos,helper,
 			num_good,num_bad);
+	//--fix the 0 bug
+	Process::CHECK_EQUAL(num_pair_togo,(*t)->num_inst,"Forward bsize nope.");
+	if(num_pair_togo==0)
+		return 0;
+	//--
 	REAL* tmp_scores = mac->forward(*t,testing);
 	return tmp_scores;
 }
@@ -179,6 +184,11 @@ REAL* Process::forward_scores_o2sib(DependencyInstance* x,Csnn* mac,nn_input** t
 	}
 	(*t) = new nn_input(num_togo,3,the_inputs,the_goals,x->index_forms,x->index_pos,h,
 			num_good,num_bad);	//!!DEBUG, goals and inputs reversed
+	//--fix the 0 bug
+	Process::CHECK_EQUAL(num_togo,(*t)->num_inst,"Forward bsize nope.");
+	if(num_togo==0)
+		return 0;
+	//--
 	REAL* tmp_scores = mac->forward(*t,testing);
 	return tmp_scores;
 }
@@ -327,6 +337,11 @@ REAL* Process::forward_scores_o3g(DependencyInstance* x,Csnn* mac,nn_input** t,n
 		}
 	}
 	(*t) = new nn_input(num_togo,4,the_inputs,the_goals,x->index_forms,x->index_pos,h,num_good,num_bad);
+	//--fix the 0 bug
+	Process::CHECK_EQUAL(num_togo,(*t)->num_inst,"Forward bsize nope.");
+	if(num_togo==0)
+		return 0;
+	//--
 	REAL* tmp_scores = mac->forward(*t,testing);
 	return tmp_scores;
 }
