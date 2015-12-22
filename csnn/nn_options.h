@@ -106,8 +106,8 @@ public:
 		//nn
 		NN_win = 7;
 
-		NN_add_average = 1;
-		NN_add_sent = 0;
+		NN_add_average = 0;
+		NN_add_sent = 1;
 
 		NN_untied_dim = 0;
 		//[nope]NN_untied_2brate = 0.2;
