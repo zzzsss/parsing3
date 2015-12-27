@@ -19,6 +19,7 @@ void Process::nn_train_prepare()
 	if(hp->CONF_traindict_file.length() > 0){
 		cout << "3.get dict from " << hp->CONF_traindict_file << endl;
 		dict = new Dictionary(hp->CONF_traindict_file);
+		dict->write(hp->CONF_dict_file);
 	}
 	else{
 		cout << "3.get dict from scratch:" << endl;
