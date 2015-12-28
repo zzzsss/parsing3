@@ -68,6 +68,7 @@ double CONF_score_o1filter_cut;
 string CONF_score_mach_fo1;		//o1-filter mach
 string CONF_score_mach_so1;		//o1-scorer mach
 string CONF_score_mach_so2sib;	//o2sib-scorer mach
+string CONF_score_mach_so3g;
 double CONF_higho_percent;		//sample the 'wrong' factors in 2/3 order
 int CONF_score_noc_dev;	//no combine scores when dev
 double CONF_score_o1scale;
@@ -93,6 +94,7 @@ int CONF_higho_toolong;	//when training, skip long sentences
 // mach name to write at last
 string CONF_pr_macho1;
 string CONF_pr_macho2;
+string CONF_pr_macho3;
 
 int CONF_pr_initway;
 REAL CONF_pr_alpha;		//maybe lrate, but does not change
@@ -128,6 +130,7 @@ HypherParameters(string conf):hp_nn()
 	CONF_score_o1filter_cut=1e-4;
 	CONF_score_mach_so1="";
 	CONF_score_mach_so2sib="";
+	CONF_score_mach_so3g="";
 	CONF_higho_percent=1.0;
 	CONF_score_noc_dev=1;
 	CONF_score_o1scale=1;
@@ -144,6 +147,7 @@ HypherParameters(string conf):hp_nn()
 
 	CONF_pr_macho1 = "pro1.mach";
 	CONF_pr_macho2 = "pro2.mach";
+	CONF_pr_macho3 = "pro3.mach";
 	CONF_pr_initway = 0;
 	CONF_pr_alpha = 1;
 	CONF_pr_devavrage = 1;
@@ -204,6 +208,7 @@ HypherParameters(string conf):hp_nn()
 		else if(buf=="s_mach_fo1")	fin >> CONF_score_mach_fo1;
 		else if(buf=="s_mach_so1")	fin >> CONF_score_mach_so1;
 		else if(buf=="s_mach_so2sib")	fin >> CONF_score_mach_so2sib;
+		else if(buf=="s_mach_so3g")	fin >> CONF_score_mach_so3g;
 		else if(buf=="s_higho_per")	fin >> CONF_higho_percent;
 		else if(buf=="s_noc_dev")	fin >> CONF_score_noc_dev;
 		else if(buf=="s_scale_o1") fin >> CONF_score_o1scale;
@@ -248,6 +253,7 @@ HypherParameters(string conf):hp_nn()
 		//1.7-pr
 		else if(buf=="p_o1name")	fin >> CONF_pr_macho1;
 		else if(buf=="p_o2name")	fin >> CONF_pr_macho2;
+		else if(buf=="p_o3name")	fin >> CONF_pr_macho3;
 		else if(buf=="p_init")		fin >> CONF_pr_initway;
 		else if(buf=="p_alpha")		fin >> CONF_pr_alpha;
 		else if(buf=="p_devavr")		fin >> CONF_pr_devavrage;

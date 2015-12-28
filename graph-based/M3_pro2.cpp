@@ -201,7 +201,7 @@ void M3_pro2::get_nninput_o1(DependencyInstance* x,nn_input** good,nn_input**bad
 	*bad = new nn_input(bgoals->size(),2,binput,bgoals,x->index_forms,x->index_pos,dict->get_helper(),0,0);
 }
 
-static int TMP_get_sib(vector<int>* heads,int m)	//-1 for no-sib
+static inline int TMP_get_sib(vector<int>* heads,int m)	//-1 for no-sib
 {
 	int h = heads->at(m);
 	int step = (h>m)?1:-1;	//m->h
@@ -236,3 +236,30 @@ void M3_pro2::get_nninput_o2sib(DependencyInstance* x,nn_input** good,nn_input**
 	*good = new nn_input(ggoals->size(),3,ginput,ggoals,x->index_forms,x->index_pos,dict->get_helper(),0,0);
 	*bad = new nn_input(bgoals->size(),3,binput,bgoals,x->index_forms,x->index_pos,dict->get_helper(),0,0);
 }
+
+void M3_pro2::get_nninput_o3g(DependencyInstance* x,nn_input** good,nn_input**bad)
+{
+	vector<int>* ginput = new vector<int>();
+	vector<int>* ggoals = new vector<int>();
+	vector<int>* binput = new vector<int>();
+	vector<int>* bgoals = new vector<int>();
+	int len = x->length();
+	for(int m=1;m<len;m++){
+		int gh = x->heads->at(m);
+		int ph = x->predict_heads->at(m);
+		int gs = TMP_get_sib(x->heads,m);
+		int ps = TMP_get_sib(x->predict_heads,m);
+		int gg = x->heads->at(gh);
+		int pg = x->predict_heads->at(ph);
+
+		if(gh != ph || gs != ps || gg != pg){
+			TMP_tmp_push234(ginput,gh,m,gs,gg);
+			ggoals->push_back(x->index_deprels->at(m));
+			TMP_tmp_push234(binput,ph,m,ps,pg);
+			bgoals->push_back(x->predict_deprels->at(m));
+		}
+	}
+	*good = new nn_input(ggoals->size(),4,ginput,ggoals,x->index_forms,x->index_pos,dict->get_helper(),0,0);
+	*bad = new nn_input(bgoals->size(),4,binput,bgoals,x->index_forms,x->index_pos,dict->get_helper(),0,0);
+}
+

@@ -56,6 +56,9 @@ int main(int argc,char **argv)
 	case 7:
 		x = new M3_pro2(conf);
 		break;
+	case 8:
+		x = new M3_pro3(conf);
+		break;
 	}
 	if(argc == 2){
 		//training
