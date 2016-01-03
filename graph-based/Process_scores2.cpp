@@ -36,25 +36,49 @@ static bool* TMP_get_cut_o1(int len,double* scores,double cut)
 	return ret;
 }
 
+#include "../algorithms/Helper.h"
 //special routine
 bool* Process::get_cut_o1(DependencyInstance* x,CsnnO1* o1_filter,Dictionary *dict,double cut)
 {
 	//CHECK_EQUAL(o1_filter->get_odim(),dict->getnum_deprel()+1,"Bad mach as filter");
 	int fs_dim = o1_filter->get_odim();
+	int cl_dim = dict->getnum_deprel();
+	bool is_marginal = (fs_dim == cl_dim);
 	//1.get o1-fscores
 	nn_input* the_inputs;
 	REAL* fscores = forward_scores_o1(x,o1_filter,&the_inputs,dict->get_helper(),1);	//testing-mode, forward scores
 	//2.get binary scores
 	int length = x->length();
 	double* scores = new double[length*length];
-	for(int i=0;i<length*length;i++)
-		scores[i] = 0;		//set to 0
-	REAL *to_assign = fscores;
-	for(int i=0;i<the_inputs->num_inst*2;i+=2){ //must be 2
-		int tmph = the_inputs->inputs->at(i);
-		int tmpm = the_inputs->inputs->at(i+1);
-		scores[get_index2(length,tmph,tmpm)] = 1-to_assign[fs_dim-1];	//1 - the last one
-		to_assign += fs_dim;
+	if(!is_marginal){
+		for(int i=0;i<length*length;i++)
+			scores[i] = 0;		//set to 0
+		REAL *to_assign = fscores;
+		for(int i=0;i<the_inputs->num_inst*2;i+=2){ //must be 2
+			int tmph = the_inputs->inputs->at(i);
+			int tmpm = the_inputs->inputs->at(i+1);
+			scores[get_index2(length,tmph,tmpm)] = 1-to_assign[fs_dim-1];	//1 - the last one
+			to_assign += fs_dim;
+		}
+	}
+	else{
+		//special one --- marginal probability
+		for(int i=0;i<length*length;i++)
+			scores[i] = DOUBLE_LARGENEG;		//set to 0
+		REAL *to_assign = fscores;
+		for(int i=0;i<the_inputs->num_inst*2;i+=2){ //must be 2
+			int tmph = the_inputs->inputs->at(i);
+			int tmpm = the_inputs->inputs->at(i+1);
+			double tmp_sum = to_assign[0];
+			for(int ii=1;ii<fs_dim;ii++)
+				tmp_sum = logsumexp(tmp_sum,to_assign[ii],false);
+			scores[get_index2(length,tmph,tmpm)] = tmp_sum;
+			to_assign += fs_dim;
+		}
+		//reaplace it ...
+		double* tmp_reaplace = scores;
+		scores = encodeMarginals(length,scores);
+		delete []tmp_reaplace;
 	}
 	//3.filter out
 	bool* o1f_cut = TMP_get_cut_o1(x->length(),scores,cut);
