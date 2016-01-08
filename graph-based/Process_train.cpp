@@ -59,6 +59,8 @@ void Process::train()
 		}
 		each_train_one_iter();
 		cout << "-- Iter done, waiting for test dev:" << endl;
+		//write curr mach -- before ...
+		mach->write(mach_cur_name);
 		double this_result = nn_dev_test(hp->CONF_dev_file,hp->CONF_output_file+".dev",hp->CONF_dev_file,1);
 		dev_results[cur_iter] = this_result;
 		//write curr mach
