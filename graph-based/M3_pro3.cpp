@@ -29,7 +29,16 @@ void M3_pro3::each_create_machine()
 
 void M3_pro3::each_test_one(DependencyInstance* x,int dev)
 {
-	Process::parse_o3g(x,mfo1,mso1,mso2);
+	if(x->length() >= hp->CONF_higho_toolong){
+		//tricky ...
+		Csnn* tmp = mach;
+		mach = mso2;
+		Process::parse_o2sib(x,mfo1,mso1);
+		mach = tmp;
+	}
+	else{
+		Process::parse_o3g(x,mfo1,mso1,mso2);
+	}
 }
 
 double M3_pro3::nn_dev_test(string to_test,string output,string gold,int dev)	//overwrite
