@@ -6,6 +6,7 @@
  */
 
 #include "sl_part.h"
+#include <exception>
 
 void sl_part::forward(nn_input* inputs,REAL* out)
 {
@@ -25,12 +26,17 @@ void sl_part::forward(nn_input* inputs,REAL* out)
 	delete []c_output_dist;
 	delete []c_output_tmp;
 	delete []c_which;
-	c_input_wp = new REAL[idim_wp*this_len];
-	c_input_dist = new REAL[idim_dist*this_len*this_size];
-	c_output_wp = new REAL[odim*this_len];
-	c_output_dist = new REAL[odim*this_len*this_size];
-	c_output_tmp = new REAL[odim*this_len*this_size];
-	c_which = new int[odim*this_size];
+	try{
+		c_input_wp = new REAL[idim_wp*this_len];
+		c_input_dist = new REAL[idim_dist*this_len*this_size];
+		c_output_wp = new REAL[odim*this_len];
+		c_output_dist = new REAL[odim*this_len*this_size];
+		c_output_tmp = new REAL[odim*this_len*this_size];
+		c_which = new int[odim*this_size];
+	}catch(std::bad_alloc& bad_one){
+		nn_math::CHECK_EQUAL(0,1,"Bad allocation for sl_part-forward.");
+		throw bad_one;
+	}
 
 	//2.fill inputs
 	//2.1 sentence
@@ -158,10 +164,19 @@ void sl_part::backward(/*const*/REAL* ograd)
 	const int odim = p_main->geto();
 
 	//1.allocate memory
-	REAL* g_input_wp = new REAL[idim_wp*this_len];
-	REAL* g_input_dist = new REAL[idim_dist*this_len*this_size];
-	REAL* g_output_wp = new REAL[odim*this_len];
-	REAL* g_output_dist = new REAL[odim*this_len*this_size];
+	REAL* g_input_wp;
+	REAL* g_input_dist;
+	REAL* g_output_wp;
+	REAL* g_output_dist;
+	try{
+		g_input_wp = new REAL[idim_wp*this_len];
+		g_input_dist = new REAL[idim_dist*this_len*this_size];
+		g_output_wp = new REAL[odim*this_len];
+		g_output_dist = new REAL[odim*this_len*this_size];
+	}catch(std::bad_alloc& bad_one){
+		nn_math::CHECK_EQUAL(0,1,"Bad allocation for sl_part-backward.");
+		throw bad_one;
+	}
 	memset(g_input_wp,0,sizeof(REAL)*idim_wp*this_len);
 	memset(g_input_dist,0,sizeof(REAL)*idim_dist*this_len*this_size);
 	memset(g_output_wp,0,sizeof(REAL)*odim*this_len);

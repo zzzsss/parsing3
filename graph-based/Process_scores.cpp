@@ -9,6 +9,7 @@
 #include "../algorithms/Eisner.h"
 #include "../algorithms/EisnerO2sib.h"
 #include "../algorithms/EisnerO3g.h"
+#include <exception>
 
 //be careful about the magic numbers
 static inline void TMP_push234(vector<int>* l,int h,int m,int c=IMPOSSIBLE_INDEX,int g=IMPOSSIBLE_INDEX)
@@ -474,7 +475,14 @@ double* Process::rearrange_scores_o3g(DependencyInstance* x,Csnn* m,nn_input* th
 	if(prob_output)	//if prob output, there is one for no-rel
 		num_label -= 1;
 	//prepare
-	double* rscores = new double[length*length*length*length*num_label];
+	double* rscores = 0;
+	try{
+		rscores = new double[length*length*length*length*num_label];
+	}catch(std::bad_alloc& bad_one){
+		nn_math::CHECK_EQUAL(0,1,"Bad allocation for scores of o3g.");
+		throw bad_one;
+	}
+
 	for(long i=0;i<length*length*length*length*num_label;i++)
 		rscores[i] = DOUBLE_LARGENEG;
 	//make sure the width is THE_DIM
@@ -491,8 +499,15 @@ double* Process::rearrange_scores_o3g(DependencyInstance* x,Csnn* m,nn_input* th
 			tmps = tmph;
 		if(tmpg<0)
 			tmpg = 0;
-		for(int curi=0;curi<num_label;curi++)
-			rscores[get_index2_o3g(length,tmpg,tmph,tmps,tmpm,curi,num_label)] = to_assign[curi];
+		for(int curi=0;curi<num_label;curi++){
+			//----------------check nan-----------------------
+			REAL the_one_tocheck = to_assign[curi];
+			if(the_one_tocheck != the_one_tocheck || the_one_tocheck < DOUBLE_LARGENEG){
+				Process::CHECK_EQUAL(the_one_tocheck,0.0f,"Maybe Nan appears.");
+			}
+			//------------------------------------------------
+			rscores[get_index2_o3g(length,tmpg,tmph,tmps,tmpm,curi,num_label)] = the_one_tocheck;
+		}
 		//(if prob, the no-rel must be at the end, which is different from before)
 		to_assign += fs_dim;
 	}
