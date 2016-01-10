@@ -506,26 +506,26 @@ double* LencodeMarginals_o3g(const long length,const double* scores,const int ln
 					continue;
 			//gsst
 			for(int zl=0;zl<ln;zl++){
-				int key_assign = get_index2_o3g(length,g,s,s,t,zl,ln);
+				long key_assign = get_index2_o3g(length,g,s,s,t,zl,ln);
 				marginals[key_assign] = exp(beta[getKey(s,s+1,t,1,1,length)]+alpha[getKey(g,s,t,0,0,length)]+scores[key_assign]-z);
 			}
 			for(int r=s+1;r<t;r++){
 				//gsrt
 				for(int zl=0;zl<ln;zl++){
-					int key_assign = get_index2_o3g(length,g,s,r,t,zl,ln);
+					long key_assign = get_index2_o3g(length,g,s,r,t,zl,ln);
 					marginals[key_assign] = exp(beta[getKey(g,s,r,0,0,length)]+beta[getKey(s,r,t,0,2,length)]
 												 +alpha[getKey(g,s,t,0,0,length)]+scores[key_assign]-z);
 				}
 			}
 			//gtts
 			for(int zl=0;zl<ln;zl++){
-				int key_assign = get_index2_o3g(length,g,t,t,s,zl,ln);
+				long key_assign = get_index2_o3g(length,g,t,t,s,zl,ln);
 				marginals[key_assign] = exp(beta[getKey(t,s,t-1,0,1,length)]+alpha[getKey(g,s,t,1,0,length)]+scores[key_assign]-z);
 			}
 			for(int r=s+1;r<t;r++){
 				//gtrs
 				for(int zl=0;zl<ln;zl++){
-					int key_assign = get_index2_o3g(length,g,t,r,s,zl,ln);
+					long key_assign = get_index2_o3g(length,g,t,r,s,zl,ln);
 					marginals[key_assign] = exp(beta[getKey(g,r,t,1,0,length)]+beta[getKey(t,s,r,0,2,length)]
 												 +alpha[getKey(g,s,t,1,0,length)]+scores[key_assign]-z);
 				}
@@ -536,13 +536,13 @@ double* LencodeMarginals_o3g(const long length,const double* scores,const int ln
 	for(int t=1;t<length;t++){
 		//000t
 		for(int zl=0;zl<ln;zl++){
-			int key_assign = get_index2_o3g(length,0,0,0,t,zl,ln);
+			long key_assign = get_index2_o3g(length,0,0,0,t,zl,ln);
 			marginals[key_assign] = exp(beta[getKey(0,1,t,1,1,length)]+alpha[getKey(0,0,t,0,0,length)]+scores[key_assign]-z);
 		}
 		//00rt
 		for(int r=1;r<t;r++){
 			for(int zl=0;zl<ln;zl++){
-				int key_assign = get_index2_o3g(length,0,0,r,t,zl,ln);
+				long key_assign = get_index2_o3g(length,0,0,r,t,zl,ln);
 				marginals[key_assign] = exp(beta[getKey(0,0,r,0,0,length)]+beta[getKey(0,r,t,0,2,length)]
 											 +alpha[getKey(0,0,t,0,0,length)]+scores[key_assign]-z);
 			}
