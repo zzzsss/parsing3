@@ -504,6 +504,7 @@ double* Process::rearrange_scores_o3g(DependencyInstance* x,Csnn* m,nn_input* th
 			REAL the_one_tocheck = to_assign[curi];
 			if(the_one_tocheck != the_one_tocheck || the_one_tocheck < DOUBLE_LARGENEG){
 				Process::CHECK_EQUAL(the_one_tocheck,0.0f,"Maybe Nan appears.");
+				throw the_one_tocheck;
 			}
 			//------------------------------------------------
 			rscores[get_index2_o3g(length,tmpg,tmph,tmps,tmpm,curi,num_label)] = the_one_tocheck;

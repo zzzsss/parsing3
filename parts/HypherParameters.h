@@ -85,6 +85,7 @@ int CONF_NN_untied_changeto;	//later change to untied ones
 int CONF_NN_untied_changetoiter;//when to change
 string CONF_o1filter_file;		//stored file for o1filter
 int CONF_higho_toolong;	//when training, skip long sentences
+int CONF_higho_tooshort;	//when training,skip short sentences for po3g
 
 //1.7-perceptron
 //!!what is re-used(even with different meanings) in pr-method
@@ -144,6 +145,7 @@ HypherParameters(string conf):hp_nn()
 	CONF_NN_untied_changeto=0;
 	CONF_NN_untied_changetoiter=-1; //nope
 	CONF_higho_toolong = 150;
+	CONF_higho_tooshort = 7;	//--only for mp2o3
 
 	CONF_pr_macho1 = "pro1.mach";
 	CONF_pr_macho2 = "pro2.mach";
@@ -249,6 +251,7 @@ HypherParameters(string conf):hp_nn()
 		else if(buf=="untied_change_iter")	fin >> CONF_NN_untied_changetoiter;
 		else if(buf=="filter_file")	fin >> CONF_o1filter_file;
 		else if(buf=="o3_toolong")	fin >> CONF_higho_toolong;
+		else if(buf=="o3_tooshort") fin >> CONF_higho_tooshort;
 
 		//1.7-pr
 		else if(buf=="p_o1name")	fin >> CONF_pr_macho1;

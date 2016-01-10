@@ -91,7 +91,8 @@ void M2_p2o3::each_train_one_iter()
 	cout << "#Sentences is " << num_sentences << " and resample (about)" << num_sentences*hp->CONF_NN_resample << endl;
 	for(int i=0;i<num_sentences;){
 		//random skip (instead of shuffling every time)
-		if(drand48() > hp->CONF_NN_resample || training_corpus->at(i)->length() >= hp->CONF_higho_toolong){
+		if(drand48() > hp->CONF_NN_resample || training_corpus->at(i)->length() >= hp->CONF_higho_toolong
+				|| training_corpus->at(i)->length() <= hp->CONF_higho_tooshort){
 			skip_sent_num ++;
 			i ++;
 			continue;
@@ -163,7 +164,8 @@ void M2_p2o3::each_train_one_iter()
 			if(i>=num_sentences)
 				break;
 			//out of the mini-batch
-			while(training_corpus->at(i)->length() >= hp->CONF_higho_toolong){	//HAVE to compromise, bad choice
+			while(training_corpus->at(i)->length() >= hp->CONF_higho_toolong
+					|| training_corpus->at(i)->length() <= hp->CONF_higho_tooshort){	//HAVE to compromise, bad choice
 				skip_sent_num ++;
 				i ++;
 			}
