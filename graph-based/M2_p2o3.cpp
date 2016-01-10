@@ -145,11 +145,13 @@ void M2_p2o3::each_train_one_iter()
 				if(tmpg<0)
 					tmpg = 0;
 				int tmp_goal = the_inputs->goals->at(ii/HERE_dim);
+				bool tmp_nonproj = ((tmpg>=GET_MIN_ONE(tmph,tmpm)) && (tmpg<=GET_MAX_ONE(tmph,tmpm)));	//!!maybe non-proj right link
 				for(int once=0;once<odim;once++,to_assign++){
+					double tmp_one_from_m = (tmp_nonproj ? 0 : tmp_marginals[get_index2_o3g(length,tmpg,tmph,tmps,tmpm,once,odim)]);
 					if(tmp_goal == once)
-						*to_assign = -1 * (1 - tmp_marginals[get_index2_o3g(length,tmpg,tmph,tmps,tmpm,once,odim)]) + *to_assign * hp->CONF_score_p2reg;
+						*to_assign = -1 * (1 - tmp_one_from_m) + *to_assign * hp->CONF_score_p2reg;
 					else
-						*to_assign = tmp_marginals[get_index2_o3g(length,tmpg,tmph,tmps,tmpm,once,odim)] + *to_assign * hp->CONF_score_p2reg;	//now object is maximum
+						*to_assign = tmp_one_from_m + *to_assign * hp->CONF_score_p2reg;	//now object is maximum
 				}
 			}
 

@@ -145,7 +145,7 @@ HypherParameters(string conf):hp_nn()
 	CONF_NN_untied_changeto=0;
 	CONF_NN_untied_changetoiter=-1; //nope
 	CONF_higho_toolong = 150;
-	CONF_higho_tooshort = 7;	//--only for mp2o3
+	CONF_higho_tooshort = 1;	//--only for mp2o3
 
 	CONF_pr_macho1 = "pro1.mach";
 	CONF_pr_macho2 = "pro2.mach";
