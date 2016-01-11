@@ -505,12 +505,14 @@ double* LencodeMarginals_o3g(const long length,const double* scores,const int ln
 				if(g>=s && g<=t)
 					continue;
 			//gsst
+			if(sum_scores[get_index2_o3g(length,g,s,s,t)] > DOUBLE_LARGENEG_P1)	//only needed for valid ones
 			for(int zl=0;zl<ln;zl++){
 				long key_assign = get_index2_o3g(length,g,s,s,t,zl,ln);
 				marginals[key_assign] = exp(beta[getKey(s,s+1,t,1,1,length)]+alpha[getKey(g,s,t,0,0,length)]+scores[key_assign]-z);
 			}
 			for(int r=s+1;r<t;r++){
 				//gsrt
+				if(sum_scores[get_index2_o3g(length,g,s,r,t)] > DOUBLE_LARGENEG_P1)
 				for(int zl=0;zl<ln;zl++){
 					long key_assign = get_index2_o3g(length,g,s,r,t,zl,ln);
 					marginals[key_assign] = exp(beta[getKey(g,s,r,0,0,length)]+beta[getKey(s,r,t,0,2,length)]
@@ -518,12 +520,14 @@ double* LencodeMarginals_o3g(const long length,const double* scores,const int ln
 				}
 			}
 			//gtts
+			if(sum_scores[get_index2_o3g(length,g,t,t,s)] > DOUBLE_LARGENEG_P1)
 			for(int zl=0;zl<ln;zl++){
 				long key_assign = get_index2_o3g(length,g,t,t,s,zl,ln);
 				marginals[key_assign] = exp(beta[getKey(t,s,t-1,0,1,length)]+alpha[getKey(g,s,t,1,0,length)]+scores[key_assign]-z);
 			}
 			for(int r=s+1;r<t;r++){
 				//gtrs
+				if(sum_scores[get_index2_o3g(length,g,t,r,s)] > DOUBLE_LARGENEG_P1)
 				for(int zl=0;zl<ln;zl++){
 					long key_assign = get_index2_o3g(length,g,t,r,s,zl,ln);
 					marginals[key_assign] = exp(beta[getKey(g,r,t,1,0,length)]+beta[getKey(t,s,r,0,2,length)]
@@ -535,12 +539,14 @@ double* LencodeMarginals_o3g(const long length,const double* scores,const int ln
 	}
 	for(int t=1;t<length;t++){
 		//000t
+		if(sum_scores[get_index2_o3g(length,0,0,0,t)] > DOUBLE_LARGENEG_P1)
 		for(int zl=0;zl<ln;zl++){
 			long key_assign = get_index2_o3g(length,0,0,0,t,zl,ln);
 			marginals[key_assign] = exp(beta[getKey(0,1,t,1,1,length)]+alpha[getKey(0,0,t,0,0,length)]+scores[key_assign]-z);
 		}
 		//00rt
 		for(int r=1;r<t;r++){
+			if(sum_scores[get_index2_o3g(length,0,0,r,t)] > DOUBLE_LARGENEG_P1)
 			for(int zl=0;zl<ln;zl++){
 				long key_assign = get_index2_o3g(length,0,0,r,t,zl,ln);
 				marginals[key_assign] = exp(beta[getKey(0,0,r,0,0,length)]+beta[getKey(0,r,t,0,2,length)]
