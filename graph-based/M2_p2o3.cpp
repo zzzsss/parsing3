@@ -145,7 +145,7 @@ void M2_p2o3::each_train_one_iter()
 				if(tmpg<0)
 					tmpg = 0;
 				int tmp_goal = the_inputs->goals->at(ii/HERE_dim);
-				bool tmp_nonproj = ((tmpg>=GET_MIN_ONE(tmph,tmpm)) && (tmpg<=GET_MAX_ONE(tmph,tmpm)));	//!!maybe non-proj right link
+				bool tmp_nonproj = ((tmpg>GET_MIN_ONE(tmph,tmpm)) && (tmpg<GET_MAX_ONE(tmph,tmpm)));	//!!maybe non-proj right link
 				for(int once=0;once<odim;once++,to_assign++){
 					if(tmp_nonproj){
 						*to_assign = 0;	//no gradient
