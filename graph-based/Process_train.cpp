@@ -65,8 +65,8 @@ void Process::train()
 		dev_results[cur_iter] = this_result;
 		//write curr mach
 		mach->write(mach_cur_name);
-		//possible write best mach
-		if(this_result > best_result){
+		//possible write best mach --- and choose the later one
+		if(this_result >= best_result){
 			cout << "-- get better result, write to " << mach_best_name << endl;
 			best_result = this_result;
 			best_iter = cur_iter;
