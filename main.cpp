@@ -12,6 +12,7 @@
 #include "graph-based/M1_p1.h"
 #include "graph-based/M2_p2.h"
 #include "graph-based/M3_pr.h"
+#include "graph-based/M4_mm.h"
 
 /* <Version 2.2>
  * 		-- usage:	(mode 3 and 4 are for debugging)
@@ -58,6 +59,15 @@ int main(int argc,char **argv)
 		break;
 	case 8:
 		x = new M3_pro3(conf);
+		break;
+	case 11:
+		x = new M4_o1(conf);
+		break;
+	case 12:
+		x = new M4_o2(conf);
+		break;
+	case 13:
+		x = new M4_o3(conf);
 		break;
 	}
 	if(argc == 2){

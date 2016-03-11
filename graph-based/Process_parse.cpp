@@ -38,13 +38,13 @@ static void TMP_get_maxlabel(long all,int ln,double* s,double** ascores_p,int** 
 //the parse routines
 //1.prepare possible o1-cut 2.get lower-order scores and combine 3.parse and take care of labels
 //!! here only testing mode --- forward_scores_o*'s testing set to 1
-void Process::parse_o1(DependencyInstance* x)
+void Process::parse_o1(DependencyInstance* x,bool add_margin)
 {
 	//1.get the numbers and informations
 	int dictionary_labelnum = dict->getnum_deprel();
 	int mach_outputnum = mach->get_odim();
 	bool is_labeled = (mach_outputnum >= dictionary_labelnum);	//at least labnum (or +1)
-	double* rscores = get_scores_o1(x,mach,dict,hp->CONF_score_prob,hp);
+	double* rscores = get_scores_o1(x,mach,dict,hp->CONF_score_prob,hp,add_margin);
 	//3.graph-algorithm
 	if(is_labeled){
 		int len = x->length();
@@ -68,7 +68,7 @@ void Process::parse_o1(DependencyInstance* x)
 }
 
 //o1_filter,o1_scorer must have same dictionary, o1_filter must be unlabel and prob, o1_scorer must be same conf
-void Process::parse_o2sib(DependencyInstance* x,CsnnO1* o1_filter,CsnnO1* o1_scorer)
+void Process::parse_o2sib(DependencyInstance* x,CsnnO1* o1_filter,CsnnO1* o1_scorer,bool add_margin)
 {
 	//1.get the numbers and informations
 	int len = x->length();
@@ -88,7 +88,7 @@ void Process::parse_o2sib(DependencyInstance* x,CsnnO1* o1_filter,CsnnO1* o1_sco
 		o1s_rscores = get_scores_o1(x,o1_scorer,dict,is_trans,hp);
 	}
 	//2.get o2sib scores
-	double* rscores = get_scores_o2sib(x,mach,dict,is_trans,o1f_cut,o1s_rscores,hp);
+	double* rscores = get_scores_o2sib(x,mach,dict,is_trans,o1f_cut,o1s_rscores,hp,add_margin);
 	//3.graph-algorithm
 	if(is_labeled){
 		int len = x->length();
@@ -120,7 +120,7 @@ void Process::parse_o2sib(DependencyInstance* x,CsnnO1* o1_filter,CsnnO1* o1_sco
 	delete []o1s_rscores;
 }
 
-void Process::parse_o3g(DependencyInstance* x,CsnnO1* o1_filter,CsnnO1* o1_scorer,CsnnO2* o2_scorer)
+void Process::parse_o3g(DependencyInstance* x,CsnnO1* o1_filter,CsnnO1* o1_scorer,CsnnO2* o2_scorer,bool add_margin)
 {
 	//1.get the numbers and informations
 	int len = x->length();
@@ -148,7 +148,7 @@ void Process::parse_o3g(DependencyInstance* x,CsnnO1* o1_filter,CsnnO1* o1_score
 		o2s_rscores = get_scores_o2sib(x,o2_scorer,dict,is_trans,o1f_cut,0,hp);	//here no combine scores
 	}
 	//2.get o3g scores
-	double* rscores = get_scores_o3g(x,mach,dict,is_trans,o1f_cut,o1s_rscores,o2s_rscores,hp);
+	double* rscores = get_scores_o3g(x,mach,dict,is_trans,o1f_cut,o1s_rscores,o2s_rscores,hp,add_margin);
 	//3.graph-algorithm
 	if(is_labeled){
 		long len = x->length();

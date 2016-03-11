@@ -102,6 +102,9 @@ REAL CONF_pr_alpha;		//maybe lrate, but does not change
 
 int CONF_pr_devavrage;	//average when dev
 
+//1.8 - margin
+REAL CONF_margin;	//margin for both prob or max-margin
+
 //init
 HypherParameters(string conf):hp_nn()
 {
@@ -155,6 +158,8 @@ HypherParameters(string conf):hp_nn()
 	CONF_pr_devavrage = 1;
 
 	CONF_traindict_file = "";	//!!new-file
+
+	CONF_margin = 0;
 
 	//read in conf-file
 #define DATA_LINE_LEN 10000
@@ -260,6 +265,9 @@ HypherParameters(string conf):hp_nn()
 		else if(buf=="p_init")		fin >> CONF_pr_initway;
 		else if(buf=="p_alpha")		fin >> CONF_pr_alpha;
 		else if(buf=="p_devavr")		fin >> CONF_pr_devavrage;
+
+		//1.8-margin
+		else if(buf=="m_margin")	fin >> CONF_margin;
 
 		else
 			cerr << "Unknown option " << buf << endl;

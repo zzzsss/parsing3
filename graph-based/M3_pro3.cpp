@@ -125,9 +125,9 @@ void M3_pro3::each_train_one_iter()
 			DependencyInstance* x = xs[ii];
 			nn_input* good_o1,* good_o2,* good_o3;
 			nn_input* bad_o1, * bad_o2,* bad_o3;
-			get_nninput_o1(x,&good_o1,&bad_o1);
-			get_nninput_o2sib(x,&good_o2,&bad_o2);
-			get_nninput_o3g(x,&good_o3,&bad_o3);
+			get_nninput_o1(x,&good_o1,&bad_o1,dict);
+			get_nninput_o2sib(x,&good_o2,&bad_o2,dict);
+			get_nninput_o3g(x,&good_o3,&bad_o3,dict);
 			mso1->update_pr(good_o1,bad_o1,hp->CONF_pr_alpha,hp->CONF_NN_WD);
 			mso2->update_pr(good_o2,bad_o2,hp->CONF_pr_alpha,hp->CONF_NN_WD);
 			mach->update_pr(good_o3,bad_o3,hp->CONF_pr_alpha,hp->CONF_NN_WD);

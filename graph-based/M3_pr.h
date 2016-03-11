@@ -24,10 +24,11 @@ protected:
 	virtual void test(string);	//override
 	virtual double nn_dev_test(string to_test,string output,string gold,int dev);
 
+public:
 	//static methods
-	void get_nninput_o1(DependencyInstance* x,nn_input** good,nn_input**bad);
-	void get_nninput_o2sib(DependencyInstance* x,nn_input** good,nn_input**bad);
-	void get_nninput_o3g(DependencyInstance* x,nn_input** good,nn_input**bad);
+	static void get_nninput_o1(DependencyInstance* x,nn_input** good,nn_input**bad, Dictionary *dddd);
+	static void get_nninput_o2sib(DependencyInstance* x,nn_input** good,nn_input**bad, Dictionary *dddd);
+	static void get_nninput_o3g(DependencyInstance* x,nn_input** good,nn_input**bad, Dictionary *dddd);
 public:
 	M3_pro2(string cname):Process(cname){
 		//need special conf for perceptron learning

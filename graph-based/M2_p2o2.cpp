@@ -101,6 +101,7 @@ void M2_p2o2::each_train_one_iter()
 			this_sentence ++;
 			i++;
 
+			adjust_scores_before(the_inputs, fscores, odim, hp->CONF_margin);
 			//two situations
 			int length = x->length();
 			if(!hp->CONF_labeled){
@@ -113,6 +114,8 @@ void M2_p2o2::each_train_one_iter()
 				rscores = rearrange_scores_o2sib(x,mach,the_inputs,fscores,0,0,0,hp);
 				tmp_marginals = LencodeMarginals_o2sib(length,rscores,mach->get_odim());
 			}
+			adjust_scores_after(the_inputs, fscores, odim, hp->CONF_margin);
+
 			//set gradients
 			int HERE_dim = the_inputs->num_width;
 			REAL* to_assign = fscores;

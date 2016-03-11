@@ -194,3 +194,21 @@ void Process::filter_write(bool** noprobs)
 		cout << "WRITING o1 filter to " << hp->CONF_o1filter_file << endl;
 	}
 }
+
+//---------------------------
+void Process::adjust_scores(nn_input* x, REAL* scores, int sdim, REAL adding_good, REAL adding_bad)
+{
+	REAL* to_assign = scores;
+	for(int i=0;i<x->get_numi();i++){
+		int tmp_goal = x->goals->at(i);
+		for(int once=0;once<sdim;once++,to_assign++){
+			if(tmp_goal == once)	//good
+				*to_assign += adding_good;
+			else
+				*to_assign += adding_bad;
+		}
+	}
+}
+
+
+

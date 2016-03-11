@@ -76,13 +76,13 @@ protected:
 	static double* rearrange_scores_o3g(DependencyInstance* x,Csnn* m,nn_input* t,REAL* fscores,bool prob_ouput,bool prob_trans,double* rscores_o1,double* rscores_o2sib,HypherParameters*hh);
 	//3.1-c: get scores (combine forward and rearrange) --- only testing or training-parsing
 	static bool* get_cut_o1(DependencyInstance* x,CsnnO1* m,Dictionary *dict,double cut);
-	static double* get_scores_o1(DependencyInstance* x,Csnn* m,Dictionary* dict,bool trans,HypherParameters*hh);
-	static double* get_scores_o2sib(DependencyInstance* x,Csnn* m,Dictionary* dict,bool trans,bool* cut_o1,double* rscores_o1,HypherParameters*hh);
-	static double* get_scores_o3g(DependencyInstance* x,Csnn* m,Dictionary* dict,bool trans,bool* cut_o1,double* rscores_o1,double* rscores_o2sib,HypherParameters*hh);
+	static double* get_scores_o1(DependencyInstance* x,Csnn* m,Dictionary* dict,bool trans,HypherParameters*hh,bool add_margin=false);
+	static double* get_scores_o2sib(DependencyInstance* x,Csnn* m,Dictionary* dict,bool trans,bool* cut_o1,double* rscores_o1,HypherParameters*hh,bool add_margin=false);
+	static double* get_scores_o3g(DependencyInstance* x,Csnn* m,Dictionary* dict,bool trans,bool* cut_o1,double* rscores_o1,double* rscores_o2sib,HypherParameters*hh,bool add_margin=false);
 	//3.2:parse (take care of the labeled situation)
-	void parse_o1(DependencyInstance* x);
-	void parse_o2sib(DependencyInstance* x,CsnnO1* o1_filter,CsnnO1* o1_scorer);
-	void parse_o3g(DependencyInstance* x,CsnnO1* o1_filter,CsnnO1* o1_scorer,CsnnO2* o2_scorer);
+	void parse_o1(DependencyInstance* x,bool add_margin=false);	//!!MAYBE add loss for margin when not testing
+	void parse_o2sib(DependencyInstance* x,CsnnO1* o1_filter,CsnnO1* o1_scorer,bool add_margin=false);
+	void parse_o3g(DependencyInstance* x,CsnnO1* o1_filter,CsnnO1* o1_scorer,CsnnO2* o2_scorer,bool add_margin=false);
 
 	//4.other helpers
 	bool filter_read(bool**&);	//read success if true
@@ -93,6 +93,31 @@ protected:
 		//make sure things go right even no setting in conf
 		hp->CONF_higho_percent = 1;
 		hp->CONF_score_prob = 0;
+	}
+
+	//6.adjust stores with loss for margin-methods
+	static void adjust_scores(nn_input* x, REAL* scores, int sdim,  REAL adding_good, REAL adding_bad);
+	static void adjust_scores_before(nn_input* x, REAL* scores, int sdim, REAL margin){
+		REAL adding_good = 0;
+		REAL adding_bad = 0;
+		if(margin > 0)//structure loss, adding_bad
+			adding_bad = margin;
+		else if(margin < 0)
+			adding_good = margin;
+		else
+			return;
+		adjust_scores(x,scores,sdim,adding_good,adding_bad);
+	}
+	static void adjust_scores_after(nn_input* x, REAL* scores, int sdim, REAL margin){	//add back
+		REAL adding_good = 0;
+		REAL adding_bad = 0;
+		if(margin > 0)//structure loss, adding_bad
+			adding_bad = -1 * margin;
+		else if(margin < 0)
+			adding_good = -1 * margin;
+		else
+			return;
+		adjust_scores(x,scores,sdim,adding_good,adding_bad);
 	}
 
 public:

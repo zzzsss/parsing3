@@ -131,8 +131,8 @@ void M3_pro2::each_train_one_iter()
 			DependencyInstance* x = xs[ii];
 			nn_input* good_o1,* good_o2;
 			nn_input* bad_o1, * bad_o2;
-			get_nninput_o1(x,&good_o1,&bad_o1);
-			get_nninput_o2sib(x,&good_o2,&bad_o2);
+			get_nninput_o1(x,&good_o1,&bad_o1,dict);
+			get_nninput_o2sib(x,&good_o2,&bad_o2,dict);
 			mso1->update_pr(good_o1,bad_o1,hp->CONF_pr_alpha,hp->CONF_NN_WD);
 			mach->update_pr(good_o2,bad_o2,hp->CONF_pr_alpha,hp->CONF_NN_WD);
 			delete good_o1;delete bad_o1;
@@ -180,7 +180,7 @@ static inline void TMP_tmp_push234(vector<int>* l,int h,int m,int c=IMPOSSIBLE_I
 }
 
 // !! nn-input must be consistent with specified !!
-void M3_pro2::get_nninput_o1(DependencyInstance* x,nn_input** good,nn_input**bad)
+void M3_pro2::get_nninput_o1(DependencyInstance* x,nn_input** good,nn_input**bad, Dictionary *dddd)
 {
 	vector<int>* ginput = new vector<int>();
 	vector<int>* ggoals = new vector<int>();
@@ -197,8 +197,8 @@ void M3_pro2::get_nninput_o1(DependencyInstance* x,nn_input** good,nn_input**bad
 			bgoals->push_back(x->predict_deprels->at(m));
 		}
 	}
-	*good = new nn_input(ggoals->size(),2,ginput,ggoals,x->index_forms,x->index_pos,dict->get_helper(),0,0);
-	*bad = new nn_input(bgoals->size(),2,binput,bgoals,x->index_forms,x->index_pos,dict->get_helper(),0,0);
+	*good = new nn_input(ggoals->size(),2,ginput,ggoals,x->index_forms,x->index_pos,dddd->get_helper(),0,0);
+	*bad = new nn_input(bgoals->size(),2,binput,bgoals,x->index_forms,x->index_pos,dddd->get_helper(),0,0);
 }
 
 static inline int TMP_get_sib(vector<int>* heads,int m)	//-1 for no-sib
@@ -213,7 +213,7 @@ static inline int TMP_get_sib(vector<int>* heads,int m)	//-1 for no-sib
 	return (sib==h)?-1:sib;
 }
 
-void M3_pro2::get_nninput_o2sib(DependencyInstance* x,nn_input** good,nn_input**bad)
+void M3_pro2::get_nninput_o2sib(DependencyInstance* x,nn_input** good,nn_input**bad, Dictionary *dddd)
 {
 	vector<int>* ginput = new vector<int>();
 	vector<int>* ggoals = new vector<int>();
@@ -233,11 +233,11 @@ void M3_pro2::get_nninput_o2sib(DependencyInstance* x,nn_input** good,nn_input**
 			bgoals->push_back(x->predict_deprels->at(m));
 		}
 	}
-	*good = new nn_input(ggoals->size(),3,ginput,ggoals,x->index_forms,x->index_pos,dict->get_helper(),0,0);
-	*bad = new nn_input(bgoals->size(),3,binput,bgoals,x->index_forms,x->index_pos,dict->get_helper(),0,0);
+	*good = new nn_input(ggoals->size(),3,ginput,ggoals,x->index_forms,x->index_pos,dddd->get_helper(),0,0);
+	*bad = new nn_input(bgoals->size(),3,binput,bgoals,x->index_forms,x->index_pos,dddd->get_helper(),0,0);
 }
 
-void M3_pro2::get_nninput_o3g(DependencyInstance* x,nn_input** good,nn_input**bad)
+void M3_pro2::get_nninput_o3g(DependencyInstance* x,nn_input** good,nn_input**bad, Dictionary *dddd)
 {
 	vector<int>* ginput = new vector<int>();
 	vector<int>* ggoals = new vector<int>();
@@ -259,7 +259,7 @@ void M3_pro2::get_nninput_o3g(DependencyInstance* x,nn_input** good,nn_input**ba
 			bgoals->push_back(x->predict_deprels->at(m));
 		}
 	}
-	*good = new nn_input(ggoals->size(),4,ginput,ggoals,x->index_forms,x->index_pos,dict->get_helper(),0,0);
-	*bad = new nn_input(bgoals->size(),4,binput,bgoals,x->index_forms,x->index_pos,dict->get_helper(),0,0);
+	*good = new nn_input(ggoals->size(),4,ginput,ggoals,x->index_forms,x->index_pos,dddd->get_helper(),0,0);
+	*bad = new nn_input(bgoals->size(),4,binput,bgoals,x->index_forms,x->index_pos,dddd->get_helper(),0,0);
 }
 
