@@ -40,6 +40,7 @@ static inline bool TMP_check234(int h1,int h2,int c1=IMPOSSIBLE_INDEX,int c2=IMP
 static inline bool TMP_higho_sample(HypherParameters* HP,int h=IMPOSSIBLE_INDEX,int m=IMPOSSIBLE_INDEX,
 		int s=IMPOSSIBLE_INDEX,int g=IMPOSSIBLE_INDEX)
 {
+	if(!HP) return 1;
 	return drand48() < HP->CONF_higho_percent;
 }
 

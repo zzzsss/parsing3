@@ -96,8 +96,8 @@ void M4_o2::each_train_one_iter()
 			nn_input* good;
 			nn_input* bad;
 			M3_pro2::get_nninput_o2sib(x,&good,&bad,dict);
-			MM_margin_backward(mach, good, 1);
-			MM_margin_backward(mach, bad, -1);
+			MM_margin_backward(mach, good, 1, hp->CONF_score_p2reg);
+			MM_margin_backward(mach, bad, -1, hp->CONF_score_p2reg);
 			delete good;delete bad;
 		}
 		xs.clear();

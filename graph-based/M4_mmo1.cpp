@@ -87,8 +87,8 @@ void M4_o1::each_train_one_iter()
 			nn_input* good;
 			nn_input* bad;
 			M3_pro2::get_nninput_o1(x,&good,&bad,dict);
-			MM_margin_backward(mach, good, 1);
-			MM_margin_backward(mach, bad, -1);
+			MM_margin_backward(mach, good, 1, hp->CONF_score_p2reg);
+			MM_margin_backward(mach, bad, -1, hp->CONF_score_p2reg);
 			delete good;delete bad;
 		}
 		xs.clear();
@@ -100,8 +100,10 @@ void M4_o1::each_train_one_iter()
 }
 
 //special method for perceptron like backward
-void MM_margin_backward(Csnn* m, nn_input* x, int what)
+void MM_margin_backward(Csnn* m, nn_input* x, int what, REAL p2reg)
 {
+	if(x->num_inst <= 0)
+		return;
 	int sdim = m->get_odim();
 	REAL *fscores = 0;
 	fscores = m->forward(x, 1);	//true for testing mode
@@ -110,9 +112,9 @@ void MM_margin_backward(Csnn* m, nn_input* x, int what)
 		int tmp_goal = x->goals->at(i);
 		for(int once=0;once<sdim;once++,to_assign++){
 			if(tmp_goal == once)
-				*to_assign = what;
+				*to_assign = -1 * what + *to_assign * p2reg;	//bug, -1 for the good one
 			else
-				*to_assign = 0;
+				*to_assign = *to_assign * p2reg;
 		}
 	}
 	m->backward(fscores);

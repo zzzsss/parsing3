@@ -13,7 +13,7 @@
 
 //should have the same interface as M2, and only training process is different ...
 
-void MM_margin_backward(Csnn*, nn_input*, int);
+void MM_margin_backward(Csnn*, nn_input*, int, REAL);
 
 //o1
 class M4_o1: public Process{

@@ -90,7 +90,7 @@ bool* Process::get_cut_o1(DependencyInstance* x,CsnnO1* o1_filter,Dictionary *di
 
 //2.the getting-score functions for parsing
 //used when testing or possible parsing in training
-double* Process::get_scores_o1(DependencyInstance* x,Csnn* m,Dictionary* dict,bool trans,HypherParameters*hh,bool add_margin)
+double* Process::get_scores_o1(DependencyInstance* x,Csnn* m,Dictionary* dict,bool trans,HypherParameters*hh,bool add_margin)	//add_margin means not testing
 {
 	//1.get the numbers and informations
 	int dictionary_labelnum = dict->getnum_deprel();
@@ -99,7 +99,7 @@ double* Process::get_scores_o1(DependencyInstance* x,Csnn* m,Dictionary* dict,bo
 	bool is_trans = trans;
 	//2.getting the scores
 	nn_input* the_input;
-	REAL* fscores = forward_scores_o1(x,m,&the_input,dict->get_helper(),1);	//testing-mode, forward scores
+	REAL* fscores = forward_scores_o1(x,m,&the_input,dict->get_helper(),(add_margin ? 0 : 1));	//testing-mode, forward scores
 	if(add_margin)
 		adjust_scores_before(the_input, fscores, m->get_odim(), hh->CONF_margin);
 	double* rscores = rearrange_scores_o1(x,m,the_input,fscores,is_prob,is_trans,hh);
@@ -118,7 +118,7 @@ double* Process::get_scores_o2sib(DependencyInstance* x,Csnn* m,Dictionary* dict
 	bool is_trans = trans;
 	//2.getting the scores
 	nn_input* the_input;
-	REAL* fscores = forward_scores_o2sib(x,m,&the_input,dict->get_helper(),1,cut_o1);	//testing-mode, forward scores
+	REAL* fscores = forward_scores_o2sib(x,m,&the_input,dict->get_helper(),(add_margin ? 0 : 1),cut_o1);	//testing-mode, forward scores
 	if(add_margin)
 		adjust_scores_before(the_input, fscores, m->get_odim(), hh->CONF_margin);
 	double* rscores = rearrange_scores_o2sib(x,m,the_input,fscores,is_prob,is_trans,rscores_o1,hh);
@@ -137,7 +137,7 @@ double* Process::get_scores_o3g(DependencyInstance* x,Csnn* m,Dictionary* dict,b
 	bool is_trans = trans;
 	//2.getting the scores
 	nn_input* the_input;
-	REAL* fscores = forward_scores_o3g(x,m,&the_input,dict->get_helper(),1,cut_o1);	//testing-mode, forward scores
+	REAL* fscores = forward_scores_o3g(x,m,&the_input,dict->get_helper(),(add_margin ? 0 : 1),cut_o1);	//testing-mode, forward scores
 	if(add_margin)
 		adjust_scores_before(the_input, fscores, m->get_odim(), hh->CONF_margin);
 	double* rscores = rearrange_scores_o3g(x,m,the_input,fscores,is_prob,is_trans,rscores_o1,rscores_o2sib,hh);
