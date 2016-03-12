@@ -352,6 +352,8 @@ void Csnn::backward(REAL* gradients)
 
 void Csnn::update(int way,REAL lrate,REAL wdecay,REAL m_alpha,REAL rms_smooth)
 {
+	if(this_mbsize <= 0)	//no updates
+		return;
 	if(p_out->need_updating())
 		p_out->update(way,lrate,wdecay,m_alpha,rms_smooth,this_mbsize);
 	if(p_h->need_updating())
