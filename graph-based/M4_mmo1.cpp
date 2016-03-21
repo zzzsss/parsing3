@@ -118,5 +118,6 @@ void MM_margin_backward(Csnn* m, nn_input* x, int what, REAL p2reg)
 		}
 	}
 	m->backward(fscores);
+	delete[] fscores;
 }
 
