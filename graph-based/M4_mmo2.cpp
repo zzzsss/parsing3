@@ -62,6 +62,7 @@ void M4_o2::each_train_one_iter()
 			continue;
 		}
 		//main batch
+		int this_instance_toupdate = 0;
 		for(;;){
 			//forward
 			DependencyInstance* x = training_corpus->at(i);
@@ -73,6 +74,8 @@ void M4_o2::each_train_one_iter()
 			for(int i2=1;i2<x->length();i2++){	//ignore root
 				if((*(x->predict_heads))[i2] == (*(x->heads))[i2])
 					all_right ++;
+				else
+					this_instance_toupdate++;
 			}
 			//
 			i++;
@@ -86,8 +89,14 @@ void M4_o2::each_train_one_iter()
 			}
 			if(i>=num_sentences)
 				break;
-			if(int(xs.size()) >= hp->CONF_minibatch)
-				break;
+			if (hp->CONF_minibatch > 0) {
+				if (int(xs.size()) >= hp->CONF_minibatch)
+					break;
+			}
+			else {
+				if (this_instance_toupdate >= -1 * hp->CONF_minibatch)
+					break;
+			}
 		}
 
 		//backward

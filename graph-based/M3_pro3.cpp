@@ -93,17 +93,20 @@ void M3_pro3::each_train_one_iter()
 			continue;
 		}
 		//main batch
+		int this_instance_toupdate = 0;
 		for(;;){
 			//forward
 			DependencyInstance* x = training_corpus->at(i);
 			xs.push_back(x);
 
-			Process::parse_o3g(x,mfo1,mso1,mso2);
+			Process::parse_o3g(x,mfo1,mso1,mso2, true);
 			// -- statistic
 			all_token += x->length()-1;
 			for(int i2=1;i2<x->length();i2++){	//ignore root
 				if((*(x->predict_heads))[i2] == (*(x->heads))[i2])
 					all_right ++;
+				else
+					this_instance_toupdate++;
 			}
 			//
 			i++;
@@ -117,8 +120,14 @@ void M3_pro3::each_train_one_iter()
 			}
 			if(i>=num_sentences)
 				break;
-			if(int(xs.size()) >= hp->CONF_minibatch)
-				break;
+			if (hp->CONF_minibatch > 0) {
+				if (int(xs.size()) >= hp->CONF_minibatch)
+					break;
+			}
+			else {
+				if (this_instance_toupdate >= -1 * hp->CONF_minibatch)
+					break;
+			}
 		}
 		//update
 		for(int ii=0;ii<xs.size();ii++){

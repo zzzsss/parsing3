@@ -85,7 +85,7 @@ void Process::parse_o2sib(DependencyInstance* x,CsnnO1* o1_filter,CsnnO1* o1_sco
 		bool o1s_is_labeled = (o1_scorer->get_odim() >= dictionary_labelnum);
 		if(is_labeled != o1s_is_labeled)
 			cerr << "Label-conf no match for o1_scorer" << endl;
-		o1s_rscores = get_scores_o1(x,o1_scorer,dict,is_trans,hp);
+		o1s_rscores = get_scores_o1(x,o1_scorer,dict,is_trans,hp, add_margin);
 	}
 	//2.get o2sib scores
 	double* rscores = get_scores_o2sib(x,mach,dict,is_trans,o1f_cut,o1s_rscores,hp,add_margin);
@@ -137,7 +137,7 @@ void Process::parse_o3g(DependencyInstance* x,CsnnO1* o1_filter,CsnnO1* o1_score
 		bool o1s_is_labeled = (o1_scorer->get_odim() >= dictionary_labelnum);
 		if(is_labeled != o1s_is_labeled)
 			cerr << "Label-conf no match for o1_scorer" << endl;
-		o1s_rscores = get_scores_o1(x,o1_scorer,dict,is_trans,hp);
+		o1s_rscores = get_scores_o1(x,o1_scorer,dict,is_trans,hp, add_margin);
 	}
 	//1.7. the o2 scorer --- ...
 	double* o2s_rscores = 0;
@@ -145,7 +145,7 @@ void Process::parse_o3g(DependencyInstance* x,CsnnO1* o1_filter,CsnnO1* o1_score
 		bool o2s_is_labeled = (o2_scorer->get_odim() >= dictionary_labelnum);
 		if(is_labeled != o2s_is_labeled)
 			cerr << "Label-conf no match for o2_scorer" << endl;
-		o2s_rscores = get_scores_o2sib(x,o2_scorer,dict,is_trans,o1f_cut,0,hp);	//here no combine scores
+		o2s_rscores = get_scores_o2sib(x,o2_scorer,dict,is_trans,o1f_cut,0,hp, add_margin);	//here no combine scores
 	}
 	//2.get o3g scores
 	double* rscores = get_scores_o3g(x,mach,dict,is_trans,o1f_cut,o1s_rscores,o2s_rscores,hp,add_margin);
