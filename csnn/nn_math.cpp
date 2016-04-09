@@ -72,7 +72,8 @@ namespace nn_math{
 	{
 		//grad /= mbsize
 		//--here, mbsize is all instances number which is different from the bsize of f/b
-		op_y_mult_a(n,grad,sqrt(1.0/mbsize));	//TRYING: use sqrt(bsize)
+		//op_y_mult_a(n,grad,sqrt(1.0/mbsize));	//TRYING: use sqrt(bsize)
+		op_y_mult_a(n, grad, 1.0/mbsize);		// -> change to non-sqrt
 		//wdecay --- add to grad
 		// -- <old> op_y_mult_a(n,w,1-wdecay);
 		if(wdecay > 0)
