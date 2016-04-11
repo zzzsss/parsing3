@@ -121,6 +121,9 @@ public:
 	static Csnn* read(string fname);
 	static Csnn* create(int order,nn_options * o);
 
+	//special setting --- use with caution
+	void set_this_mbsize(int x) { this_mbsize = x; }
+
 	//main methods
 	//-- SHOULD BE: while(MiniBatch){prepare_batch;while(sent){f;b;}update;}
 	void prepare_batch();

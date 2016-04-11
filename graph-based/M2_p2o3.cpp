@@ -105,6 +105,7 @@ void M2_p2o3::each_train_one_iter()
 		//main batch
 		int this_sentence = 0;
 		int this_instance = 0;
+		int this_tokens = 0;
 		for(;;){
 			//forward
 			DependencyInstance* x = training_corpus->at(i);
@@ -118,6 +119,7 @@ void M2_p2o3::each_train_one_iter()
 			all_inst_right += the_inputs->inst_good;
 			all_inst_wrong += the_inputs->inst_bad;
 			this_sentence ++;
+			this_tokens += x->length();
 			i++;
 
 			adjust_scores_before(the_inputs, fscores, odim, hp->CONF_margin);
@@ -190,6 +192,8 @@ void M2_p2o3::each_train_one_iter()
 			}
 		}
 		//real update
+		if (hp->CONF_mbatch_way == 1)
+			mach->set_this_mbsize(this_tokens*this_tokens);
 		mach->update(hp->CONF_UPDATE_WAY,cur_lrate,hp->CONF_NN_WD,hp->CONF_MOMENTUM_ALPHA,hp->CONF_RMS_SMOOTH);
 	}
 	cout << "Iter done, skip " << skip_sent_num << " sentences and f&b " << all_forward_instance

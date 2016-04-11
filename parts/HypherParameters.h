@@ -105,6 +105,9 @@ int CONF_pr_devavrage;	//average when dev
 //1.8 - margin
 REAL CONF_margin;	//margin for both prob or max-margin
 
+//1.9 - about batch-div when updating --- assuming sqrt-yes
+int CONF_mbatch_way;
+
 //init
 HypherParameters(string conf):hp_nn()
 {
@@ -160,6 +163,8 @@ HypherParameters(string conf):hp_nn()
 	CONF_traindict_file = "";	//!!new-file
 
 	CONF_margin = 0;
+
+	CONF_mbatch_way = 0;
 
 	//read in conf-file
 #define DATA_LINE_LEN 10000
@@ -268,6 +273,9 @@ HypherParameters(string conf):hp_nn()
 
 		//1.8-margin
 		else if(buf=="m_margin")	fin >> CONF_margin;
+
+		//1.9-...
+		else if(buf == "mb_way")	fin >> CONF_mbatch_way;
 
 		else
 			cerr << "Unknown option " << buf << endl;
