@@ -100,7 +100,7 @@ void M2_p2o2::each_train_one_iter()
 			all_inst_right += the_inputs->inst_good;
 			all_inst_wrong += the_inputs->inst_bad;
 			this_sentence ++;
-			this_tokens += x->length();
+			this_tokens += x->length() - 1;
 			i++;
 
 			adjust_scores_before(the_inputs, fscores, odim, hp->CONF_margin);
@@ -165,6 +165,8 @@ void M2_p2o2::each_train_one_iter()
 		//real update
 		if (hp->CONF_mbatch_way == 1)
 			mach->set_this_mbsize(this_tokens*this_tokens);
+		else if (hp->CONF_mbatch_way == 2)
+			mach->set_this_mbsize(this_sentence*this_sentence);
 		mach->update(hp->CONF_UPDATE_WAY,cur_lrate,hp->CONF_NN_WD,hp->CONF_MOMENTUM_ALPHA,hp->CONF_RMS_SMOOTH);
 	}
 	cout << "Iter done, skip " << skip_sent_num << " sentences and f&b " << all_forward_instance

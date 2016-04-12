@@ -81,6 +81,7 @@ void M4_o3::each_train_one_iter()
 		}
 		//main batch
 		int this_instance_toupdate = 0;
+		int this_tokens = 0;
 		for(;;){
 			//forward
 			DependencyInstance* x = training_corpus->at(i);
@@ -96,6 +97,7 @@ void M4_o3::each_train_one_iter()
 					this_instance_toupdate++;
 			}
 			//
+			this_tokens += x->length() - 1;
 			i++;
 
 			if(i>=num_sentences)
@@ -127,8 +129,13 @@ void M4_o3::each_train_one_iter()
 			MM_margin_backward(mach, bad, -1, hp->CONF_score_p2reg);
 			delete good;delete bad;
 		}
+		int this_sentence = xs.size();
 		xs.clear();
 		//real update
+		if (hp->CONF_mbatch_way == 1)
+			mach->set_this_mbsize(this_tokens*this_tokens);
+		else if (hp->CONF_mbatch_way == 2)
+			mach->set_this_mbsize(this_sentence*this_sentence);
 		mach->update(hp->CONF_UPDATE_WAY,cur_lrate,hp->CONF_NN_WD,hp->CONF_MOMENTUM_ALPHA,hp->CONF_RMS_SMOOTH);
 	}
 	cout << "Iter done, skip " << skip_sent_num << " sentences." << "AND training UAS:"
