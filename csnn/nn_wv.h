@@ -34,7 +34,9 @@ private:
 	void init_clear(){
 		memset(w_grad,0,sizeof(REAL)*num*dim);
 		memset(w_moment,0,sizeof(REAL)*num*dim);
-		memset(w_square,0,sizeof(REAL)*num*dim);
+		//memset(w_square,0,sizeof(REAL)*num*dim);
+		for (int i = 0; i<num*dim; i++)	//set square-sum to 1 at start
+			w_square[i] = 1;
 	}
 
 public:
