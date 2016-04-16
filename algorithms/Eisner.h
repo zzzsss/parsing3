@@ -41,7 +41,8 @@ inline int get_index2(int len,int h,int m,int l=0,int ln=1)
 
 #define E_ERROR(str) \
 	cout << str << endl;\
-	exit(1)
+	throw str;
+	//exit(1)
 
 extern vector<int>* decodeProjective(int length,double* scores);
 extern double* encodeMarginals(const int length,const double* scores);
